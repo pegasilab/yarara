@@ -151,6 +151,12 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
                 print(' python produce_dace_summary.py -s %s -i HARPS03 -c %.1f -D %s -f %s -o %s \n'%(starname, m ,drs_version, str(force_reduction),out_dir))
                 os.system('python produce_dace_summary.py -s %s -i HARPS03 -c %.1f -D %s -f %s -o %s'%(starname, m ,drs_version, str(force_reduction),out_dir))
                 os.system('python produce_dace_summary.py -s %s -i HARPS15 -c %.1f -D %s -f %s -o %s'%(starname, m, drs_version, str(force_reduction),out_dir))
+            elif ins=='HARPS03':
+                print(' python produce_dace_summary.py -s %s -i HARPS03 -c %.1f -D %s -f %s -o %s \n'%(starname, m ,drs_version, str(force_reduction),out_dir))
+                os.system('python produce_dace_summary.py -s %s -i HARPS03 -c %.1f -D %s -f %s -o %s'%(starname, m ,drs_version, str(force_reduction),out_dir))
+            elif ins=='HARPS03':
+                print(' python produce_dace_summary.py -s %s -i HARPS15 -c %.1f -D %s -f %s -o %s \n'%(starname, m ,drs_version, str(force_reduction),out_dir))
+                os.system('python produce_dace_summary.py -s %s -i HARPS15 -c %.1f -D %s -f %s -o %s'%(starname, m, drs_version, str(force_reduction),out_dir))
             elif ins=='CORALIE':
                 print(' python produce_dace_summary.py -s %s -i CORALIE14 -c %.1f -D %s -f %s -o %s \n'%(starname, m ,drs_version, str(force_reduction),out_dir))
                 os.system('python produce_dace_summary.py -s %s -i CORALIE98 -c %.1f -D %s -f %s -o %s'%(starname, m ,drs_version, str(force_reduction),out_dir))
@@ -183,6 +189,10 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
     Dico = {}
     if 'HARPS' in instruments:
         Dico['HARPS'] =  dico.loc[dico['instrument']=='HARPS']
+    if 'HARPS03' in instruments:
+        Dico['HARPS03'] =  dico.loc[dico['instrument']=='HARPS03']
+    if 'HARPS' in instruments:
+        Dico['HARPS15'] =  dico.loc[dico['instrument']=='HARPS15']
     if 'CORALIE' in instruments:
         Dico['CORALIE'] =  dico.loc[dico['instrument']=='CORALIE']
     if 'ESPRESSO18' in instruments:
@@ -206,6 +216,14 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
             offsets =[0]
                 
         if k == 'HARPS':
+            berv_kw = 'HIERARCH ESO DRS BERV'
+            lamp_kw  = 'HIERARCH ESO DRS CAL TH LAMP OFFSET'
+            time_kw = 'MJD-OBS'
+        elif k == 'HARPS03':
+            berv_kw = 'HIERARCH ESO DRS BERV'
+            lamp_kw  = 'HIERARCH ESO DRS CAL TH LAMP OFFSET'
+            time_kw = 'MJD-OBS'
+        elif k == 'HARPS15':
             berv_kw = 'HIERARCH ESO DRS BERV'
             lamp_kw  = 'HIERARCH ESO DRS CAL TH LAMP OFFSET'
             time_kw = 'MJD-OBS'
@@ -657,7 +675,7 @@ class spec_time_series(object):
                     'blaze_correction':np.ones(len(wave)),
                     'rejected':np.zeros(len(wave))}
             dico = pd.DataFrame(dico)
-            dico.to_pickle(self.directory+'Analyse_material.p')
+            myf.pickle_dump(dico,open(self.directory+'Analyse_material.p','wb'))       
 
         if os.path.exists(self.directory+'/RASSINE_Master_spectrum.p'):
             master = pd.read_pickle(self.directory+'/RASSINE_Master_spectrum.p')
@@ -942,6 +960,10 @@ class spec_time_series(object):
         files = glob.glob(directory+'RASSI*.p')
         if len(files)==0:
             print('No RASSINE file found in the directory : %s'%(directory))
+            if return_name:
+                return [], []
+            else:
+                return []
         else:
             files = np.sort(files)   
             file = []
@@ -1217,9 +1239,9 @@ class spec_time_series(object):
         self.import_table()
         self.berv = myc.tableXY(self.table.jdb,self.table.berv)
 
-    def import_proxies(self):
+    def import_proxies(self,sub_dico=None):
         self.import_table()
-
+        self.import_ccf()
         
         self.ca2 = myc.tableXY(self.table['jdb'],self.table['CaII'],self.table['CaII_std'])
         self.ca2h = myc.tableXY(self.table['jdb'],self.table['CaIIH'],self.table['CaIIH_std'])
@@ -1228,6 +1250,7 @@ class spec_time_series(object):
         self.rhk = myc.tableXY(self.table['jdb'],self.table['RHK'],self.table['RHK_std'])
         self.kernel_ca2 = myc.tableXY(self.table['jdb'],self.table['Kernel_CaII'],self.table['Kernel_CaII_std'])
         self.kernel_wb = myc.tableXY(self.table['jdb'],self.table['Kernel_WB'],self.table['Kernel_WB_std'])
+        self.nad = myc.tableXY(self.table['jdb'],self.table['NaD'],self.table['NaD_std'])
         self.nad1 = myc.tableXY(self.table['jdb'],self.table['NaD1'],self.table['NaD1_std'])
         self.nad2 = myc.tableXY(self.table['jdb'],self.table['NaD2'],self.table['NaD2_std'])
         self.ha = myc.tableXY(self.table['jdb'],self.table['Ha'],self.table['Ha_std'])
@@ -1235,6 +1258,7 @@ class spec_time_series(object):
         self.hc = myc.tableXY(self.table['jdb'],self.table['Hc'],self.table['Hc_std'])
         self.hd = myc.tableXY(self.table['jdb'],self.table['Hd'],self.table['Hd_std'])
         self.hed3 = myc.tableXY(self.table['jdb'],self.table['HeID3'],self.table['HeID3_std'])
+        self.mg1 = myc.tableXY(self.table['jdb'],self.table['MgI'],self.table['MgI_std'])
         self.mg1a = myc.tableXY(self.table['jdb'],self.table['MgIa'],self.table['MgIa_std'])
         self.mg1b = myc.tableXY(self.table['jdb'],self.table['MgIb'],self.table['MgIb_std'])
         self.mg1c = myc.tableXY(self.table['jdb'],self.table['MgIc'],self.table['MgIc_std'])
@@ -1245,39 +1269,57 @@ class spec_time_series(object):
         self.cb2 = myc.tableXY(self.table['jdb'],self.table['CB2'],self.table['CB2_std'])
         self.sas = myc.tableXY(self.table['jdb'],self.table['SAS'],self.table['SAS_std'])
 
-        try:
-            self.import_dico_chain('matching_mad')        
-            loc = np.where(self.dico_chain=='matching_activity')[0][0]
-            sb = self.dico_chain[loc+1]
-        except:
-            sb = 'matching_diff'
-        print('\n [INFO] Dictionnary selected for CCF proxy : %s'%(sb))
-        fwhm = self.import_ccf_timeseries('CCF_'+self.mask_harps,sb,'fwhm')
-        contrast = self.import_ccf_timeseries('CCF_'+self.mask_harps,sb,'contrast')
+        if sub_dico is None:
+            try:
+                self.import_dico_chain('matching_mad')        
+                loc = np.where(self.dico_chain=='matching_activity')[0][0]
+                sb = self.dico_chain[loc+1]
+            except:
+                sb = 'matching_diff'
+        else:
+            sb = sub_dico
 
+        ccf_masks = list(self.table_ccf.keys())
+        if sb in list(self.table_ccf[ccf_masks[1]].keys()):
+            ccf_mask = ccf_masks[1]
+        elif sb in list(self.table_ccf[ccf_masks[2]].keys()):
+            ccf_mask = ccf_masks[2]
+        else:
+            ccf_mask = ccf_masks[3]
+            
+            
+        print('\n [INFO] Dictionnary selected for CCF proxy : %s'%(sb))
+        print('\n [INFO] Mask selected for CCF proxy : %s'%(ccf_mask))
+        
+        fwhm = self.import_ccf_timeseries(ccf_mask, sb, 'fwhm')
+        contrast = self.import_ccf_timeseries(ccf_mask, sb, 'contrast')
+        vspan = self.import_ccf_timeseries(ccf_mask, sb, 'bisspan')
+        
         self.ccf_harps_fwhm = fwhm 
         self.ccf_harps_contrast = contrast 
-
+        self.ccf_harps_vspan = vspan
+        
         table = self.table.copy()
         table['contrast'] = contrast.y
         table['fwhm'] = fwhm.y
+        table['vspan'] = vspan.y
         table['contrast_std'] = contrast.yerr
         table['fwhm_std'] = fwhm.yerr
+        table['vspan_std'] = vspan.yerr
         
         table_proxy = table[['jdb','CaII','CaIIH','CaIIK','CaI','RHK','Kernel_CaII',
-                                       'NaD1','NaD2','Ha','Hb','Hc','Hd','HeID3',
-                                       'MgIa','MgIb','MgIc','WB','CB','CB2','BIS','BIS2']]
+                                       'NaD','NaD1','NaD2','Ha','Hb','Hc','Hd','HeID3',
+                                       'MgI','MgIa','MgIb','MgIc','WB','CB','CB2','BIS','BIS2']]
 
-        self.table_proxy2 = table[['CaII','CaIIH','CaIIK','CaI','RHK','Kernel_CaII',
-                                       'NaD1','NaD2','Ha','Hb','Hc','Hd','HeID3',
-                                       'MgIa','MgIb','MgIc','contrast','fwhm']]
+        self.table_proxy2 = table[['CaII','CaIIH','CaIIK','CaI','RHK','Kernel_CaII', 'WB',
+                                       'NaD','NaD1','NaD2','Ha','Hb','Hc','Hd','HeID3',
+                                       'MgI','MgIa','MgIb','MgIc','contrast','fwhm','vspan']]
 
-        self.table_proxy2_std = table[['CaII_std','CaIIH_std','CaIIK_std','CaI_std','RHK_std','Kernel_CaII_std',
-                                       'NaD1_std','NaD2_std','Ha_std','Hb_std','Hc_std','Hd_std','HeID3_std',
-                                       'MgIa_std','MgIb_std','MgIc_std','contrast_std','fwhm_std']]
+        self.table_proxy2_std = table[['CaII_std','CaIIH_std','CaIIK_std','CaI_std','RHK_std','Kernel_CaII_std', 'WB_std',
+                                       'NaD_std','NaD1_std','NaD2_std','Ha_std','Hb_std','Hc_std','Hd_std','HeID3_std',
+                                       'MgI_std','MgIa_std','MgIb_std','MgIc_std','contrast_std','fwhm_std','vspan_std']]
 
-
-
+        
     def import_ccf(self):
         self.table_ccf = pd.read_pickle(self.directory+'Analyse_ccf.p')
 
@@ -1291,12 +1333,19 @@ class spec_time_series(object):
         self.ccf_rv = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['rv'])*1000, np.array(self.table_ccf[mask][sub_dico]['table']['rv_std'])*1000)
         self.ccf_fwhm = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['fwhm']), np.array(self.table_ccf[mask][sub_dico]['table']['fwhm_std']))
         self.ccf_contrast = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['contrast']), np.array(self.table_ccf[mask][sub_dico]['table']['contrast_std']))
-        
-        vec = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']),np.array(self.table_ccf[mask][sub_dico]['table'][kw])*1000, self.table.rv_dace_std)
         try:
-            vec = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']),np.array(self.table_ccf[mask][sub_dico]['table'][kw])*1000,np.array(self.table_ccf[mask][sub_dico]['table'][kw+'_std'])*1000)
+            self.ccf_vspan = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['bisspan']), np.array(self.table_ccf[mask][sub_dico]['table']['bisspan_std']))
         except:
-            vec = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']),np.array(self.table_ccf[mask][sub_dico]['table'][kw])*1000)
+            self.ccf_vspan = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['bisspan']), np.array(self.table_ccf[mask][sub_dico]['table']['rv_std']))
+            
+        factor = [1,1000][kw=='rv']
+        
+        vec = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']),np.array(self.table_ccf[mask][sub_dico]['table'][kw])*factor, self.table.rv_dace_std)
+        
+        try:
+            vec = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']),np.array(self.table_ccf[mask][sub_dico]['table'][kw])*factor,np.array(self.table_ccf[mask][sub_dico]['table'][kw+'_std'])*factor)
+        except:
+            vec = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']),np.array(self.table_ccf[mask][sub_dico]['table'][kw])*factor)
         
         return vec
 
@@ -1578,6 +1627,17 @@ class spec_time_series(object):
     # =============================================================================
     # IMPORT a RANDOM SPECTRUM
     # =============================================================================
+
+    def copy_spectrum(self):
+        directory = self.directory
+        files = glob.glob(directory+'RASSI*.p')
+        files = np.sort(files)[0]
+        
+        if not os.path.exists(self.dir_root+'TEMP/'):
+            os.system('mkdir '+self.dir_root+'TEMP/') 
+        
+        os.system('cp '+files+' '+self.dir_root+'TEMP/')
+        
         
     def import_spectrum(self,num=None):
         """
@@ -1596,6 +1656,9 @@ class spec_time_series(object):
         directory = self.directory
         files = glob.glob(directory+'RASSI*.p')
         files = np.sort(files)
+        if not len(files):
+            files = glob.glob(directory.replace('WORKSPACE','TEMP')+'RASSI*.p')
+        
         if num is None:
             try:
                 num = np.random.choice(np.arange(len(files)),1)
@@ -1631,7 +1694,12 @@ class spec_time_series(object):
         
         if starname in table_simbad.keys():
             print('\n [INFO] Star found in the SIMBAD table')
-            dico = pd.DataFrame(table_simbad[starname])          
+            dico2 = table_simbad[starname]         
+            
+            for kw in dico2.keys():
+                if type(dico2[kw])==dict:
+                    for kw2 in dico2[kw].keys():
+                        dico[kw][kw2] = dico2[kw][kw2]
         else:
             try:
                 query = customSimbad.query_objects([starname])
@@ -1743,12 +1811,13 @@ class spec_time_series(object):
                 dico['Dec']['fixed'] = dec
                 dico['Ra']['fixed'] = ra  
                 dico['Rv_sys']['fixed'] = rv
-                
-                myf.pickle_dump(dico,open(self.dir_root+'STAR_INFO/Stellar_info_'+self.starname+'.p','wb'))
-                
+                                
                 table_simbad[self.starname] = dico
                 #myf.pickle_dump(table_simbad, open(self.dir_yarara+'database/SIMBAD/table_stars.p','wb'))
                 myf.pickle_dump(table_simbad, open(root+'/Python/database/SIMBAD/table_stars.p','wb'))
+
+
+        myf.pickle_dump(dico,open(self.dir_root+'STAR_INFO/Stellar_info_'+self.starname+'.p','wb'))
 
         del dico['Name']                
                 
@@ -1757,8 +1826,7 @@ class spec_time_series(object):
         
         dataframe = pd.DataFrame([dico[i]['fixed'] for i in dico.keys()],index=[i for i in dico.keys()], columns=[self.starname])
         print(dataframe)
-
-    
+            
     def yarara_star_info(self, Rv_sys=None, simbad_name=None, magB=None, magV=None, magR=None, BV=None, VR=None, sp_type=None, Mstar=None, Rstar=None, Vsini=None, Vmicro=None, Teff=None, log_g=None, FeH=None, Prot=None, Fwhm=None, Contrast=None, CCF_delta=None, Pmag=None, stellar_template=None):
         
         kw = ['Rv_sys','Simbad_name','Sp_type','magB','magV','magR','BV','VR','Mstar','Rstar','Vsini','Vmicro','Teff','Log_g','FeH','Prot','FWHM','Contrast','Pmag', 'stellar_template','CCF_delta']
@@ -2091,6 +2159,12 @@ class spec_time_series(object):
         ccf['CCF_kitcat_mask_'+self.starname] = self.table_ccf_saved['CCF_kitcat_mask_'+self.starname][sub_dico]
         myf.pickle_dump(ccf,open(directory+instrument+'/UTILITIES/Analyse_ccf.p','wb'))
         
+        #rdb table
+        os.system('cp '+self.directory.replace('WORKSPACE','KEPLERIAN')+'*drs*.rdb '+directory+instrument+'/UTILITIES')
+        os.system('cp '+self.directory.replace('WORKSPACE','KEPLERIAN')+'*yarara_v1*.rdb '+directory+instrument+'/UTILITIES')
+        os.system('cp '+self.directory.replace('WORKSPACE','KEPLERIAN')+'*yarara_v2*.rdb '+directory+instrument+'/UTILITIES')
+        
+        
         #kitcat
         self.import_kitcat()
         kitcat = self.kitcat['catalogue'][['wave','line_depth','depth_rel','freq_mask0','diff_continuum','wave_fitted']].copy()
@@ -2313,6 +2387,8 @@ class spec_time_series(object):
                 if j==4:
                     print(' [WARNING] The Keplerian fit has not converged')
         plt.savefig(self.dir_root+'KEPLERIAN/'+self.starname+'_'+name_pre+'keplerian_fit'+name_ext+'.png')
+        
+        vec2.rv_residues = vec.rv_residues
         self.planet_fitted[name_ext[1:]] = vec.planet_fitted
         self.planet_fitted['info_'+name_ext[1:]] = vec.model_info
     
@@ -2332,8 +2408,8 @@ class spec_time_series(object):
             self.import_snr_curve()
             mad = 1/np.median(self.table_snr['snr_curve'],axis=0)*np.sqrt(master)
         except:
-            a,b,c = self.yarara_map(wave_min=3000,wave_max=8000,sub_dico='matching_mad',Plot=False,reference='master')
-            mad = myf.mad(a,axis=0)
+            a,b,c = self.yarara_map(wave_min=3000, wave_max=8000, sub_dico='matching_mad', Plot=False, reference='master')
+            mad = myf.mad(a, axis=0)
             mad*=self.material['correction_factor']
         
         
@@ -2348,7 +2424,7 @@ class spec_time_series(object):
         histo = plt.hist(v,bins=1000,alpha=0.8,cumulative=True,density=True,histtype='step')
         plt.xlim(0,3)
         plt.xlabel(r'$Log_{10}(RV)$ [m/s]')
-        plt.axvline(x=np.log10(rv.rms/np.sqrt(2)),color='k',ls=':',label='RV raw (%.2f m/s)'%(rv.rms*np.sqrt(2)))
+        plt.axvline(x=np.log10(rv.rms*np.sqrt(2)),color='k',ls=':',label='RV raw (%.2f m/s)'%(rv.rms*np.sqrt(2)))
         plt.axhline(y=0.2,color='k',ls='-.',alpha=0.5)
         k_amp = 10**histo[1][myf.find_nearest(histo[0],0.2)[0][0]]/2
         plt.axvline(x=np.log10(k_amp*2),color='k',ls='-.',label=r'$K_{max}$ semi-amplitude (%.2f m/s)'%(k_amp),alpha=0.5)
@@ -3425,7 +3501,7 @@ class spec_time_series(object):
                 ras.save_pickle(j,file)                
         
         if to_table:
-            table.to_pickle(directory+'Analyse_summary.p')
+            myf.pickle_dump(table,open(self.directory+'Analyse_summary.p','wb'))       
         
         self.yarara_analyse_summary()     
     
@@ -4051,6 +4127,17 @@ class spec_time_series(object):
         
         print('\n [INFO] FWHM measured as %.1f kms'%(self.fwhm))
         
+    def yarara_ccf_summary(self,mask,sub_dico):
+        rv = self.import_ccf_timeseries(mask,sub_dico,'rv')
+        
+        table = {}
+        
+        for name,vec in zip(['contrast','fwhm','vspan','rv'],[self.ccf_contrast,self.ccf_fwhm,self.ccf_vspan,self.ccf_rv]):
+            factor = {'contrast':1,'fwhm':1/2.355,'vspan':1,'rv':1/1000}[name]
+            table['ccf_'+name] = vec.y*factor
+            table['ccf_'+name+'_std'] = vec.yerr*factor
+        table = pd.DataFrame(table)
+        self.yarara_obs_info(kw=table)
 
     def yarara_obs_info(self, kw=[None,None], jdb=None, berv=None, rv=None, airmass=None, texp=None, seeing=None, humidity=None):
         """
@@ -4467,8 +4554,9 @@ class spec_time_series(object):
         mat['merged'] = zone_merged
         mat['blaze_correction'] = blaze_correction
         
-        mat.to_pickle(self.directory+'Analyse_material.p')
-    
+        myf.pickle_dump(mat,open(self.directory+'Analyse_material.p','wb'))       
+
+            
     def yarara_detector(self,wave_cut=[]):
         self.import_material()
         load = self.material
@@ -4477,8 +4565,9 @@ class spec_time_series(object):
         for j in wave_cut:
             load.loc[load['wave']>j,'detector'] = load.loc[load['wave']>j,'detector'] + 1
         
-        load.to_pickle(self.directory+'Analyse_material.p')
-
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
+        
+        
     def yarara_get_bin_length(self):
         bin_length = int(''.join(glob.glob(self.dir_root+'WORKSPACE/RASSINE*')[0].split('bin_')[1].split('.')[0:-3]))
         return bin_length
@@ -4948,38 +5037,41 @@ class spec_time_series(object):
                           
             
             #morpho
-            for fname,kw in zip(['depth_by_depth','bt_by_bt','asym_by_asym','width_by_width'],['dbd','bt','aba','wbw']):
-                lbl_file = pd.read_pickle(parent+'/'+main_ins+'/WORKSPACE/Analyse_'+fname+'.p') 
-                for sub_dico in lbl_file.keys():
-                    valid_lines = np.array(lbl_file[sub_dico]['catalog']['valid'])
+            for fname,kw in zip(['depth_by_depth','asym_by_asym','width_by_width','bt_by_bt'],['dbd','aba','wbw','bt']):
+                try:
+                    lbl_file = pd.read_pickle(parent+'/'+main_ins+'/WORKSPACE/Analyse_'+fname+'.p') 
+                    for sub_dico in lbl_file.keys():
+                        valid_lines = np.array(lbl_file[sub_dico]['catalog']['valid'])
+            
+                        for j, path in enumerate(dir_found):
+                            tab = pd.read_pickle(path+'/WORKSPACE/Analyse_'+fname+'.p')[sub_dico]
+                            match = myf.match_nearest(kitcat_wave, np.array(tab['catalog']['freq_mask0']))
+                            
+                            valid_lines = (valid_lines[match[:,0].astype('int')])&(np.array(tab['catalog']['valid'])[match[:,1].astype('int')])
+                            lbl_file[sub_dico]['catalog'] = lbl_file[sub_dico]['catalog'].reset_index(drop=True)
+                            lbl_file[sub_dico]['catalog'] = lbl_file[sub_dico]['catalog'].iloc[match[:,0].astype('int')]
+                            
+                            lbl_file[sub_dico][kw] = lbl_file[sub_dico][kw][:,match[:,0].astype('int'),:]
+                            lbl_file[sub_dico][kw+'_std'] = lbl_file[sub_dico][kw+'_std'][:,match[:,0].astype('int'),:]
+                            
+                            tab[kw] = tab[kw][:,match[:,1].astype('int'),:]
+                            tab[kw+'_std'] = tab[kw+'_std'][:,match[:,1].astype('int'),:]
+                            try:
+                                lbl_file[sub_dico]['jdb'] = np.vstack([lbl_file[sub_dico]['jdb'],tab['jdb']])
+                                lbl_file[sub_dico][kw] = np.concatenate([lbl_file[sub_dico][kw],tab[kw]],axis=2)
+                                lbl_file[sub_dico][kw+'_std'] = np.concatenate([lbl_file[sub_dico][kw+'_std'],tab[kw+'_std']],axis=2)
+                            except:
+                                pass
+                        sorting = np.argsort(lbl_file[sub_dico]['jdb'])
+                        lbl_file[sub_dico]['jdb'] = lbl_file[sub_dico]['jdb'][sorting]
+                        lbl_file[sub_dico][kw] = lbl_file[sub_dico][kw][:,:,sorting]
+                        lbl_file[sub_dico][kw+'_std'] = lbl_file[sub_dico][kw+'_std'][:,:,sorting]
+                        
+                        lbl_file[sub_dico]['catalog']['valid'] = valid_lines
         
-                    for j, path in enumerate(dir_found):
-                        tab = pd.read_pickle(path+'/WORKSPACE/Analyse_'+fname+'.p')[sub_dico]
-                        match = myf.match_nearest(kitcat_wave, np.array(tab['catalog']['freq_mask0']))
-                        
-                        valid_lines = (valid_lines[match[:,0].astype('int')])&(np.array(tab['catalog']['valid'])[match[:,1].astype('int')])
-                        lbl_file[sub_dico]['catalog'] = lbl_file[sub_dico]['catalog'].reset_index(drop=True)
-                        lbl_file[sub_dico]['catalog'] = lbl_file[sub_dico]['catalog'].iloc[match[:,0].astype('int')]
-                        
-                        lbl_file[sub_dico][kw] = lbl_file[sub_dico][kw][:,match[:,0].astype('int'),:]
-                        lbl_file[sub_dico][kw+'_std'] = lbl_file[sub_dico][kw+'_std'][:,match[:,0].astype('int'),:]
-                        
-                        tab[kw] = tab[kw][:,match[:,1].astype('int'),:]
-                        tab[kw+'_std'] = tab[kw+'_std'][:,match[:,1].astype('int'),:]
-                        try:
-                            lbl_file[sub_dico]['jdb'] = np.vstack([lbl_file[sub_dico]['jdb'],tab['jdb']])
-                            lbl_file[sub_dico][kw] = np.concatenate([lbl_file[sub_dico][kw],tab[kw]],axis=2)
-                            lbl_file[sub_dico][kw+'_std'] = np.concatenate([lbl_file[sub_dico][kw+'_std'],tab[kw+'_std']],axis=2)
-                        except:
-                            pass
-                    sorting = np.argsort(lbl_file[sub_dico]['jdb'])
-                    lbl_file[sub_dico]['jdb'] = lbl_file[sub_dico]['jdb'][sorting]
-                    lbl_file[sub_dico][kw] = lbl_file[sub_dico][kw][:,:,sorting]
-                    lbl_file[sub_dico][kw+'_std'] = lbl_file[sub_dico][kw+'_std'][:,:,sorting]
-                    
-                    lbl_file[sub_dico]['catalog']['valid'] = valid_lines
-    
-                myf.pickle_dump(ccf_file,open(parent+'/INS_merged/WORKSPACE/Analyse_'+fname+'.p','wb'))
+                    myf.pickle_dump(ccf_file,open(parent+'/INS_merged/WORKSPACE/Analyse_'+fname+'.p','wb'))
+                except:
+                    pass
             
     
     # =============================================================================
@@ -5485,7 +5577,7 @@ class spec_time_series(object):
             mask = np.ones(len(master))
         
         kernel = weight*sign_corr*mask
-                
+        
         if wave_min is not None:
             i1 = myf.find_nearest(wave,wave_min)[0][0]
             kernel[0:i1] = 0
@@ -5498,7 +5590,7 @@ class spec_time_series(object):
         kernel[mask_flux] = 0            
         kernel/=np.nansum(abs(kernel))
         kernel*=100
-        
+                        
         ax = plt.gca()
         plt.subplot(3,1,2,sharex=ax)
         plt.plot(wave,kernel,color='k')
@@ -5534,13 +5626,13 @@ class spec_time_series(object):
         else:
             return kernel
     
-    def yarara_kernel_from_proxy(self, proxy_corr, r_min=0.4, sub_dico='matching_pca', substract_map=['stitching','ghost_a','ghost_b','thar','smooth'], wave_min=None, wave_max=None, power_snr=2, smooth_corr=1,time_min=None,time_max=None):
+    def yarara_kernel_from_proxy(self, proxy_corr, r_min=0.4, sub_dico='matching_pca', substract_map=['stitching','ghost_a','ghost_b','thar','smooth'], wave_min=None, wave_max=None, power_snr=1, smooth_corr=1,time_min=None,time_max=None,save=True):
         self.import_table()
         
         self.yarara_time_variations(sub_dico=sub_dico, reference='master', substract_map=substract_map, Plot=False, proxy_corr=proxy_corr, proxy_detrending=0,smooth_corr=smooth_corr,time_min=None,time_max=None)
         slope_vec = self.slope_corr*self.std_norm_corr
         slope_vec[abs(self.r_corr)<r_min] = 0
-        self.yarara_create_kernel(slope_vec=slope_vec, sub_dico=sub_dico, mask=None, wave_min=wave_min, wave_max=wave_max, save=True, ext=proxy_corr+'_'+self.starname)
+        self.yarara_create_kernel(slope_vec=slope_vec, sub_dico=sub_dico, mask=None, wave_min=wave_min, wave_max=wave_max, save=save, ext=proxy_corr+'_'+self.starname)
         
         test,test_std = self.yarara_kernel_integral(sub_dico, 'Kernel_'+proxy_corr+'_'+self.starname+'.txt', doppler_free=False, substract_map=substract_map, contam=True, power_snr=power_snr)
         test = test.T[0]
@@ -6100,8 +6192,8 @@ class spec_time_series(object):
         factor = np.array(self.material['correction_factor'])
         
         self.material['reference_spectrum'] = flux_telluric_free
-        self.material.to_pickle(self.directory+'Analyse_material.p')
-                
+        myf.pickle_dump(self.material,open(self.directory+'Analyse_material.p','wb'))       
+                        
         dico = {'wave':wave,'flux':flux_telluric_free,'correction_factor':factor,'flux_telluric':telluric, 'flux_uncorrected':flux_telluric, 
                 'continuum':conti,'berv_mean':b_mean, 'berv_min':[b_min,-fixed_berv_span][int(fixed_berv_span!=0)], 
                 'berv_max':[b_max,fixed_berv_span][int(fixed_berv_span!=0)],'rejected':rejected,'rv_sys':rv_sys,'t_eff':Teff}
@@ -7152,7 +7244,7 @@ class spec_time_series(object):
         load.loc[load['reference_spectrum']<0,'reference_spectrum'] = 0
             
         if save:
-            load.to_pickle(self.directory+'Analyse_material.p')
+            myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
         else:
             return np.array(load['reference_spectrum'])
         
@@ -7314,7 +7406,7 @@ class spec_time_series(object):
             
             load['wave'] = wavelength
             load['reference_spectrum'] = mean1
-            load.to_pickle(self.directory+'Analyse_material.p')    
+            myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))   
     
     
     def yarara_color_template(self,sub_dico='matching_anchors', continuum='linear'):
@@ -7343,7 +7435,8 @@ class spec_time_series(object):
                 
         load['wave'] = wave
         load['color_template'] = continuum_ref
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
+
 
 
     # =============================================================================
@@ -7571,7 +7664,7 @@ class spec_time_series(object):
         
         load = load[idx_min:idx_max]
         load = load.reset_index(drop=True)
-        load.to_pickle(directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
         
         try:
             file_kitcat = pd.read_pickle(self.dir_root+'KITCAT/kitcat_spectrum.p')
@@ -8222,7 +8315,7 @@ class spec_time_series(object):
         
         load['stellar_template'] = template_flux
         load['correction_factor'] = correction
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
     
     # =============================================================================
     # COMPUTE ALL THE PROXIES OF ACTIVITY
@@ -8636,7 +8729,7 @@ class spec_time_series(object):
                 plt.axvline(x=center,color='r')
         
         load['activity_proxies'] = mask_activity.astype('int')
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))
 
         if not np.sum(abs(save['CaIIK'])):
             save['CaIIK'] = save['Ha']+0.01 ; save['CaIIH'] = save['Ha']+0.01
@@ -9192,7 +9285,7 @@ class spec_time_series(object):
     
     def yarara_produce_manual_master_slice(self,sub_dico='matching_color',var='s',smooth_box=5,name_ext='',modulo_time=0):
         """To launch in an Ipython terminal"""
-        database = pd.read_pickle(root+'/Yarara/database/%s_pca_vec_fitted.p'%(self.instrument))[sub_dico]
+        database = pd.read_pickle(root+'/Yarara/database/%s/%s_pca_vec_fitted.p'%(self.instrument,self.instrument))[sub_dico]
         all_stars = database.keys()
         all_slices = []
         counter = -1
@@ -9219,7 +9312,7 @@ class spec_time_series(object):
         
         fig = plt.figure(figsize=(18,14))
         plt.subplots_adjust(left=0.07,right=0.93,top=0.93,bottom=0.07,hspace=0.35,wspace=0.35)
-        s1,s2 = myf.best_grid_size(counter+1)
+        s2 = 5 ; s1 = counter//s2+int(counter%s2!=0)
         t=0
         l_axes = []
         save = []
@@ -9272,7 +9365,7 @@ class spec_time_series(object):
                     update(rgba)
                     plt.draw()
                 else:
-                    plt.savefig(root+'/Yarara/database/%s_%s_slice%s.png'%(self.instrument,sub_dico,name_ext))
+                    plt.savefig(root+'/Yarara/database/%s/%s_%s_slice%s.png'%(self.instrument,self.instrument,sub_dico,name_ext))
                     plt.close('all')
 
         fig.canvas.mpl_connect('button_press_event', onclick)
@@ -9291,9 +9384,13 @@ class spec_time_series(object):
         complete_map = complete_map[:,~mask]
         self.slice_map_produced = complete_map
 
-        test = myc.tableXY(complete_map[1],complete_map[2])
+        test = myc.tableXY(complete_map[1].copy(),complete_map[2].copy())
+        test.reject_twin() #understand what is happening
         model_x = myf.smooth(test.x,box_pts=smooth_box,shape='rectangular')        
         model_y = myf.smooth(test.y,box_pts=smooth_box,shape='rectangular')
+        model = myc.tableXY(model_x,model_y)
+        model.order()
+        model.interpolate(new_grid=complete_map[1],replace=False,method='linear')
 
         scale = myf.mad(complete_map[2])/myf.mad(model_y)
         
@@ -9308,9 +9405,9 @@ class spec_time_series(object):
         plt.ylabel(r'Wavelength $\lambda$ [$\AA$]',fontsize=15)
         plt.title('Master slice')
         
-        order = np.argsort(abs(model_y))
+        order = np.argsort(abs(model.y_interp))
         plt.subplot(1,2,2,sharex=ax2,sharey=ax2)
-        plt.scatter(complete_map[0][order],complete_map[1][order],c=model_y[order],vmin=-2/scale,vmax=2/scale,cmap='seismic',alpha=0.5)
+        plt.scatter(complete_map[0][order],complete_map[1][order],c=model.y_interp[order],vmin=-2,vmax=2,cmap='seismic',alpha=0.5)
         ax = plt.colorbar(pad=0)
         ax.ax.set_ylabel(r'Z score $(\gamma)$',fontsize=15)
         plt.xlabel('Pixels',fontsize=15)
@@ -9320,15 +9417,15 @@ class spec_time_series(object):
         
         plt.show(block=False)
         
-        plt.savefig(root+'/Yarara/database/%s_slice%s.png'%(self.instrument,name_ext))
+        plt.savefig(root+'/Yarara/database/%s/%s_slice%s.png'%(self.instrument,self.instrument,name_ext))
         
-        kernels_file = root+'/Yarara/database/%s_kernels.p'%(self.instrument)
+        kernels_file = root+'/Yarara/database/%s/%s_manual_kernels.p'%(self.instrument,self.instrument)
         if os.path.exists(kernels_file):
             slices = pd.read_pickle(kernels_file)
         else:
             slices = {}
         
-        slices['kernel'+name_ext] = {'var':pd.DataFrame({'wave':model_x[np.argsort(model_x)]}),'strength':model_y[np.argsort(model_x)]}
+        slices['kernel'+name_ext] = {'var':pd.DataFrame({'wave':model.x}),'strength':model.y}
         myf.pickle_dump(slices,open(kernels_file,'wb'))
     
     
@@ -9423,20 +9520,34 @@ class spec_time_series(object):
         coeff.r_matrix(name=var_kept,absolute=False,light_plot=True,angle=90,vmin=-1.2,vmax=1.2)   
         plt.close()
 
-        block_order = myf.block_matrix(coeff.matrix_corr.copy(),r_min=r_min)
+        block_order,dust = myf.block_matrix2(coeff.matrix_corr.copy())#,r_min=r_min)
         plt.figure(figsize=(12,12))
         coeff.r_matrix(name=var_kept[block_order],absolute=False,light_plot=True,angle=90,vmin=-1.2,vmax=1.2)   
 
-        binary_matrix = abs(coeff.matrix_corr)>r_min
-        cluster_loc = []
-        for j in range(1,len(binary_matrix)):
-            if not np.sum(binary_matrix[j,0:j]):
-                cluster_loc.append(j)
-                plt.axvline(x=j-0.5,color='k')
-                plt.axhline(y=j-0.5,color='k')
-        plt.close()
-        
-        cluster_loc = [0]+cluster_loc+[len(binary_matrix)]
+        if True: #new borders algo 13.09.21
+            binary_matrix = abs(coeff.matrix_corr)>r_min
+            borders = []
+            i = 0
+            for j in np.arange(1,len(binary_matrix)):
+                #if np.sum(binary_matrix[j,i:j])<(j-i)*0.5:
+                if np.sum(binary_matrix[j:j+1,i:j])<(j-i)*0.5:
+                    #if (j-i)>cluster_min_size:
+                    borders.append([i,j])
+                    i = j     
+                    plt.axvline(x=j-0.5,color='k')
+                    plt.axhline(y=j-0.5,color='k')
+            borders.append([borders[-1][1],len(binary_matrix)-1])
+            cluster_loc = np.unique(np.hstack(borders))
+        else:
+            binary_matrix = abs(coeff.matrix_corr)>r_min
+            cluster_loc = []
+            for j in range(1,len(binary_matrix)):
+                if not np.sum(binary_matrix[j,0:j]):
+                    cluster_loc.append(j)
+                    plt.axvline(x=j-0.5,color='k')
+                    plt.axhline(y=j-0.5,color='k')
+            plt.close()
+            cluster_loc = [0]+cluster_loc+[len(binary_matrix)]
         
         mask_kept= np.ones(len(binary_matrix))
         for i,j in zip(cluster_loc[0:-1],cluster_loc[1:]):
@@ -9452,16 +9563,33 @@ class spec_time_series(object):
         plt.figure(figsize=(12,12))
         coeff.r_matrix(name=var_kept[block_order][mask_kept],absolute=False,light_plot=True,angle=90,vmin=-1.2,vmax=1.2)   
 
-        binary_matrix = abs(coeff.matrix_corr)>r_min
-        cluster_loc = []
-        for j in range(1,len(binary_matrix)):
-            if not np.sum(binary_matrix[j,0:j]):
-                cluster_loc.append(j)
-                plt.axvline(x=j-0.5,color='k')
-                plt.axhline(y=j-0.5,color='k')    
-        cluster_loc = [0]+cluster_loc+[len(binary_matrix)]
+        if True: #new borders algo 13.09.21
+            binary_matrix = abs(coeff.matrix_corr)>r_min
+            borders = []
+            i = 0
+            for j in np.arange(1,len(binary_matrix)):
+                #if np.sum(binary_matrix[j,i:j])<(j-i)*0.5:
+                if np.sum(binary_matrix[j:j+1,i:j])<(j-i)*0.5:
+                    #if (j-i)>cluster_min_size:
+                    borders.append([i,j])
+                    i = j     
+                    plt.axvline(x=j-0.5,color='k')
+                    plt.axhline(y=j-0.5,color='k')
+            borders.append([borders[-1][1],len(binary_matrix)-1])
+            cluster_loc = np.unique(np.hstack(borders))
+        else:
+            binary_matrix = abs(coeff.matrix_corr)>r_min
+            cluster_loc = []
+            for j in range(1,len(binary_matrix)):
+                if not np.sum(binary_matrix[j,0:j]):
+                    cluster_loc.append(j)
+                    plt.axvline(x=j-0.5,color='k')
+                    plt.axhline(y=j-0.5,color='k')
+            cluster_loc = [0]+cluster_loc+[len(binary_matrix)]
 
         plt.savefig(root+'/Yarara/database/%s/%s_%s_slices_ordering_cluster.png'%(self.instrument,self.instrument,sub_dico))
+        
+        self.debug = (coeff,all_slices)
         
         cluster_min_size = np.round(nb_stars*frac_affected,0)
         self.slice_map_auto_produced = []
@@ -9469,7 +9597,8 @@ class spec_time_series(object):
         for n,m in zip(cluster_loc[0:-1],cluster_loc[1:]):
             if (m-n)>cluster_min_size:
                 counter+=1
-                loc = np.where(np.in1d(all_vec_name,var_kept[block_order][mask_kept][n:m]))[0]
+                                
+                loc = np.array([np.where(np.in1d(all_vec_name,name_comp))[0][0] for name_comp in var_kept[block_order][mask_kept][n:m]])
                 
                 fig = plt.figure(figsize=(18,14))
                 plt.subplots_adjust(left=0.04,right=0.97,top=0.95,bottom=0.05,hspace=0.35,wspace=0.20)
@@ -9479,17 +9608,18 @@ class spec_time_series(object):
                 complete_map = []
                 for l,k in enumerate(loc): 
                     j,i = save[k]
-                    complete_map.append(np.vstack([all_slices[j][i,0,:],all_slices[j][i,1,:],np.sign(coeff.matrix_corr[n,n+l])*all_slices[j][i,2,:],np.sign(coeff.matrix_corr[n,n+l])*all_slices[j][i,3,:]]))
+                    sign_component = np.sign(coeff.matrix_corr[n,n+l])
+                    complete_map.append(np.vstack([all_slices[j][i,0,:],all_slices[j][i,1,:],sign_component*all_slices[j][i,2,:],sign_component*all_slices[j][i,3,:]]))
                     t+=1
                     time_jdb = database[list(all_stars)[j]]['jdb']
                     plt.subplot(s1,s2*2,2*t-1)
-                    plt.scatter(all_slices[j][i,0,:],all_slices[j][i,1,:],c=all_slices[j][i,2,:],cmap='seismic',vmin=-2,vmax=2,alpha=0.5,s=6)                
+                    plt.scatter(all_slices[j][i,0,:],all_slices[j][i,1,:],c=sign_component*all_slices[j][i,2,:],cmap='seismic',vmin=-2,vmax=2,alpha=0.5,s=6)                
                     plt.xlim(np.min(p),np.max(p))
                     plt.ylim(np.min(w),np.max(w))
                     plt.tick_params(labelleft=False,labelbottom=False,left=False,bottom=False)
                     ax = plt.subplot(s1,s2*2,2*t)
                     plt.title(list(all_stars)[j]+'(%.0f)'%(i+1),fontsize=8)
-                    plt.scatter([(time_jdb-myf.get_phase(time_jdb,modulo))%modulo,time_jdb][int(modulo==0)],database[list(all_stars)[j]]['base_vec'][i+1],s=5,c='k')
+                    plt.scatter([(time_jdb-myf.get_phase(time_jdb,modulo))%modulo,time_jdb][int(modulo==0)],sign_component*database[list(all_stars)[j]]['base_vec'][i+1],s=5,c='k')
                     plt.tick_params(labelleft=False,labelbottom=False,left=False,bottom=False)
                 plt.savefig(root+'/Yarara/database/%s/%s_selection_autoslice_%.0f_%s.png'%(self.instrument,self.instrument,counter,sub_dico))
                 
@@ -9536,7 +9666,7 @@ class spec_time_series(object):
                 
                 plt.savefig(root+'/Yarara/database/%s/%s_autoslice%.0f.png'%(self.instrument,self.instrument,counter))
                 
-                kernels_file = root+'/Yarara/database/%s/%s_autokernels.p'%(self.instrument,self.instrument)
+                kernels_file = root+'/Yarara/database/%s/%s_auto_kernels.p'%(self.instrument,self.instrument)
                 if os.path.exists(kernels_file):
                     slices = pd.read_pickle(kernels_file)
                 else:
@@ -9550,7 +9680,7 @@ class spec_time_series(object):
                              continuum='linear', offset=False, substract_map=[], add_map=[], continuum_absorption=True, mask_rejection=True, fap=0.1,
                              wave_min=None, wave_max=None, m=2, m_shell=3, kind='inter', nb_comp=10, nb_comp_kept=5, power_max=None, min_element_nb=30, snr_min=1, 
                              ordering='lbl_var', force_reduction=False, blended_lines=True, photon_noise=0.7, distortion_amplitude=0.05, proxies_to_corr=None, paper_plot=False,
-                             cross_validation=False, cv_sim=100, cv_percent_rm=10, cv_frac_affected=0.01, treshold_percent=95, p_noise=1/np.inf):
+                             cross_validation=False, cv_sim=100, cv_percent_rm=10, cv_frac_affected=0.01, treshold_percent=95, p_noise=1/np.inf, rv_ref=None):
         
         """lbl_var,rvm_rms,laplacien or divergence for ordering pca vectors"""
         myf.print_box('\n---- RECIPE : CORRECTION LINE PROFILE ACTIVITY ----\n')
@@ -9833,7 +9963,7 @@ class spec_time_series(object):
             plt.figure()
             plt.title(text_info,fontsize=15)
             plt.scatter(ds1,s1,alpha=0.02,color='k')
-            plt.xlabel(r'Flux gradient $df_0/d\lambda$ [u.a]',fontsize=15)
+            plt.xlabel(r'Flux gradient $df_0/d\lambda$ [$1/\AA$]',fontsize=15)
             plt.ylabel(r'Flux normalised $f_0$',fontsize=15)
             for j in x_grid:
                 plt.axvline(x=j,color='r',alpha=0.5)
@@ -9844,8 +9974,9 @@ class spec_time_series(object):
                 plt.annotate('%.1f'%(k),(i,j),ha='center',va='center',color=scalarMap.to_rgba(l),weight='bold',bbox=dict(facecolor='gray', edgecolor='none', pad=1, alpha=0))
             
             plt.scatter([0],[1.05],c=[zcolor[0]],cmap='jet',vmin=4100,vmax=5300) ; plt.ylim(0,1) ; ax_color = plt.colorbar(pad=0) ;  ax_color.ax.set_ylabel(r'Mean wavelength [$\AA$]',fontsize=15)
-            plt.subplots_adjust(right=0.95,top=0.93)
+            plt.subplots_adjust(right=0.95,top=0.93,bottom=0.15)
             plt.savefig(self.dir_root+'PCA/SHELL_statistic.pdf')
+            plt.savefig(self.dir_root+'PCA/SHELL_statistic.png')
 
             self.shell = {sub_dico:{'f':new_matrix,'f_std':new_matrix_std,'x':x,'y':y,'x2':x2,'y2':y2,'x_inter':grid[0],'y_inter':grid[1],'spec':save[0],'grad_spec':save[1],'match':closest_point,'match_dist':closest_point_distance,'index_wave':index_wave,'nb':nb,'nb_norm':nb_norm}} 
         
@@ -9952,14 +10083,21 @@ class spec_time_series(object):
         percentages_values = np.round(percentages,0).astype('int')
         self.shell_cv_percent = percentages_values.copy()
         
-        
+        comp_kept = list(np.arange(len(base_fixed)))
         if bool(treshold_percent)&cross_validation:
             nb_shell_significant =  myf.first_transgression(percentages_values,treshold_percent,relation=1)
+            comps_kept = np.arange(len(base_fixed),len(base_fixed)+len(percentages_values))[percentages_values>=treshold_percent]
             if nb_shell_significant<1:
                 nb_shell_significant=1
+            if len(comps_kept)<1:
+                comps_kept=[1]
             nb_comp_kept = nb_shell_significant
         else:
             nb_shell_significant = nb_comp_kept
+            comps_kept = np.arange(len(base_fixed),len(base_fixed)+nb_comp_kept)
+        
+        comp_kept = np.array(comp_kept+list(comps_kept))
+        print(comp_kept)
         
         self.shell_cv_rmed = rmed.copy()
         self.shell_all_pca_base = base_vec
@@ -10137,11 +10275,17 @@ class spec_time_series(object):
         plt.subplots_adjust(top=0.94,hspace=0.35,left=0.07,right=0.96)
         plt.savefig(self.dir_root+'PCA/SHELL_periodogram_nb_comp.pdf')        
         
-        base = base[:nb_comp_kept+nb_fixed]
-        coeff_base = coeff_base[:,:nb_comp_kept+nb_fixed]
-        coeff_base_std = coeff_base_std[:,:nb_comp_kept+nb_fixed]
-        name = name[:nb_comp_kept+nb_fixed]
+        #TBD HERE
         
+        #base = base[:nb_comp_kept+nb_fixed]
+        #coeff_base = coeff_base[:,:nb_comp_kept+nb_fixed]
+        #coeff_base_std = coeff_base_std[:,:nb_comp_kept+nb_fixed]
+        #name = name[:nb_comp_kept+nb_fixed]
+        
+        base = base[comp_kept]
+        coeff_base = coeff_base[:,comp_kept]
+        coeff_base_std = coeff_base_std[:,comp_kept]
+        name = np.array(name)[comp_kept]
         
         plt.figure(figsize=(12,12))
         plt.subplots_adjust(hspace=0,wspace=0,left=0.05,right=0.95,top=0.95,bottom=0.05)
@@ -10284,6 +10428,8 @@ class spec_time_series(object):
         counter2=-1
         plt.figure(figsize=(16,13))
         colors= 'k' ; central_wave = liste_wave[1]
+        print(np.shape(all_profiles))
+        print(np.shape(all_distortions))
         for depth in liste_depth:
             counter2+=1
             for comp in np.arange(1,nb_shell_significant+1):
@@ -10373,8 +10519,12 @@ class spec_time_series(object):
         self.shell_base_interpolated = shell_interpolated
         self.shell_coeff = coeff_base.copy()
         self.shell_coeff_std = coeff_base_std.copy()
-                
-        rv = myc.tableXY(self.table.jdb, coeff_base[:,0], coeff_base_std[:,0])
+        
+        if rv_ref is None:
+            rv = myc.tableXY(self.table.jdb, coeff_base[:,0], coeff_base_std[:,0])
+            rv.yerr = np.sqrt(rv_dace.yerr**2+photon_noise**2)
+        else:
+            rv = rv_ref
         
         rv.fit_base(coeff_base[:,1:].T)
         
@@ -10388,7 +10538,6 @@ class spec_time_series(object):
         rv_stat.fit_line()
         rv_stat.fit_spearman()
         
-        rv.yerr = np.sqrt(rv_dace.yerr**2+photon_noise**2)
         rv.vec_residues.yerr = rv_dace.yerr
         
         rv.vec_residues.rms_w()
@@ -10396,7 +10545,8 @@ class spec_time_series(object):
         
         print('\n [INFO] Total R pearson between shell model and RV doppler : %.2f (%.2f)'%(rv_stat.r_pearson_w,rv_stat.r_pearson))
         print('\n [INFO] Total Rho spearman between shell model and RV doppler : %.2f'%(rv_stat.rho_spearman))
-        print('\n [INFO] RV residuals : %.2f [m/s]'%(rv.vec_residues.rms))
+        print('\n [INFO] RV rms : %.2f [m/s]'%(rv.rms))
+        print('\n [INFO] RV residuals rms : %.2f [m/s]'%(rv.vec_residues.rms))
 
 
         plt.subplot(len(base)+1,2,2,sharex=ax1)
@@ -10441,7 +10591,7 @@ class spec_time_series(object):
             if kw!='':
                 self.yarara_indicate_planet(color='r',ls='-',alpha=0.3)
             plt.ylim(1e-4,None)
-
+            
             plt.tick_params(labelbottom=False)
             plt.xlabel('')
             plt.ylabel('')
@@ -10450,7 +10600,7 @@ class spec_time_series(object):
                         
             if i==0:
                 plt.axes([0.05,0.97-dy*(len(base))-0.05,0.13,dy])
-                plt.xlabel('Flux gradient [u.a]',fontsize=16)
+                plt.xlabel('Flux gradient',fontsize=16)
                 plt.ylabel('Flux normalised',fontsize=16)
             else:
                 plt.axes([0.05,0.97-dy*(i),0.13,dy])
@@ -10465,7 +10615,7 @@ class spec_time_series(object):
             ax = plt.colorbar(pad=0)
             xlim_shell()
             if i==0:
-                ax.ax.set_ylabel(r'$\delta f$ [u.a]',fontsize=16)
+                ax.ax.set_ylabel(r'$\delta f$',fontsize=16)
         
         plt.axes([0.25,0.97-dy*(2+i)-0.05,0.50,dy])
         rv.vec_residues.periodogram(Norm=True,level=level)
@@ -10551,7 +10701,7 @@ class spec_time_series(object):
         for element in proxies_to_corr:
             matrix = np.hstack([matrix,self.table[element][:,np.newaxis]])
         
-        all_names_table = list(name)+['pca_model']+proxies_to_corr
+        all_names_table = list(name)+[r'$\alpha$_model']+proxies_to_corr
         
         if paper_plot:
             for n,val in enumerate(all_names_table):
@@ -10563,7 +10713,7 @@ class spec_time_series(object):
         
         m = myc.table(matrix.astype('float'))
         plt.figure(figsize=(11,10))
-        
+                
         m.r_matrix(name=all_names_table, paper_plot=paper_plot, unit=[1,100][int(paper_plot)])
         if not paper_plot:
             plt.title('sub_dico : %s'%(sub_dico))
@@ -13626,20 +13776,22 @@ class spec_time_series(object):
         
         tab = self.table
         tab_ccf = self.table_ccf 
-       
+        
+        jdb = tab_ccf[list(tab_ccf.keys())[-1]][sub_dico]['table']['jdb']
+        
         directory = self.directory
         files = glob.glob(directory+'RASSI*.p')
         files = np.sort(files)                
         
         masks = list(tab_ccf.keys())[1:]
         
-        jdb_m = np.array(tab['jdb']-np.mean(tab['jdb']))
+        jdb_m = np.array(jdb-np.mean(jdb))
         jdb_m = jdb_m / np.std(jdb_m)
         
         base_vec = np.array([jdb_m**p for p in np.arange(time_detrending+1)])
         
         if substract_rv is None:
-            substract_rv = np.zeros(len(tab['jdb']))
+            substract_rv = np.zeros(len(jdb))
         
         for p in proxies:
             if type(p)==str:
@@ -13658,7 +13810,7 @@ class spec_time_series(object):
             canevas = np.array(tab_ccf['CCF_'+mask][sub_dico]['table']).copy()
             new_canevas = pd.DataFrame(canevas,columns=tab_ccf['CCF_'+mask][sub_dico]['table'].keys())
             
-            rv = myc.tableXY(tab['jdb'],tab_ccf['CCF_'+mask][sub_dico]['table']['rv']*1000,tab['rv_dace_std'])
+            rv = myc.tableXY(jdb,tab_ccf['CCF_'+mask][sub_dico]['table']['rv']*1000,tab['rv_dace_std'])
             rv.y -= substract_rv
             rv.fit_base(base_vec)
             rv.y += substract_rv
@@ -13668,7 +13820,7 @@ class spec_time_series(object):
             print('\n---- Mask %s (gaussian) ----'%('CCF_'+mask))
             print('old rms : %.2f\nnew rms : %.2f'%(rv.rms,rv.vec_residues.rms))
     
-            rv = myc.tableXY(tab['jdb'],tab_ccf['CCF_'+mask][sub_dico]['table']['center']*1000,tab['rv_dace_std'])
+            rv = myc.tableXY(jdb,tab_ccf['CCF_'+mask][sub_dico]['table']['center']*1000,tab['rv_dace_std'])
             rv.y -= substract_rv
             rv.fit_base(base_vec)
             rv.y += substract_rv
@@ -14143,9 +14295,10 @@ class spec_time_series(object):
                 for j in np.array(dico_tree['dico']):
                     new = myc.tableXY(dace.x, table_ccf[j]['table'][column]*1000, dace.yerr)
                     self.debug = new,j,mask
-                    new.substract_polyfit(poly_deg,replace=True)                
-                    new.rms_w()   
-                    dico_tree.loc[dico_tree['dico']==j,'rms'] = new.rms
+                    if len(new.x)==len(new.y):
+                        new.substract_polyfit(poly_deg,replace=True)                
+                        new.rms_w()   
+                        dico_tree.loc[dico_tree['dico']==j,'rms'] = new.rms
                 
                 plt.plot(np.array(dico_tree['step']), np.array(dico_tree['rms']), marker=['x','o'][mask[0]=='C'],label='%s (rms : %.2f m/s)'%(mask,np.min(dico_tree['rms'])))
                 
@@ -14576,9 +14729,12 @@ class spec_time_series(object):
         
         time.sleep(1)
         rows = (len(matrix)+2)//3
-        
+
+        plt.figure('all-rv',figsize=(20,3.2*rows))
+        plt.figure('all-perio',figsize=(20,3.2*rows))
+
         for j in tqdm(range(len(matrix)-1)):
-            plt.figure(2,figsize=(20,3.2*rows))
+            plt.figure('all-rv')
             new = myc.tableXY(dace.x,matrix[j+1][column_rv]*1000,dace.yerr)
             old = myc.tableXY(dace.x,matrix[j][column_rv]*1000,dace.yerr)
             
@@ -14602,7 +14758,7 @@ class spec_time_series(object):
             plt.ylabel('RV [m/s]',fontsize=13)
             plt.legend(prop={'size': 14})
             
-            plt.figure(3,figsize=(20,12))
+            plt.figure('all-perio')
             # if not j:
             #     plt.subplot((len(matrix)+1)//3,3,1)
             #     ax1=plt.gca()
@@ -14612,10 +14768,10 @@ class spec_time_series(object):
             diff.periodogram(Norm=True, nb_perm=nb_perm, p_min=p_min,color='k')
             for k in harm:
                 plt.axvline(x=365.25*k,color='k',ls=':')
-        plt.figure(2,figsize=(20,3.2*rows))
+        plt.figure('all-rv')
         plt.subplots_adjust(top=0.95,left=0.07,right=0.93,bottom=0.06,hspace=[0.45,0.6][rows>4],wspace=0.4)
         plt.savefig(self.dir_root+'IMAGES/Each_correction_%s_rv.pdf'%(mask))
-        plt.figure(3,figsize=(20,3.2*rows))
+        plt.figure('all-perio')
         plt.subplots_adjust(top=0.95,left=0.07,right=0.93,bottom=0.06,hspace=[0.45,0.6][rows>4],wspace=0.4)
         plt.savefig(self.dir_root+'IMAGES/Each_correction_%s_periodogram.pdf'%(mask))
         
@@ -16929,7 +17085,7 @@ class spec_time_series(object):
         
         load['kitcat_vec'] = vec
         
-        load.to_pickle(self.directory+'Analyse_material.p')        
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
         
         # pixels_line = []
         # orders_line =[]
@@ -18006,9 +18162,10 @@ class spec_time_series(object):
 
         rv_max = np.max(abs(np.array(self.table_ccf['LBL_'+kitcat_name]['matching_diff']['table']['rv']*1000)))
         if rv_max>rv_range:
-            print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.WHITE)
-            myf.make_sound('Warning')
-            rv_range = rv_max + 5
+            if False:
+                print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.WHITE)
+                myf.make_sound('Warning')
+                rv_range = rv_max + 5
 
         grid = kitcat_file['spectre']['wave']
         
@@ -18208,11 +18365,13 @@ class spec_time_series(object):
         kitcat_file = pd.read_pickle(kitcat)
         kitcat_dico = kitcat_file['catalogue']
 
-        rv_max = np.max(abs(np.array(self.table_ccf['LBL_'+kitcat_name]['matching_diff']['table']['rv']*1000)))
+        rv_max = np.max(abs(np.array(self.table_ccf['LBL_ITER_'+kitcat_name]['matching_diff']['table']['rv']*1000)))
+        
         if rv_max>rv_range:
-            print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.WHITE)
-            myf.make_sound('Warning')
-            rv_range = rv_max + 5
+            if False:
+                print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.WHITE)
+                myf.make_sound('Warning')
+                rv_range = rv_max + 5
 
         grid = kitcat_file['spectre']['wave']
         
@@ -20292,15 +20451,16 @@ class spec_time_series(object):
         
     def planet_simu_absorption(self,planet=None,oversampling=1):
         output_file = {}
-                
-        try:
-            simu = self.simu
-            for i in simu.keys():
-                output_file[i] = {'period':simu[i].x,'absorption':simu[i].y,'sup':simu[i].yerr,'inf':simu[i].xerr}
-            myf.pickle_dump(output_file,open(self.dir_root+'KEPLERIAN/Simulation_absorption.p','wb'))
-        except:
-            simus = pd.read_pickle(self.dir_root+'KEPLERIAN/Simulation_absorption.p')
-            simu = {l:myc.tableXY(simus[l]['period'],simus[l]['absorption'],simus[l]['sup'],simus[l]['inf']) for l in list(simus.keys())}
+        
+        simus = myf.touch_pickle(self.dir_root+'KEPLERIAN/Simulation_absorption.p')
+        
+        simu_saved = self.simu
+        for i in simu_saved.keys():
+            simus[i] = {'period':simu_saved[i].x,'absorption':simu_saved[i].y,'sup':simu_saved[i].yerr,'inf':simu_saved[i].xerr}
+        myf.pickle_dump(simus,open(self.dir_root+'KEPLERIAN/Simulation_absorption.p','wb'))
+        
+        simu = {l:myc.tableXY(simus[l]['period'],simus[l]['absorption'],simus[l]['sup'],simus[l]['inf']) for l in list(simus.keys())}
+
         
         plt.figure(figsize=(18,4.5))
 
@@ -20529,18 +20689,11 @@ class spec_time_series(object):
 
     def lbl_pca(self, reduction='pca_scikit', sub_dico='matching_diff', kw_dico='lbl', col=0, m=2, kind='inter', ordering='lbl_var',
                 nb_comp=10, weighted=True, nb_comp_kept='auto', ext='',color_residues='k', recenter=True, standardize=False, 
-                contam_training=True, wave_bins=0, depth_bins=0, kernel=0, snr_min=0.5,
+                contam_training=True, wave_bins=0, depth_bins=0, kernel_num=0, kernel_file='auto', nb_kernel_split=50, kernel=None, snr_min=0.5,
                 cross_validation=False, cv_sim=100, cv_percent_rm=10, cv_frac_affected=0.01):
         """ordering : lbl_var or rvm_rms"""
         self.import_table()
-        
-        jdb = np.array(self.table['jdb'])
-        
-        if len(jdb)<nb_comp:
-            nb_comp = len(jdb)-1
-
-        phase_mod = np.arange(365)[np.argmin(np.array([np.max((jdb-k)%365.25)-np.min((jdb-k)%365.25) for k in range(365)]))]
-        
+                        
         if kw_dico=='lbl':
             self.import_lbl()        
             imported_table = self.lbl
@@ -20566,6 +20719,12 @@ class spec_time_series(object):
         
         matrix_rv = imported_table[sub_dico][kw_dico][col]
         matrix_rv_std = imported_table[sub_dico][kw_dico+'_std'][col]
+        jdb =  imported_table[sub_dico]['jdb']
+        phase_mod = np.arange(365)[np.argmin(np.array([np.max((jdb-k)%365.25)-np.min((jdb-k)%365.25) for k in range(365)]))]
+
+        if len(jdb)<nb_comp:
+            nb_comp = len(jdb)-1
+        
         valid = imported_table[sub_dico]['catalog']['valid'].astype('bool')
         valid = np.array(valid)
         
@@ -20594,7 +20753,8 @@ class spec_time_series(object):
 
         mean_rv = np.sum(matrix_rv/matrix_rv_std**2,axis=0)/np.sum(1/matrix_rv_std**2,axis=0)
         rv_std =1/np.sqrt(np.sum(1/matrix_rv_std**2,axis=0))
-        line = myc.tableXY(self.table['jdb'], mean_rv, rv_std)
+        
+        line = myc.tableXY(jdb, mean_rv, rv_std)
         if recenter:
             matrix_rv = matrix_rv - line.y         
             matrix_rv_std = np.sqrt(matrix_rv_std**2 + line.yerr**2)         
@@ -20651,12 +20811,14 @@ class spec_time_series(object):
             matrix_rv = new_matrix_rv
             matrix_rv_std = new_matrix_rv_std
             
-        if kernel!=0:
+        if (kernel_num!=0)|(kernel is not None):
             new_matrix_rv = []
             new_matrix_rv_std = []
             nb_lines_per_chuck = []
-            kernels_file = root+'/Yarara/database/%s/%s_autokernels.p'%(self.instrument,self.instrument)
-            kernel = pd.read_pickle(kernels_file)['kernel_%.0f'%(kernel)]
+            if kernel is None:
+                kernels_file = pd.read_pickle(root+'/Python/database/%s/%s_%s_kernels.p'%(self.instrument,self.instrument,kernel_file))
+                kernel_name = list(kernels_file.keys())[kernel_num-1]
+                kernel = kernels_file[kernel_name]
             variable = list(kernel['var'].keys())
             catalog = imported_table[sub_dico]['catalog'][valid]
             catalog = catalog.reset_index()
@@ -20664,8 +20826,11 @@ class spec_time_series(object):
                 model = myc.tableXY(np.array(kernel['var'][variable[0]]),kernel['strength'])
                 model.interpolate(new_grid=np.array(catalog['wave']),replace=False)
                 strength = model.y_interp
+                plt.figure()
+                plt.scatter(np.array(catalog['wave']),strength)
+                #pouet
             
-            nb_groups=50
+            nb_groups=nb_kernel_split
             cuts = np.linspace(0,100,nb_groups)
             for i,j in zip(cuts[0:-1],cuts[1:]):
                 mask = (strength>np.nanpercentile(strength,i))&(strength<=np.nanpercentile(strength,j))
@@ -20704,7 +20869,7 @@ class spec_time_series(object):
         print('\n [INFO] %.1f%% of the observations removed with criterion SNR %.1f'%(100-100*sum(obs_kept)/len(obs_kept),snr_min))
         print('\n [INFO] %.1f%% of the wavelength bins %.0f AA removed with criterion SNR %.1f'%(100-100*sum(wave_kept)/len(wave_kept),wave_bins,snr_min))
         
-            
+        
         matrix = myc.table(matrix_rv[wave_kept][:,obs_kept])
         
         matrix_weight = 1/matrix_rv_std[wave_kept][:,obs_kept]**2
@@ -20938,6 +21103,197 @@ class spec_time_series(object):
             self.pca_residues = line.vec_residues
 
             #line.fit_base(base_vec[:,0:pca_comp_kept].T)
+
+    def lbl_slice(self, reduction='pca', sub_dico='matching_shell', kw_dico='lbl_iter', col=0, nb_comp_kept=5, nb_comp=5, ext='_slice', contam_training=True, kernel_file='manual', nb_slice_split=10, nb_slice=2):
+        
+        
+        kernels_file = pd.read_pickle(root+'/Python/database/%s/%s_%s_kernels.p'%(self.instrument,self.instrument,kernel_file))
+        if nb_slice is None:
+            nb_slice = len(list(kernels_file.keys()))
+        
+        base_kernel = []
+        for k in np.arange(1,1+nb_slice):
+            self.lbl_pca(reduction=reduction, sub_dico=sub_dico, kw_dico=kw_dico, col=col, nb_comp_kept=nb_comp_kept, nb_comp=nb_comp, ordering='var_lbl',
+                        ext=ext, color_residues='k', contam_training=contam_training, recenter=True, standardize=True, wave_bins=0, depth_bins=0, 
+                        kernel_num=k, kernel_file = kernel_file, nb_kernel_split=nb_slice_split)
+            
+            base_kernel.append(self.base_vec_pca[:,0])
+        plt.close('all')
+        
+        base_kernel = np.array(base_kernel)
+        return base_kernel
+        
+
+    def lbl_slice_gaveup(self, sub_dico='matching_shell', col=0, m=2, kind='inter', nb_comp=3, weighted=True, dico_name='', color_residues='k', kernel_file='manual', planet=1):
+                    
+        """ordering : lbl_var or rvm_rms"""
+        self.import_table()
+        instrument = self.instrument                
+        
+        if kw_dico=='lbl':
+            self.import_lbl()        
+            imported_table = self.lbl
+        elif kw_dico == 'lbl_iter':
+            kw_dico='lbl'
+            self.import_lbl_iter()
+            imported_table = self.lbl_iter
+        elif kw_dico=='dbd':
+            self.import_dbd()        
+            imported_table = self.dbd
+        elif kw_dico=='aba':
+            self.import_aba()        
+            imported_table = self.aba
+        elif kw_dico=='wbw':
+            self.import_wbw()        
+            imported_table = self.wbw     
+        elif kw_dico=='bt':
+            self.import_bt()        
+            imported_table = self.bt           
+                
+        imported_lbl = imported_table[sub_dico][kw_dico]
+        imported_lbl_std = imported_table[sub_dico][kw_dico+'_std']
+        jdb =  imported_table[sub_dico]['jdb']
+        
+        valid = imported_table[sub_dico]['catalog']['valid'].astype('bool')
+        valid = np.array(valid)
+                
+        matrix_rv = imported_lbl[col][valid]
+        matrix_rv_std = imported_lbl_std[col][valid]
+
+        matrix_rv+=planet*np.sin(2*np.pi*jdb/80)
+
+        mask = np.std(matrix_rv,axis=1)!=0
+        matrix_rv = matrix_rv[mask]
+        matrix_rv_std = matrix_rv_std[mask]
+        
+        mean_rvi = np.sum(matrix_rv/matrix_rv_std**2,axis=1)/np.sum(1/matrix_rv_std**2,axis=1)
+        matrix_rv = matrix_rv - mean_rvi[:,np.newaxis] #because svd sensitive to global offset of each vectors
+
+        mean_rv = np.sum(matrix_rv/matrix_rv_std**2,axis=0)/np.sum(1/matrix_rv_std**2,axis=0)
+        rv_std =1/np.sqrt(np.sum(1/matrix_rv_std**2,axis=0))
+        
+        line = myc.tableXY(jdb, mean_rv, rv_std)        
+
+        matrix = myc.table(matrix_rv)
+            
+        kernels_file = root+'/Python/database/%s/%s_%s_kernels.p'%(instrument,instrument,kernel_file)
+        kernels = pd.read_pickle(kernels_file)
+
+        plt.figure(figsize=(18,6))        
+        kernel_base = []
+        kernel_name = list(kernels.keys())
+        for kernel in np.arange(nb_comp):
+            kw = kernel_name[kernel]
+            variable = list(kernels[kw]['var'].keys())
+            catalog = imported_table[sub_dico]['catalog'][valid]
+            catalog = catalog.reset_index()
+            if len(variable)==1:
+                model = myc.tableXY(np.array(kernels[kw]['var'][variable[0]]),kernels[kw]['strength'])
+                model.interpolate(new_grid=np.array(catalog['wave']),replace=False)
+                strength = model.y_interp
+                kernel_base.append(strength)
+                
+                plt.subplot(nb_comp,1,kernel+1)
+                plt.plot(np.array(catalog['wave']),strength,color='k',marker='')
+                plt.xlim(np.min(model.x_interp),np.max(model.x_interp))
+                plt.tick_params(top=True,direction='in')
+                plt.axhline(y=0,color='r',alpha=0.4)
+                plt.ylim(-2.99,2.99)
+                plt.ylabel('Z score (S%.0f)'%(kernel+1),fontsize=14)
+                #pouet
+        plt.xlabel(r'Wavelength [$\AA$]',fontsize=14)
+        plt.subplots_adjust(hspace=0,left=0.08,right=0.96,top=0.96)
+        kernel_base2 = np.array(kernel_base)
+        #kernel_base2 -= np.median(kernel_base2,axis=1)[:,np.newaxis] #recenter to kill Doppler shift signatures
+        kernel_base = kernel_base2
+        #kernel_base = np.vstack([np.ones(len(matrix_rv)),kernel_base2])
+        
+        m1 = np.median(myf.mad(matrix_rv,axis=1)[:,np.newaxis]/matrix_rv_std,axis=0)
+        m2 = np.median(myf.mad(matrix_rv,axis=0)/matrix_rv_std,axis=1)
+                
+        #obs_kept = m1>snr_min
+        obs_kept = np.ones(len(m1)).astype('bool') #cannot apply obs cutoff since otherwise basis not of the good size
+        wave_kept = m2>-1
+            
+        matrix = myc.table(matrix_rv[wave_kept][:,obs_kept])
+        matrix_weight = (1/matrix_rv_std[wave_kept][:,obs_kept]**2).T
+                
+        if weighted:
+            w = matrix_weight
+        else:                    
+            w = None
+            
+        matrix.replace_outliers(m=m, kind=kind)
+        matrix.table = matrix.table.T
+        matrix.fit_base(kernel_base,weight=w)
+        
+        plt.figure()
+        plt.plot(np.mean(matrix.vec_fitted,axis=0))
+        
+        plt.figure()
+        line2 = line.copy()
+        line2.y = np.mean(matrix.table,axis=1)
+        line3 = line.copy()
+        line3.y = np.mean(matrix.vec_residues,axis=1)
+        
+        
+        plt.subplot(2,2,1) ; line.plot(label='rms %.2f m/s'%(np.std(line.y))) ; plt.legend() ; ax=plt.gca() ; 
+        plt.subplot(2,2,2) ; line.periodogram(Norm=True)
+        plt.subplot(2,2,3,sharex=ax,sharey=ax)  ; 
+        line2.plot(label='rms %.2f m/s'%(np.std(line2.y)),color='r')
+        line3.plot(label='rms %.2f m/s'%(np.std(line3.y)),color='b')
+        plt.legend()
+        plt.subplot(2,2,4)
+        line2.periodogram(color='r',Norm=True)
+        line3.periodogram(color='b',Norm=True)
+        
+        
+        # new_lbl = imported_lbl[0].copy()
+        # new_lbl[valid] = matrix.vec_residues.T
+        
+        # ccf_rv = myc.table(new_lbl)
+        # ccf = ccf_rv.rv_subselection(rv_std = np.array(imported_lbl_std)[0], selection=np.arange(len(valid))[valid])
+        # ccf.x = jdb
+        # ccf_rv = ccf.y
+        
+        # save = {'jdb':jdb, 
+        # kw2:np.array([new_lbl, new_lbl - ccf_rv, imported_lbl[2]]),
+        # kw2+'_std':imported_lbl_std,
+        # 'catalog':kitcat,
+        # 'mask':kitcat_name,
+        # 'snr_med':np.nanmedian(table['snr']),
+        # 'base_vec':base_vec,
+        # 'sub_dico_used':sub_dico,
+        # 'date':datetime.datetime.now().strftime("%Y-%m-%d:%H:%M:%S")}
+        
+        # if kw_dico=='lbl':
+        #     self.lbl[dico_name] = save
+        #     myf.pickle_dump(self.lbl,open(self.directory+'Analyse_line_by_line.p','wb'))
+
+        # elif kw_dico=='lbl_iter':
+        #     self.lbl_iter[dico_name] = save
+        #     myf.pickle_dump(self.lbl_iter,open(self.directory+'Analyse_line_by_line_iter.p','wb'))
+
+        # elif kw_dico=='dbd':
+        #     self.dbd[dico_name] = save
+        #     myf.pickle_dump(self.dbd,open(self.directory+'Analyse_depth_by_depth.p','wb'))
+
+        # elif kw_dico=='wbw':
+        #     self.wbw[dico_name] = save
+        #     myf.pickle_dump(self.wbw,open(self.directory+'Analyse_width_by_width.p','wb'))            
+            
+        # for i,j in enumerate(files):
+        #     file = pd.read_pickle(j)
+        #     file[dico_name] = {'parameters':{'sub_dico_used':sub_dico,'step':step+1+add_step}}
+        #     myf.pickle_dump(file,open(j,'wb'))  
+
+        
+        # if (kw_dico=='lbl')|(kw_dico=='lbl_iter'):
+        #     self.lbl_to_ccf(all_dico=[dico_name],kw_dico=kw_dico)
+
+        # plt.show(block=False)    
+        
+        
 
     def lbl_color_investigation(self, sub_dico='matching_diff', kw_dico='lbl', col=0, m=2, contam_training=True, wave_bins=5,ext=''):
         """ordering : lbl_var or rvm_rms"""
@@ -21528,6 +21884,8 @@ class spec_time_series(object):
                 
         proxies = myc.table(main_points.astype('float'))
         proxies.fit_base(base_vec, weight=1/main_points_std**2)
+        
+        print(np.shape(proxies.table),np.shape(base_vec))
                         
         #proxies
         
@@ -21793,6 +22151,9 @@ class spec_time_series(object):
                 button='off'
             k=0
             if plot_proxies:
+                proxies_to_display = [p.replace('shell',r'$\alpha$') for p in proxies_to_display]
+                proxies_to_display = [p.replace('fitted','model') for p in proxies_to_display]
+                    
                 for sym,name in zip(symbols,proxies_to_display):
                     plt.scatter(phi_star[k],r_corr_star[k],marker=sym,color='white',zorder=99,s=sizes2[k],lw=1.5)
                     plt.scatter(phi_star[k],r_corr_star[k],marker=sym, color=color_marker[k], edgecolor='k',zorder=100,s=sizes[k],label=name,lw=1)
@@ -28439,7 +28800,8 @@ class spec_time_series(object):
             vec.interpolate(new_grid=np.array(load['wave']),method='linear')
                  
             load['contam'] = vec.y.astype('int')
-            load.to_pickle(self.directory+'Analyse_material.p')
+            myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
+
 
     def yarara_produce_mask_telluric(self, telluric_tresh=0.001):
                 
@@ -28522,7 +28884,7 @@ class spec_time_series(object):
         load['telluric'] = mask_telluric.astype('int')
         load['telluric_delta'] = wavet_delta.astype('int')
 
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
 
     def yarara_produce_mask_stitching(self, frog_file=root+'/Python/Material/Ghost_HARPS03.p'):
                 
@@ -28586,7 +28948,8 @@ class spec_time_series(object):
         load['stitching'] = mask_stitching.astype('int')
         load['stitching_delta'] = wavet_delta.astype('int')
 
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
+
     
     def yarara_produce_mask_frog(self,frog_file=root+'/Python/Material/Ghost_HARPS03.p'):
         
@@ -28693,7 +29056,7 @@ class spec_time_series(object):
             else:
                 load[correction] =  np.zeros(len(grid))
                     
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
     
         
     def yarara_correct_frog(self, sub_dico = 'matching_diff', continuum='linear', correction = 'stitching', berv_shift = False,
@@ -29503,7 +29866,7 @@ class spec_time_series(object):
             flag_region[l:r+1] = 1
         
         load['borders_pxl'] = flag_region.astype('int')
-        load.to_pickle(self.directory+'Analyse_material.p')            
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))           
         
     
     # =============================================================================
@@ -29678,7 +30041,7 @@ class spec_time_series(object):
         mask_ghost = mask_ghost!=0
         
         load['ghost2'] = mask_ghost.astype('int')
-        load.to_pickle(self.directory+'Analyse_material.p')        
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
     
 
     # =============================================================================
@@ -29909,7 +30272,7 @@ class spec_time_series(object):
         self.mask_contam = (np.sum(correction,axis=0)!=0).astype('int')
         
         load['rejected'] = self.mask_contam
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
         
         ref2 = np.median(spectra_corrected,axis=0)
 
@@ -30138,13 +30501,13 @@ class spec_time_series(object):
         else:
             ghost_brute_mask = np.zeros(len(final_mask)).astype('bool')
         load['ghost2'] = ghost_brute_mask.astype('int')
-        load.to_pickle(self.directory+'Analyse_material.p')        
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
         
         final_mask = (final_mask|ghost_brute_mask|borders_pxl_mask)
         self.brute_mask = final_mask
         
         load['mask_brute'] = final_mask
-        load.to_pickle(self.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(self.directory+'Analyse_material.p','wb'))       
                 
         all_flux2 = all_flux.copy()
         all_flux2[:,final_mask] = 0

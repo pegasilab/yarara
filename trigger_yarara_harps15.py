@@ -56,13 +56,16 @@ from astropy import units as u
 # stage = 25 (compute bt)
 # stage = 26 (compute wbw)
 # stage = 27 (1 year line rejection)
-# stage = 28 (final graphic summary)
-# stage = 29 (YARARA RV corrections proxies Ca,SAS1Y,WB)
-# stage = 30 (YARARA RV corrections proxies PCA)
-# stage = 31 (l1 periodogram)
-# stage = 32 (hierarchical periodogram)
-# stage = 33 (yarara qc file creation)
-#
+# stage = 28 (final graphic summary) ---------------- BEGIN OF THE TIME DOMAIN
+# stage = 29 (SHELL correction)
+# stage = 30 (COLOR LBL PCA correction)
+# stage = 31 (LBL PCA correction)
+# stage = 32 (BIS correction)
+# stage = 33 (General Analysis)
+# stage = 34 (l1 periodogram)
+# stage = 35 (hierarchical periodogram)
+# stage = 36 (light the directory)
+# stage = 37 (yarara qc file creation)
 #
 # =============================================================================
 
@@ -170,22 +173,19 @@ def break_func(stage):
 
 if stage==-2:
     
+    # =============================================================================
+    # EXTRACT INFORMATION IF IMPORTED FROM DACE
+    # =============================================================================
+    
     myr.move_extract_dace(directory_to_dace, instrument=instrument)
-    
-    if not os.path.exists('/'.join(directory_to_dace.split('/')[0:-1])+'/'+instrument):
-        os.system('mkdir '+'/'.join(directory_to_dace.split('/')[0:-1])+'/'+instrument)
-    
+
     myr.extract_table_dace(star, instrument=[instrument], update_table=False, auto_trend=True, degree_max=None, m=m_clipping, prefit_planet=prefit_planet, drs_version=drs_version)
     if os.path.exists('/'.join(directory_to_dace.split('/')[0:-1])+'/'+instrument+'/DACE_TABLE/Dace_extracted_table.csv'):
         if not os.path.exists(pd.read_csv('/'.join(directory_to_dace.split('/')[0:-1])+'/'+instrument+'/DACE_TABLE/Dace_extracted_table.csv')['fileroot'][0]):
-            error = sys.exit()
+           error = sys.exit('[ERROR] No file found according to the dace table fileroot')
     else:
         error = sys.exit()
-    
-    myr.split_instrument('/'.join(directory_to_dace.split('/')[0:-1])+'/'+instrument+'/', instrument=instrument)
-    if not len(glob.glob('/'.join(directory_to_dace.split('/')[0:-1])+'/'+instrument+'/*.fits')):
-        os.system('rm -rf '+'/'.join(directory_to_dace.split('/')[0:-1])+'/'+instrument+'/'+' 2>/dev/null')
- 
+        
     plt.close('all')
     get_time_step('dace_extraction')
     stage = break_func(stage)
@@ -195,8 +195,8 @@ if stage==-2:
 # =============================================================================
 
 if stage==-1:
-    print(' python Rassine_trigger.py -s %s -i %s -a %s -b %s -d %s -l 0.01 -o %s'%(star, [instrument,'ESPRESSO'][drs_version!='old'], str(rassine_full_auto), str(bin_length), ins, directory_rassine+'/'))
-    os.system('python Rassine_trigger.py -s %s -i %s -a %s -b %s -d %s -l 0.01 -o %s'%(star, [instrument,'ESPRESSO'][drs_version!='old'], str(rassine_full_auto), str(bin_length), ins, directory_rassine+'/'))
+    print(' python Rassine_trigger.py -s %s -i %s -a %s -b %s -d %s -l 0.01 -o %s'%(star, [instrument[0:5],'ESPRESSO'][drs_version!='old'], str(rassine_full_auto), str(bin_length), ins, directory_rassine+'/'))
+    os.system('python Rassine_trigger.py -s %s -i %s -a %s -b %s -d %s -l 0.01 -o %s'%(star, [instrument[0.5],'ESPRESSO'][drs_version!='old'], str(rassine_full_auto), str(bin_length), ins, directory_rassine+'/'))
     get_time_step('rassine')
     
     reduced_files = glob.glob(directory_reduced_rassine+'RASSINE*.p')
@@ -775,7 +775,7 @@ if stage==14:
         sts.import_material()
         load = sts.material
         load['reference_spectrum_backup'] = load['reference_spectrum']
-        load.to_pickle(sts.directory+'Analyse_material.p')
+        myf.pickle_dump(load,open(sts.directory+'Analyse_material.p','wb'))
         
     sts.yarara_cut_spectrum(wave_min=None, wave_max=6834)
     
@@ -1067,6 +1067,9 @@ if stage==26:
 # =============================================================================       
 
 if stage==27:
+    
+    sts.copy_spectrum()
+    
     sts.yarara_curve_rv(poly_deg=0, metric='gaussian')
 
     if close_figure:
@@ -1137,20 +1140,26 @@ if stage==28:
     stage = break_func(stage)  
 
 
-if stage==29:
+# =============================================================================
+# TIME-DOMAIN    
+# =============================================================================
 
-    kw_dico = 'lbl_iter'
-    nb_comp_shell = 3
-    nb_comp_color = 3
-    nb_comp_pca = 3
-    alpha_crit = 1 #1% of significance alpha
-    z_crit = 0.25
-    treshold_percent = 95 # put higher than 100 to not use cross validation 
-    nb_period = 5000
-    DBD = False
+kw_dico = 'lbl_iter'
+alpha_crit = 1 # 1% of significance alpha
+z_crit = 0.25
+nb_period = 1000
+DBD = True
+min_r_percentile = 25
+nb_comp_shell = 3
+nb_comp_color = 3
+nb_comp_pca = 3
+treshold_percent = 95 # put higher than 100 to not use cross validation 
+sts.simu = {}
     
-    base_tot = []
-    sts.simu = {}
+file_base_vec = myf.touch_pickle(sts.dir_root+'KEPLERIAN/Vectors_fitted.p')
+file_base_vec['matching_mad'] = []
+
+if stage==29:    
     sub_dico1 = 'matching_mad'
     
     if nb_comp_shell:
@@ -1188,7 +1197,7 @@ if stage==29:
         
         if False:
             somme = []
-            for j in range(1,8):
+            for j in range(1,5):
                 loc = np.argmax(abs(sts.shell_coeff[:,j]))
                 si = np.sign(sts.shell_coeff[loc,j])
                 somme.append(sts.shell_coeff[:,j]*si)
@@ -1199,34 +1208,60 @@ if stage==29:
             sts.supress_time_spectra(liste=spectrum_removed)
     
         sts.yarara_obs_info(kw=['shell_fitted',sts.shell_composite.y])
-        for j in range(1,len(sts.shell_base)):
-            sts.yarara_obs_info(kw=['shell_v%.0f'%(j),sts.shell_coeff[:,j]])
-
+        
+        if treshold_percent<=100:
+            nb_comp_shell =  myf.first_transgression(sts.shell_cv_percent,treshold_percent,relation=1)
+            print('\n [AUTO] Nb shells selected by cross-validation above %.0f %% : %.0f'%(treshold_percent,nb_comp_shell))
+            if nb_comp_shell>7:
+                nb_comp_shell=7
+            if not nb_comp_shell:
+                nb_comp_shell = 1
+        
         base_shell = list(sts.shell_coeff[:,1:1+nb_comp_shell].T)
+        
+        kw = pd.DataFrame(np.array(base_shell).T,columns=['shell_v%.0f'%(j+1) for j in range(0,len(base_shell))])
+        sts.yarara_obs_info(kw=kw)
 
         if DBD:
             sts.lbl_fit_vec('matching_shell', sub_dico = 'matching_mad', kw_dico = 'dbd', base_vec = base_shell, time_detrending = 0, add_step = 1, save_database=False, col=0)
             sts.lbl_kolmo_cat(base_shell, sub_dico='matching_shell', kw_dico = 'dbd', alpha_kolmo=alpha_crit, z_lim = z_crit, ext='matching_shell', depth_var = 'depth_rel')
-            sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192) 
-            sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192)
+            sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
+            sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile)
             plt.close('all')
 
         sts.yarara_ccf_fit('matching_shell', sub_dico = 'matching_mad', proxies = base_shell, time_detrending = 0)
         sts.lbl_fit_vec('matching_shell', sub_dico = 'matching_mad', kw_dico = kw_dico, base_vec = base_shell, time_detrending = 0, add_step = 0, save_database=False)
         sts.lbl_kolmo_cat(base_shell, sub_dico='matching_shell', kw_dico = kw_dico, alpha_kolmo=alpha_crit, z_lim = z_crit, ext='matching_shell', depth_var = 'depth_rel')
-        sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = kw_dico, analysis='all', var='r', percentile=20, Plot=True, my_dpi=192) 
-        sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = kw_dico, analysis='all', var='s', percentile=20, Plot=True, my_dpi=192) 
+        sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = kw_dico, analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
+        sts.lbl_xgb_cat(sub_dico='matching_shell', kw_dico = kw_dico, analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
         plt.close('all')
 
-        base_tot = base_tot + base_shell
-        
+        base_tot = file_base_vec[sub_dico1] + base_shell
+        file_base_vec['matching_shell'] = base_tot
+        pickle.dump(file_base_vec,open(sts.dir_root+'KEPLERIAN/Vectors_fitted.p','wb'))
+
+        sts.lbl_fit_vec('matching_shell', sub_dico = 'matching_mad', kw_dico = kw_dico, base_vec = base_tot, time_detrending = 0, add_step = 1, save_database=False)        
         sts.lbl_fit_base('matching_shell', sub_dico='matching_mad', kw_dico='lbl_iter', proxies = base_tot + ['dbd_0','aba_6','aba_7'], time_detrending=0, add_step=1)
         sts.lbl_fit_base('matching_shell', sub_dico='matching_mad', kw_dico='lbl', proxies = base_tot + ['dbd_0','aba_6','aba_7'], time_detrending=0, add_step=1)
-        sts.lbl_fit_vec('matching_shell', sub_dico = 'matching_mad', kw_dico = kw_dico, base_vec = base_tot, time_detrending = 0, add_step = 1, save_database=False)
         plt.close('all')
             
         sts.simu['shell'] = sts.planet_fit_base(base_tot, time_detrending=0, substract_rv=True, p=nb_period)
-        sub_dico1='matching_shell'
+        sts.planet_simu_absorption()
+
+    if close_figure:
+        plt.close('all')
+
+    get_time_step('matching_empca')                   
+    
+    stage = break_func(stage) 
+
+if stage==30:
+    file_test = sts.import_spectrum()
+
+    if 'matching_shell' in file_test.keys():
+        sub_dico1 = 'matching_shell'
+    else:
+        sub_dico1 = 'matching_mad' 
         
     if nb_comp_color:
         
@@ -1234,70 +1269,108 @@ if stage==29:
         # long wavelength contamination
         # =============================================================================
                 
-        sts.lbl_pca(reduction='pca', sub_dico=sub_dico1, kw_dico=kw_dico, col=0, nb_comp_kept=nb_comp_color, ordering='var_lbl',
+        sts.lbl_pca(reduction='pca', sub_dico=sub_dico1, kw_dico=kw_dico, col=0, nb_comp_kept='auto', ordering='var_lbl',
                     ext='_color', color_residues='k', contam_training=True, recenter=True, standardize=True, wave_bins=4, depth_bins=0,
-                    cross_validation=True, cv_percent_rm=10, cv_sim=100, cv_frac_affected=0.01, nb_comp=10)    
+                    cross_validation=True, cv_percent_rm=20, cv_sim=100, cv_frac_affected=0.01, nb_comp=10, snr_min=0.5)    
+        
+        if treshold_percent<=100:
+            nb_comp_color =  myf.first_transgression(sts.base_cv_percent,treshold_percent,relation=1)
+            print('\n [AUTO] Nb PCA vec selected by cross-validation above %.0f %% : %.0f'%(treshold_percent,nb_comp_color))
+            if nb_comp_color>7:
+                nb_comp_color=7
+            if not nb_comp_color:
+                nb_comp_color = 1
         
         base = [sts.base_vec_pca[:,j] for j in range(nb_comp_color)]
         
-        for j in range(0,len(base)):
-            sts.yarara_obs_info(kw=['pca_color_v%.0f'%(j+1),base[j]])
+        kw = pd.DataFrame(np.array(base).T,columns=['pca_color_v%.0f'%(j+1) for j in range(0,len(base))])
+        
+        sts.yarara_obs_info(kw=kw)
                 
         if DBD:
             sts.lbl_fit_vec('matching_color', sub_dico = 'matching_mad', kw_dico = 'dbd', base_vec = base, time_detrending = 0, add_step = 1, save_database=False, col=0)
             sts.lbl_kolmo_cat(base, sub_dico='matching_color', kw_dico = 'dbd', alpha_kolmo=alpha_crit, z_lim = z_crit, ext='matching_color', depth_var = 'depth_rel')
-            sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192) 
-            sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192)
+            sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
+            sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile)
             plt.close('all')
                 
         sts.yarara_ccf_fit('matching_color', sub_dico = sub_dico1, proxies = base, time_detrending = 0)
         sts.lbl_fit_vec('matching_color', sub_dico = sub_dico1, kw_dico = kw_dico, base_vec = base, time_detrending = 0, add_step = 0, save_database=False)
         sts.lbl_kolmo_cat(base, sub_dico='matching_color', kw_dico = kw_dico, alpha_kolmo=alpha_crit, z_lim = z_crit, ext='matching_color', depth_var = 'depth_rel')
-        sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico=kw_dico, analysis='all', var='r', percentile=20, Plot=True, my_dpi=192) 
-        sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico=kw_dico, analysis='all', var='s', percentile=20, Plot=True, my_dpi=192) 
+        sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico=kw_dico, analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
+        sts.lbl_xgb_cat(sub_dico='matching_color', kw_dico=kw_dico, analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
         plt.close('all')
         
         #base = base + ['CaII',sub_dico.split('_')[1].upper()]
-        base_tot = base_tot + base
+        base_tot = file_base_vec[sub_dico1] + base
+        file_base_vec['matching_color'] = base_tot
+        pickle.dump(file_base_vec,open(sts.dir_root+'KEPLERIAN/Vectors_fitted.p','wb'))
+        
         sts.lbl_fit_vec('matching_color', sub_dico = 'matching_mad', kw_dico = kw_dico, base_vec = base_tot, time_detrending = 0, add_step = 2)
         sts.lbl_fit_base('matching_color', sub_dico='matching_mad', kw_dico = 'lbl', proxies = base_tot + ['dbd_0','aba_6','aba_7'], time_detrending=0, add_step=2)
         sts.lbl_fit_base('matching_color', sub_dico='matching_mad', kw_dico = 'lbl_iter', proxies = base_tot + ['dbd_0','aba_6','aba_7'], time_detrending=0, add_step=2)
         plt.close('all')
     
         sts.simu['color'] = sts.planet_fit_base(base_tot, time_detrending=0, substract_rv=True, p=nb_period)
-        
-        sub_dico1 = 'matching_color'
+        sts.planet_simu_absorption()
+
+    if close_figure:
+        plt.close('all')
+
+    get_time_step('matching_empca')                   
     
+    stage = break_func(stage) 
+
+if stage==31:
+    file_test = sts.import_spectrum()
+
+    if 'matching_color' in file_test.keys():
+        sub_dico1 = 'matching_color'
+    else:
+        sub_dico1 = 'matching_mad'     
+        
     if nb_comp_pca:
         
         # =============================================================================
         # final correction 
         # =============================================================================
         
-        sts.lbl_pca(reduction='empca', sub_dico=sub_dico1, kw_dico=kw_dico, col=0, nb_comp_kept=nb_comp_pca, ordering='var_lbl',
+        sts.lbl_pca(reduction='pca', sub_dico=sub_dico1, kw_dico=kw_dico, col=0, nb_comp_kept='auto', ordering='var_lbl',
                     ext='_empca', color_residues='k', contam_training=True, recenter=True, standardize=True, wave_bins=0, depth_bins=0,   
-                    cross_validation=False, cv_percent_rm=10, cv_sim=100, nb_comp=10)    
+                    cross_validation=True, cv_percent_rm=20, cv_sim=100, nb_comp=10, snr_min=0.5)   
+        
+        if treshold_percent<=100:
+            nb_comp_pca =  myf.first_transgression(sts.base_cv_percent,treshold_percent,relation=1)
+            print('\n [AUTO] Nb PCA vec selected by cross-validation above %.0f %% : %.0f'%(treshold_percent,nb_comp_pca))
+            if nb_comp_pca>7:
+                nb_comp_pca = 7
+            if not nb_comp_pca:
+                nb_comp_pca = 1
         
         base2 = [sts.base_vec_pca[:,j] for j in range(nb_comp_pca)]
-        
-        for j in range(0,len(base2)):
-            sts.yarara_obs_info(kw=['pca_v%.0f'%(j+1),base2[j]])
+                
+        kw = pd.DataFrame(np.array(base2).T,columns=['pca_v%.0f'%(j+1) for j in range(0,len(base2))])
+                
+        sts.yarara_obs_info(kw=kw)
             
         if DBD:
             sts.lbl_fit_vec('matching_empca', sub_dico = 'matching_mad', kw_dico = 'dbd', base_vec = base2, time_detrending = 0, add_step = 1, save_database=False, col=0)
             sts.lbl_kolmo_cat(base2, sub_dico='matching_empca', kw_dico = 'dbd', alpha_kolmo=alpha_crit, z_lim = z_crit, ext='matching_empca', depth_var = 'depth_rel')
-            sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192) 
-            sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192)
+            sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
+            sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico = 'dbd', analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile)
             plt.close('all')
                     
         sts.yarara_ccf_fit('matching_empca', sub_dico = sub_dico1, proxies = base2, time_detrending = 0)
         sts.lbl_fit_vec('matching_empca', sub_dico = sub_dico1, kw_dico = kw_dico, base_vec = base2, time_detrending = 0, add_step = 0, save_database=False)
         sts.lbl_kolmo_cat(base2, sub_dico='matching_empca', kw_dico = kw_dico, alpha_kolmo=alpha_crit, z_lim = z_crit, ext='matching_empca', depth_var = 'depth_rel')
-        sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico=kw_dico, analysis='all', var='r', percentile=20, Plot=True, my_dpi=192) 
-        sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico=kw_dico, analysis='all', var='s', percentile=20, Plot=True, my_dpi=192) 
+        sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico=kw_dico, analysis='morpho-atomic-pixel', var='r', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
+        sts.lbl_xgb_cat(sub_dico='matching_empca', kw_dico=kw_dico, analysis='morpho-atomic-pixel', var='s', percentile=20, Plot=True, my_dpi=192, min_r_percentile=min_r_percentile) 
         plt.close('all')
+
+        base_tot = file_base_vec[sub_dico1] + base2
+        file_base_vec['matching_empca'] = base_tot
+        pickle.dump(file_base_vec,open(sts.dir_root+'KEPLERIAN/Vectors_fitted.p','wb'))
         
-        base_tot = base_tot + base2
         sts.lbl_fit_vec('matching_empca', sub_dico = 'matching_mad', kw_dico = kw_dico, base_vec = base_tot, time_detrending = 0, add_step = 3)
         sts.lbl_fit_base('matching_empca', sub_dico='matching_mad', kw_dico='lbl', proxies = base_tot + ['dbd_0','aba_6','aba_7'], time_detrending=0, add_step=3)
         sts.lbl_fit_base('matching_empca', sub_dico='matching_mad', kw_dico='lbl_iter', proxies = base_tot + ['dbd_0','aba_6','aba_7'], time_detrending=0, add_step=3)
@@ -1305,24 +1378,51 @@ if stage==29:
     
         sts.simu['empca'] = sts.planet_fit_base(base_tot, time_detrending=0, substract_rv=True, p=nb_period)  
 
+        sts.planet_simu_absorption()
+
+    if close_figure:
+        plt.close('all')
+
+    get_time_step('matching_empca')                   
+    
+    stage = break_func(stage) 
+
+if stage==32:
+    file_test = sts.import_spectrum()
+
+    if 'matching_empca' in file_test.keys():
         sub_dico1 = 'matching_empca'
+    else:
+        sub_dico1 = 'matching_mad'  
     
     # =============================================================================
     # BIS correction 
     # =============================================================================
 
+
     sts.import_proxies() ; bis = sts.bis.y
-    base_tot = base_tot + [bis]
+    base_tot = file_base_vec[sub_dico1] + [bis]
+    file_base_vec['matching_bis'] = base_tot
+    pickle.dump(file_base_vec,open(sts.dir_root+'KEPLERIAN/Vectors_fitted.p','wb'))
     
     sts.yarara_ccf_fit('matching_bis', sub_dico = sub_dico1, proxies = base_tot, time_detrending = 0)
     sts.lbl_fit_vec('matching_bis', sub_dico = 'matching_mad', kw_dico = kw_dico, base_vec = base_tot, time_detrending = 0, add_step = 4)
     sts.lbl_fit_base('matching_bis', sub_dico='matching_mad', proxies=base_tot + ['dbd_0','aba_6','aba_7'], time_detrending=0, add_step=4)
     
-    sts.simu['bis'] = sts.planet_fit_base(base_tot, time_detrending=0, substract_rv=True, p=nb_period)  
-
+    sts.simu['bis'] = sts.planet_fit_base(base_tot, time_detrending=0, substract_rv=True, p=nb_period)      
     sts.planet_simu_absorption()
+
+    if close_figure:
+        plt.close('all')
+
+    get_time_step('matching_bis')                   
     
-    sts.yarara_stellar_rotation(windows=100, min_nb_points=25, prot_max=100, rhk=1, ca2=0, ha=1, h=0, wb=1, mg1=0, nad=0, bis=1, cb=1, rv=1)
+    stage = break_func(stage) 
+
+if stage==33:
+    
+    sts.lbl_treshold_blue(sub_dicos=['matching_diff','matching_morpho','matching_empca'],wave_bins=10)    
+    sts.yarara_stellar_rotation(windows=100, min_nb_points=25, prot_max=100, rhk=1, kernel_rhk=0, ca2=0, ha=1, h=0, wb=1, mg1=0, nad=0, bis=1, cb=1, rv=1)
     sts.yarara_star_info(Pmag=['YARARA',np.round(sts.Pmag,1)])
 
     sts.yarara_curve_rv(poly_deg=0, metric='gaussian')
@@ -1335,11 +1435,12 @@ if stage==29:
     stage = break_func(stage) 
 
 
+
 # =============================================================================
 # PERIODOGRAM L1
 # =============================================================================
 
-if stage==30:
+if stage==34:
     v2_dico = 'matching_bis'
 
     sts.import_table()
@@ -1417,7 +1518,7 @@ if stage==30:
     stage = break_func(stage)
 
 
-if stage==31:
+if stage==35:
     v2_dico = 'matching_bis'
     sts.import_table()
     
@@ -1491,7 +1592,7 @@ if stage==31:
     stage = break_func(stage)
 
 
-if stage==32:
+if stage==36:
     sts.yarara_supress_dico('matching_fourier',only_continuum=True)
     sts.yarara_supress_dico('matching_telluric',only_continuum=True)
     sts.yarara_supress_dico('matching_oxygen',only_continuum=True)
@@ -1507,7 +1608,7 @@ if stage==32:
 # PRODUCE QC FILE YARARA
 # =============================================================================
 
-if stage==33:
+if stage==37:
     try:
         os.system('touch '+root+'/Yarara/'+star+'/data/s1d/YARARA_LOGS/'+ins+'/yarara_finished.txt')
     except:

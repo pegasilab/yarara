@@ -501,7 +501,8 @@ if len(data_extract):
         data_extract_selected = data_extract_selected.sort_index()
                 
         data_extract_selected.to_csv(directory_to_yarara+'/%s_%s_DRS-%s.rdb'%(star,instrument,drs_version.replace('.','-')),sep='\t',index=False, float_format='%.6f')
-     
+        
+        print(' [INFO] file saved '%(directory_to_yarara+'/%s_%s_DRS-%s.rdb'%(star,instrument,drs_version.replace('.','-'))))
         
     
     plt.close('all')

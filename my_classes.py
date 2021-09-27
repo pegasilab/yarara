@@ -421,9 +421,33 @@ class table(object):
         new_table = table(np.array(self.table).copy())
         return new_table
     
-    def r_matrix(self,name=None,absolute=True,cmap='seismic',vmin=None,vmax=None,light_plot=False,angle=45,Plot=True,rm_diagonal=False,paper_plot=False,unit=1):
-        
-        matrix = self.table
+    def fit_poly(self,deg_detrend,vec_x,replace=False):
+        vec_x-=np.nanmedian(vec_x)
+        new_tab = table(np.array(self.table).T)
+        new_tab.fit_unique_base(np.array([vec_x**i for i in range(deg_detrend+1)]))
+        if replace:
+            if type(self.table) == pd.core.frame.DataFrame:
+                self.table.values = pd.DataFrame(new_tab.vec_residues.T,columns=self.table.keys())
+            else:
+                self.table = new_tab.vec_residues.T
+        else:
+            if type(self.table) == pd.core.frame.DataFrame:
+                self.table_poly_detrended = pd.DataFrame(new_tab.vec_residues.T,columns=self.table.keys())
+            else:
+                self.table_poly_detrended = new_tab.vec_residues.T
+
+    
+    def r_matrix(self,name=None, absolute=True, cmap='seismic',vmin=None, vmax=None, light_plot=False, angle=45, Plot=True, rm_diagonal=False, paper_plot=False, unit=1, deg_detrend=0, vec_x=None):
+
+        if deg_detrend:
+            if vec_x is None:
+                vec_x = np.arange(len(self.table))
+            vec_x-=np.nanmedian(vec_x)
+            
+            self.fit_base(np.array([vec_x**i for i in range(deg_detrend+1)]))
+            matrix = self.vec_residues
+        else:
+            matrix = self.table
         if type(matrix)==pd.core.frame.DataFrame:
             if name is None:
                 name = list(matrix.columns)
@@ -465,7 +489,7 @@ class table(object):
             plt.imshow(r_matrix,vmin=vmin,vmax=vmax,cmap=cmap)
             ax = plt.colorbar(pad=[0.05,0][int(light_plot)])
             ax.ax.set_ylabel(r'$\mathcal{R}_{pearson}$',fontsize=[15,20][int(paper_plot)])
-        
+            ax.ax.set_yticklabels(np.round(np.arange(0,1.1,0.2),2), fontsize=[15,20][int(paper_plot)])
             plt.xticks(ticks=np.arange(len(r_matrix)), labels=list(name), rotation=[angle,90][int(paper_plot)], fontsize=[14,18][int(paper_plot)])
             plt.yticks(ticks=np.arange(len(r_matrix)), labels=list(name), fontsize=[14,18][int(paper_plot)])     
             plt.subplots_adjust(left=0.2,right=0.95,top=0.95,bottom=0.20)
@@ -591,7 +615,7 @@ class table(object):
         final_coeff = coeff.matrix_corr.copy()
         self.cv_matrix = final_coeff
         
-        cluster_min_size = np.round(cross_valid_size*frac_affected,0)
+        cluster_min_size = int(np.round(cross_valid_size*frac_affected,0))
         
         if algo_borders==1:#based on 1 diagonal-off algorithm
             binary_matrix = (abs(final_coeff)>r_min).astype('int')
@@ -622,9 +646,10 @@ class table(object):
             borders = []
             i = 0
             for j in np.arange(1,len(binary_matrix)):
-                if np.sum(binary_matrix[j,i:j])<(j-i)*0.5:
-                    if (j-i)>cluster_min_size:
-                        borders.append([i,j])
+                #if np.sum(binary_matrix[j,i:j])<(j-i)*0.5:
+                if np.sum(binary_matrix[j:j+cluster_min_size,i:j])<(j-i)*0.5*cluster_min_size:
+                    #if (j-i)>cluster_min_size:
+                    borders.append([i,j])
                     i = j     
             borders.append([borders[-1][1],len(binary_matrix)-1])
             cluster_loc = np.unique(np.hstack(borders))
@@ -1040,7 +1065,7 @@ class table(object):
         f1 = '\t'.join(all_name)
         f2 = '\t'.join(['-'*len(i) for i in all_name])
         
-        np.savetxt(file_name,matrice,delimiter='\t',header=f1+'\n'+f2,fmt=['%.8e']*(len(all_name)-1)+['%s'])
+        np.savetxt(file_name,matrice,delimiter='\t',header=f1+'\n'+f2,fmt=['%.6f']+['%.8e']*(len(all_name)-2)+['%s'])
         
         f = open(file_name,"r")
         lines = f.readlines()
@@ -1468,7 +1493,7 @@ class table(object):
         
     
     def fit_base(self, base_vec, weight=None, num_sim = 1):
-        """ weights define as 1/sigma**2 """
+        """ weights define as 1/sigma**2 self.table = MxT, base_vec = NxT, N the number of basis element"""
         
         
         if np.shape(base_vec)[1] != np.shape(self.table)[0]:
@@ -4362,7 +4387,6 @@ class tableXY(object):
         self.vec_fitted = tableXY(self.x,y_pred)
         self.vec_residues = tableXY(self.x,self.y-y_pred,self.yerr)
 
-    
     def plus(self,new_tableXY,const=1):
         self.y = self.y + new_tableXY.y*const
         self.yerr = np.sqrt(self.yerr**2 + (const*new_tableXY.yerr)**2)
@@ -4383,6 +4407,28 @@ class tableXY(object):
         self.y = self.y/(divider.y*const)
         self.yerr = np.sqrt((self.yerr/divider.y)**2 + (self.y*divider.yerr/divider.y**2)**2)/const
     
+    def duplicate(self,nb_duplication):
+        new_x = []
+        for j in range(1,1+nb_duplication):
+            new_x.append(list(self.x+(np.min(self.x)+(np.max(self.x)-np.min(self.x))*j)))
+        self.x = np.hstack(new_x)
+        self.y = np.array(list(self.y)*nb_duplication)
+        self.xerr = np.array(list(self.xerr)*nb_duplication)
+        self.yerr = np.array(list(self.yerr)*nb_duplication)
+    
+    def integrate(self,x0,x1,output=False):
+        
+        i0 = myf.find_nearest(self.x,x0)[0][0]
+        i1 = myf.find_nearest(self.x,x1)[0][0]
+        if i0<i1:
+            self.integrated = np.nansum(self.y[i0:i1+1])
+        else:
+            self.integrated = np.nansum(self.y[i1:i0+1])
+        
+        print(self.integrated)
+        if output:
+            return self.integrated
+            
     def rolling(self,window=1,quantile=None,median=True,iq=True):
         if median:
             self.roll_median = np.ravel(pd.DataFrame(self.y).rolling(window,min_periods=1,center=True).quantile(0.50))
@@ -5162,10 +5208,38 @@ class tableXY(object):
             dstep = np.median(np.diff(self.x))
         self.freq = np.fft.fftfreq(len(self.y))/dstep
         self.sig_fft = tableXY(1/self.freq[1:len(self.freq)//2],abs(self.power)[1:len(self.freq)//2])
+        
+        
         if Plot:
             plt.plot(self.sig_fft.x ,self.sig_fft.y)
             plt.ylim(np.min(self.sig_fft.y))
             plt.xscale('log')
+    
+    def fft_extract_split(self,nb_comp,debug=False):
+        self.fft(Plot=False)
+        self.sig_fft.find_max()
+        if debug:
+            plt.figure()
+            plt.plot(np.arange(1,1+len(self.sig_fft.y_max)),np.sort(self.sig_fft.y_max)[::-1],'ko-')
+            plt.xscale('log')
+            plt.yscale('log')
+        
+        loc = self.sig_fft.index_max[np.argsort(self.sig_fft.y_max)[::-1][0:nb_comp]]
+        loc_left = []
+        loc_right = []
+        for j in loc:
+           loc_left.append(myf.find_nearest(self.sig_fft.index_max[self.sig_fft.index_max<j],j)[1][0])
+           loc_right.append(myf.find_nearest(self.sig_fft.index_max[self.sig_fft.index_max>j],j)[1][0])
+    
+        half_width = np.min(np.array([abs(loc-loc_left),abs(loc-loc_right)]),axis=0)/2
+        loc2 = loc + 1
+        signal_extracted = {}
+        for l,h in zip(loc2.astype('int'),half_width.astype('int')):
+            mask = np.zeros(len(self.power))
+            mask[l-h:l+h+1] = 1
+            mask[len(self.power)-(l+h):len(self.power)-(l-h)+1] = 1
+            signal_extracted[self.sig_fft.x[l]] = tableXY(self.x,np.fft.ifft(self.power*mask))
+        self.fft_signals = signal_extracted
     
     def pattern(self,width_range=[0.1,20],new=True,color='k',label=None):
         """If the vector is in angstrom"""
@@ -5855,6 +5929,7 @@ class tableXY(object):
                     plt.xscale('log')
                     plt.xlabel('Period [days]',fontsize=14)
                     plt.xlim(1/np.max(self.freq),1/np.min(self.freq))
+                    plt.ylim(0,None)
 
                 if axis_y_var!='p':
                     plt.plot(1/pXav[0], pXav[1],color=color)

@@ -83,11 +83,11 @@ if not os.path.exists(root+'/Yarara/'+star+'/data/s1d/YARARA_LOGS/'):
 #old reduction 
 begin2 = 3
     
-dico = {'HARPS03':['14','34'],
-        'HARPS15':['14','34'],
-        'HARPN':['13','32'],
-        'ESPRESSO18':['13','31'],
-        'ESPRESSO19':['13','31'],
+dico = {'HARPS03':['14','38'],
+        'HARPS15':['14','38'],
+        'HARPN':['13','37'],
+        'ESPRESSO18':['13','35'],
+        'ESPRESSO19':['13','35'],
         'CORALIE14':['12','26']}
 
 for ins in instrument:

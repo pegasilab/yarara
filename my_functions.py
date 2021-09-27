@@ -10,7 +10,7 @@ from scipy.optimize import curve_fit
 from tqdm import tqdm
 from scipy.interpolate import interp1d
 from scipy.stats import norm, boxcox
-from itertools import compress, product,combinations
+from itertools import compress, product, combinations
 from scipy import signal
 import scipy.special as sse
 from astropy.io import fits
@@ -535,7 +535,7 @@ def import_dace_keplerian(filename, Mstar=1):
     return dico 
 
 def format_keplerian_dace_table(planets=[[365.25, 0.10, 0, 0, 123, 0]]):
-    """[period,smi-amplitude,eccentricity,periastron,ascending node,t0]"""
+    """[period,semi-amplitude,eccentricity,periastron,ascending node,t0]"""
     matrix = np.array(planets)
     table = pd.DataFrame(matrix,columns=['p','k','e','peri','long','t0'],index=['planet %.0f'%(i) for i in np.arange(len(matrix))+1])
     return table
@@ -1344,6 +1344,26 @@ def my_colormesh(x,y,z,cmap='seismic',vmin=None,vmax=None,zoom=1,shading='auto',
         return X,Y,Z
     else:
         plt.pcolormesh(X,Y,Z,shading=shading,cmap=cmap,vmin=vmin,vmax=vmax) 
+
+def randomly_shuffle_dataframe(dataframe,sort=0,axis=0):
+    vec = np.ravel(dataframe.values)
+    new_vec = np.random.choice(vec,len(vec),replace=False)
+    new_matrix = np.reshape(new_vec,np.shape(dataframe))
+    
+    if sort==1:
+        new_matrix=np.sort(new_matrix,axis=axis)
+    
+    if sort==-1:
+        new_matrix=np.sort(new_matrix,axis=axis)
+        if axis:
+            new_matrix = new_matrix[:,::-1]
+        else:
+            new_matrix = new_matrix[::-1]
+    
+    new_dataframe = pd.DataFrame(new_matrix,columns=list(dataframe.keys()))
+    
+    return new_dataframe
+
 
 def clustering(array, tresh, num):
     difference = abs(np.diff(array))
