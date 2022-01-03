@@ -36,6 +36,7 @@ from astropy.coordinates import get_sun, get_moon, SkyCoord, EarthLocation, AltA
 import astropy.coordinates as astrocoord
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator)
+import time
 
 pickle_protocol_version = 3
 
@@ -53,8 +54,27 @@ au_m = 149597871*1000
 cwd = os.getcwd()
 root = '/'.join(cwd.split('/')[:-1])
 
+prop_cycle = plt.rcParams['axes.prop_cycle']
+colors_cycle_mpl = prop_cycle.by_key()['color']
+
 # statistical
 
+def current_time():
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime())
+
+def days_from_now(array):
+    array = np.array(array)
+    noww = current_time()
+    
+    dt = []
+    for i in array:
+        if type(i)==str:
+            dt.append(Time.Time(noww,format='isot').mjd - Time.Time(i,format='isot').mjd)
+        else:
+            dt.append(np.nan)
+    dt = np.array(dt)
+    return dt
+            
 
 def pickle_dump(obj,obj_file,protocol=None):
     if protocol is None:
@@ -131,7 +151,7 @@ def transform_prim(x,y):
     return x,y
     
 def transform_min_max(y):
-    y = np.array(y)
+    y = np.array(y).astype('float')
     y -= np.nanmin(y)
     y /= np.nanmax(y)
     return y    
@@ -384,6 +404,19 @@ def first_transgression(array,treshold,relation=1):
             break
     return nb_comp
 
+def kcluster(array,tresh_dist):
+    k_indices = []
+    length = len(array)
+    indices = np.arange(length)
+    while len(indices):
+        indice = [np.array([0,1]), np.array([indices[0]])]
+        while len(indice[-1])!=len(indice[-2]):
+            new_indice = np.where(np.min(array[indice[-1]],axis=0)<tresh_dist)[0]
+            indice.append(new_indice)
+        k_indices.append(new_indice)
+        indices = indices[~np.in1d(indices,new_indice)]
+    return k_indices
+    
 
 def block_matrix(array,r_min=0,offset=0,debug=False):
     matrix = array.copy()
@@ -540,6 +573,75 @@ def format_keplerian_dace_table(planets=[[365.25, 0.10, 0, 0, 123, 0]]):
     table = pd.DataFrame(matrix,columns=['p','k','e','peri','long','t0'],index=['planet %.0f'%(i) for i in np.arange(len(matrix))+1])
     return table
 
+def convert_to_dace(star, instrument, drs_version, instrument_mode, path):
+    file = glob.glob(path+'comparison_'+star+'_rv_old_versus_new_'+instrument_mode.lower()+'drs02.csv')[0]
+    dataframe = pd.read_csv(file)
+    
+    if instrument == 'HARPS03':
+        range_jdb=[0,57161.5]
+    elif instrument == 'HARPS15':
+        range_jdb=[57161.5,100000]    
+    
+    dataframe = dataframe.loc[(dataframe['jdb']<range_jdb[1])&(dataframe['jdb']>range_jdb[0])]
+    
+    new = {
+             'texp':dataframe['exptime'], #not needed
+             'texp_err':dataframe['exptime']*0, #not needed
+             'bispan':dataframe['new_bis_span'],
+             'bispan_err':dataframe['new_sig_bis_span'],
+             'drift_noise':dataframe['new_sig_vrad'], #not needed
+             'drift_noise_err':dataframe['new_sig_vrad']*0, #not needed
+             'rjd':dataframe['new_bjd']-2400000,
+             'rjd_err':dataframe['new_jdb']*0, #not needed
+             'cal_therror':dataframe['th_cal_error'], #not needed
+             'cal_therror_err':dataframe['th_cal_error']*0, #not needed
+             'fwhm':1000*(dataframe['new_fwhm']),
+             'fwhm_err':1000*(dataframe['new_sig_fwhm']),
+             'rv':1000*(dataframe['new_vrad']),
+             'rv_err':1000*(dataframe['new_sig_vrad']),
+             'berv':dataframe['new_berv'],
+             'berv_err':dataframe['new_berv']*0, #not needed
+             'ccf_noise':dataframe['new_vrad'], #not needed
+             'ccf_noise_err':dataframe['new_sig_vrad'], #not needed
+             'rhk':dataframe['rhk'], #not needed
+             'rhk_err':dataframe['sig_rhk'], #not needed
+             'contrast':dataframe['new_contrast'],
+             'contrast_err':dataframe['new_sig_contrast'],
+             'cal_thfile':dataframe['new_th_file'], #not needed
+             'spectroFluxSn50':dataframe['new_sn50'],
+             'spectroFluxSn50_err':dataframe['new_sn50']*0, #not needed
+             'protm08':dataframe['prot_m08'], #not needed
+             'protm08_err':dataframe['sig_prot_m08'], #not needed
+             'caindex':dataframe['s_mw'], #not needed
+             'caindex_err':dataframe['sig_s'], #not needed
+             'pub_reference':['']*len(dataframe), #not needed
+             'drs_qc':dataframe['new_qc'].astype('bool'),
+             'haindex':dataframe['s_mw'], #not needed
+             'haindex_err':dataframe['sig_s'], #not needed
+             'protn84':dataframe['prot_n84'], #not needed
+             'protn84_err':dataframe['sig_prot_n84'], #not needed
+             'naindex':dataframe['s_mw'], #not needed
+             'naindex_err':dataframe['sig_s'], #not needed
+             'snca2':dataframe['sn_CaII'], #not needed
+             'snca2_err':dataframe['sn_CaII']*0, #not needed
+             'mask':dataframe['mask'], #not needed
+             'public':[False]*len(dataframe), #not needed
+             'spectroFluxSn20':dataframe['new_sn20'], #not needed
+             'spectroFluxSn20_err':dataframe['new_sn20']*0, #not needed
+             'sindex':dataframe['s_mw'],
+             'sindex_err':dataframe['sig_s'],
+             'drift_used':dataframe['new_drift_ccf'],
+             'drift_used_err':dataframe['new_sig_drift_ccf'], #not needed
+             'ccf_asym':dataframe['new_bis_span'], #not needed
+             'ccf_asym_err':dataframe['new_sig_bis_span'], #not needed
+             'date_night':dataframe['night'], 
+             'raw_file':'r.'+dataframe['file_root']+'.fits'
+           }
+    
+    return new
+    
+
+
 def convert_bib_morgane(filename):
     fin = open(filename,'r')
     lines = fin.readlines()
@@ -689,10 +791,10 @@ def import_dace_mcmc_gael(filename,sigma=1):
             cols += name
         else:
             if '\log P' in paragraph[0]:        
-                parameters = np.delete(parameters,[10,12]).T
-                parameters_err = np.delete(parameters_err,[10,12]).T
-                parameters_err_sup = np.delete(parameters_err_sup,[10,12]).T
-                parameters_err_inf = np.delete(parameters_err_inf,[10,12]).T
+                parameters = np.delete(parameters,[11,12]).T
+                parameters_err = np.delete(parameters_err,[11,12]).T
+                parameters_err_sup = np.delete(parameters_err_sup,[11,12]).T
+                parameters_err_inf = np.delete(parameters_err_inf,[11,12]).T
                 
                 dico_temp = pd.DataFrame({k:[a] for k,a in zip(['planet','logP','logK','sqrt(e)cosw','sqrt(e)sinw','L0','a_s','a','e','K','w','m_p','P','Tc','Tp'],np.append(np.array([pla_name[pla_itr]]),parameters))})
                 dico_err_temp = pd.DataFrame({k:[a] for k,a in zip(['planet','logP_std','logK_std','sqrt(e)cosw_std','sqrt(e)sinw_std','L0_std','a_s_std','a_std','e_std','K_std','w_std','m_p_std','P_std','Tc_std','Tp_std'],np.append(np.array([pla_name[pla_itr]]),parameters_err))})
@@ -948,7 +1050,7 @@ def plot_weight(y,yerr='none',normed=False,bin_method='scott',alpha=0.6,color='b
 
 def transit_proba(p,Rs=1,Ms=1):
     a = (Ms*Mass_sun*G_cst*(p*24*3600)**2/(4*np.pi**2))**(1/3)
-    print('Distance Au : %.2f'%(a/au_m))
+    #print('Distance Au : %.2f'%(a/au_m))
     proba = Rs*radius_sun/a
     return proba*100 
 
@@ -1293,7 +1395,7 @@ def make_sound(sentence,voice='Victoria'):
     else:
         print('\7')
 
-def plot_copy_time(ax1=None,fmt='isot',time='x'):
+def plot_copy_time(ax1=None,fmt='isot',time='x',split=0):
     if ax1 is None:
         ax1 = plt.gca()
     if time=='x':
@@ -1314,7 +1416,7 @@ def plot_copy_time(ax1=None,fmt='isot',time='x'):
         new_labels = ['%.2f'%(i) for i in new_labels]
     else:
         new_labels = Time.Time(x,format='mjd').isot
-        new_labels = [i.split('T')[0] for i in new_labels]        
+        new_labels = [i.split('T')[split] for i in new_labels]        
     ax2.set_xticks(x)
     ax2.set_xticklabels(new_labels)
     return ax1
@@ -2312,8 +2414,12 @@ def PeriodSolarRV(period, code='day', position='inwards'):
     if position=='outwards':
         return abs(Earth_sidereal*period)/(period-Earth_sidereal)
 
-def fit_planet(table):
+def get_hill(a,e,mp,ms):
+    return a*(1-e)*((mp*Mass_earth)/(3*ms*Mass_sun))**(1/3)
+
+def fit_planet(table,legend=True,alpha=1):
     curves = []
+
     if 'P' in table.keys():
         table['p'] = table['P']
     if 'K' in table.keys():
@@ -2327,8 +2433,12 @@ def fit_planet(table):
     
     p_min = np.min(table['p'])
     p_max = np.max(table['p'])
-    t = np.arange(0, 3*p_max, p_min/72)
+    #t = np.arange(0, 3*p_max, p_min/72)
+    t = np.arange(0, p_max, p_min/36)
+    color = -1
     for planet in table.index:
+        
+        color+=1
         semi_axis = table.loc[planet,'a']
         period = table.loc[planet,'p']
         ecc = table.loc[planet,'e']
@@ -2336,22 +2446,74 @@ def fit_planet(table):
         periastron = table.loc[planet,'long']
         i = table.loc[planet,'i']
         val = table.loc[planet,'mass']
-        
+                
         if int(val)>9999.9:
             val = 9999.9
 
         ke = pyasl.KeplerEllipse(semi_axis, period, ecc, Omega=node, i=i, w=periastron)
         pos = ke.xyzPos(t)
-        plt.plot(pos[:,0],pos[:,1],label='%.1f $M_{\oplus}$ (%.1f days)'%(val,period))
+        if legend:
+            plt.plot(pos[:,0],pos[:,1],label='%.1f $M_{\oplus}$ (%.1f days)'%(val,period),alpha=alpha,color=colors_cycle_mpl[color])
+        else:
+            plt.plot(pos[:,0],pos[:,1],alpha=alpha,color=colors_cycle_mpl[color])            
         plt.axis('equal')
-        plt.scatter(0,0,marker='x',color='k')
+        plt.scatter(0,0,marker='*',color='yellow',ec='k',s=100)
+        #plt.scatter(0,0,marker='x',color='k')
         plt.xlabel('X [AU]',fontsize=14)
         plt.ylabel('Y [AU]',fontsize=14)
         
         curves.append(pos)
-    plt.legend(loc=1)
+    if legend:
+        plt.legend(loc=1)
     curves = np.array(curves)    
     return curves
+
+def plot_hz(ms=1, ls_inf='-.', ls_sup=':', color_inf='r', color_sup='b'):
+    """Kopparapu(2013)"""
+    tab = pd.read_pickle(cwd+'/Material/HZ.p')
+    index = find_nearest(tab['Ms'],ms)[0]
+    hz_min = tab['HZ_inf'][index]
+    hz_max = tab['HZ_sup'][index]
+    
+    plt.plot(hz_min*np.sin(np.linspace(0,2*np.pi,100)),hz_min*np.cos(np.linspace(0,2*np.pi,100)), color=color_inf, ls=ls_inf, label=r'$HZ_{inf}$')
+    plt.plot(hz_max*np.sin(np.linspace(0,2*np.pi,100)),hz_max*np.cos(np.linspace(0,2*np.pi,100)), color=color_sup, ls=ls_sup, label=r'$HZ_{sup}$')
+
+def plot_hill(x,y,hill_radius,color='k',ls=':',zorder=1):
+    """Kopparapu(2013)"""
+
+    plt.plot(x+hill_radius*np.sin(np.linspace(0,2*np.pi,100)),y+hill_radius*np.cos(np.linspace(0,2*np.pi,100)), color=color, ls=ls, zorder=zorder)
+
+def plot_color_box(color='r',font='bold',lw=2,ax=None,side='all',ls='-'):
+    if ls=='-':
+        ls='solid'
+        
+    if ax is None:
+        ax = plt.gca()
+    if side=='all':
+        side = ['top','bottom','left','right']
+    else:
+        side = [side]
+    for axis in side:
+        ax.spines[axis].set_linewidth(lw)
+        ax.spines[axis].set_color(color)
+        if ax.spines[axis].get_linestyle()!=ls:#to win a but of time
+            ax.spines[axis].set_linestyle(ls)
+
+    ax.tick_params(axis='x', which='both', colors=color)
+    ax.tick_params(axis='y', which='both', colors=color)
+    
+    if font=='bold':
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label1.set_fontweight('bold')
+
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label1.set_fontweight('bold')  
+
+def only_axis(color=None,lw=2,ax=None,side='all',ls='-'):
+    plt.tick_params(left=False,bottom=False,labelleft=False,labelbottom=False)  
+    if color is not None:
+        plot_color_box(color=color, lw=lw, ax=ax, side=side,ls=ls)
+
 
 def divide_0_0(a,b):
     eps = np.zeros(np.shape(a))
@@ -3130,9 +3292,9 @@ def find_borders_it(matrix, cross_valid_size, frac_affected, cv_rm, Draw=True, s
                 plt.plot([k,k],[j,k],color='w')
                 plt.plot([j,k],[j,j],color='w')
                 plt.plot([j,k],[k,k],color='w')  
-
+    
     cluster_signi[order_complete] = False
-        
+    
     return borders, cluster_loc, mask_cluster, med_cluster, cluster_signi, mask_cluster_complete
 
 def block_matrix_iter(coeff, cross_valid_size, frac_affected, cv_rm, var_kept, selection, loc_comp):
@@ -3176,3 +3338,103 @@ def block_matrix_iter(coeff, cross_valid_size, frac_affected, cv_rm, var_kept, s
     coeff.r_matrix(name=final_vec_ordered,absolute=True,Plot=False,rm_diagonal=True) 
     
     return coeff, final_vec_ordered
+
+def convert_to_fits(files, ins='HARPN',kw_wave='wave', kw_flux='flux', kw_flux_err = None, ref='air', snr_ref=300):
+    reference = fits.open('/Users/cretignier/Documents/Python/Material/r.ESPRESSO_S1D_A_REFERENCE.fits')
+    files = np.sort(glob.glob(files))
+    directory = '/'.join(files[0].split('/')[:-1])
+    last_dir = directory.split('/')[-1]
+    
+    nb_files = len(files)
+    print('Number of files detected : %.0f'%(nb_files))
+
+    os.system('mkdir '+directory.replace(last_dir,ins))    
+    os.system('mkdir '+directory.replace(last_dir,ins+'/DACE_TABLE'))
+    
+    zero = np.zeros(nb_files)
+    reference2 = pd.read_csv('/Users/cretignier/Documents/Python/Material/Dace_extracted_table.csv',index_col=0)
+    zero = zero*np.ones(len(np.array(reference2.columns)))[:,np.newaxis]
+    new_tab = pd.DataFrame(zero.T,columns=reference2.columns)
+    
+    counter=-1
+    for f in tqdm(files):
+        counter+=1
+        ext = f.split('.')[-1]
+        if ext=='csv':
+            file = pd.read_csv(f)            
+            wave = file[kw_wave]
+            flux = file[kw_flux]
+            if kw_flux_err is not None:
+                flux_err = file[kw_flux_err]  
+            else:
+                flux_err = np.sqrt(abs(flux))
+        
+        elif ext=='npz':
+            file = np.load(f)
+            wave = file[kw_wave]
+            flux = file[kw_flux]
+            if kw_flux_err is not None:
+                flux_err = file[kw_flux_err]  
+            else:
+                flux_err = np.sqrt(abs(flux))
+                flux_err[flux<1] = 1
+
+        elif ext=='p':
+            file = pd.read_pickle(f) 
+            wave = file[kw_wave]
+            flux = file[kw_flux]
+            if kw_flux_err is not None:
+                flux_err = file[kw_flux_err]  
+            else:
+                flux_err = np.sqrt(abs(flux))
+        
+        elif ext=='txt':
+            file = np.loadtxt(f)
+            wave = file[:,kw_wave]
+            flux = file[:,kw_flux]
+            
+            if kw_flux_err is not None:
+                flux_err = file[:,kw_flux_err]  
+            else:
+                flux_err = np.sqrt(abs(flux)) 
+        
+        if ref=='air':
+            wave_air = wave
+            wave_void = conv_air_void(wave_air)
+        else:
+            wave_void = wave
+            wave_air = conv_void_air(wave_void)
+
+        data = np.rec.array([(i1,i2,i3,i4,i5) for i1,i2,i3,i4,i5 in zip(wave_void,wave_air,flux,flux_err,np.zeros(len(flux)))],
+                            formats='float64,float64,float64,float64,float32',
+                            names='wavelength,wavelength_air,flux,error,quality')
+        
+        reference[1] = fits.BinTableHDU(data, header=reference[1].header, name=reference[1].name)
+        
+        reference.writeto(f.replace('.'+ext,'.fits'), overwrite=True)
+
+        new_name = f.replace('.'+ext,'.fits').replace(last_dir,last_dir+'/fits_output')
+        
+        new_tab.loc[counter,'raw_file'] = new_name.split('/')[-1]
+        new_tab.loc[counter,'fileroot'] = new_name
+        new_tab.loc[counter,'rjd'] = counter
+        new_tab.loc[counter,'mjd'] = counter
+    
+    os.system('mkdir '+directory+'/fits_output')
+    
+    os.system('mv '+directory+'/*.fits '+directory+'/fits_output')
+    new_tab.to_csv(directory.replace(last_dir,ins+'/DACE_TABLE')+'/Dace_extracted_table.csv')
+    
+                
+            
+def rsync_from_lesta(path_lesta='/hpcstorage/cretigni/Yarara/HD666/data/s1d/YARARA_LOGS', path_output=None, entry='2'):
+    if path_output is None:
+        path_output = '.'
+    os.system('rsync -av --progress -e "ssh -A cretigni@login0'+entry +'.astro.unige.ch ssh" cretigni@lesta0'+entry+':'+path_lesta+' '+path_output)
+
+
+
+
+
+
+

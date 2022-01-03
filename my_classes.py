@@ -13,7 +13,7 @@ sys.path.append(root+'/Python/l1periodogram/l1periodogram_codes')
 sys.path.append(root+'/Python/keplerian')
 sys.path.append(root+'/Python/fit_ccf')
 
-try: #Merci Jean-Baptiste ...
+try: 
     import rvmodel as rvm
     rvmodel = rvm.rvModel 
     spleaf_version = 'old'
@@ -2664,7 +2664,7 @@ class tableXY(object):
         self.xerr[np.isnan(self.xerr)] = np.random.randn(sum(np.isnan(self.xerr)))
 
     def supress_inf(self):
-        mask = ~(self.x==np.inf)&~(self.y==np.inf)&~(self.yerr==np.inf)&~(self.xerr==np.inf)
+        mask = ~(abs(self.x)==np.inf)&~(abs(self.y)==np.inf)&~(abs(self.yerr)==np.inf)&~(abs(self.xerr)==np.inf)
         self.mask_not_inf = mask
         self.x = self.x[mask]
         self.y = self.y[mask]
@@ -2837,7 +2837,9 @@ class tableXY(object):
             
             for k,s in enumerate(spe):
                 shift[species==s] += val_median[k]
-                
+        else:
+            shift += np.nanmedian(self.y)
+        
         newy = self.y -  shift
 
         self.species = species            
@@ -3125,6 +3127,8 @@ class tableXY(object):
         period = 1/self.freq[::-1]
         v1 = self.power[::-1]
         v2 = table_xy2.power[::-1]
+        ymax = np.max([np.max(v1),np.max(v2)])*1.1
+        
         mask_sup = v1>v2
         mask_inf = v1<v2
 
@@ -3157,6 +3161,7 @@ class tableXY(object):
         plt.plot(period,c4,color=color2,zorder=zorder_min+1,alpha=alpha)
         plt.plot(period,c2,color=color1,zorder=zorder_min+2,alpha=alpha)
         plt.plot(period,c3,color=color2,zorder=zorder_min+3,alpha=alpha)
+        plt.ylim(0,ymax)
         
     def fill_between(self, color='k', alpha=0.2, borders=True, label=None, oversampling=1, scale='lin'):
         
@@ -3180,7 +3185,7 @@ class tableXY(object):
         
         '''For the mask give either the first and last index in a list [a,b] or the mask boolean'''
         
-        if (len(self.x)>10000)&(ls==''):
+        if (len(self.x)>10000)&(ls=='')&(modulo is None):
             ls='-'
         
         if species is None:
@@ -3691,6 +3696,34 @@ class tableXY(object):
     def convert_x(self,fmt='decimalyear'):
         if fmt=='decimalyear':
             self.x = Time.Time(self.x,format='mjd').decimalyear
+
+    def knee_detection(self,Plot=False): #from Satopää et al., 2011 [2] https://towardsdatascience.com/detecting-knee-elbow-points-in-a-graph-d13fc517a63c
+        copy = self.copy()
+        
+        copy.x = myf.transform_min_max(copy.x)
+        copy.y = myf.transform_min_max(copy.y)
+       
+        if copy.y[0]>copy.y[-1]:
+            copy.y = 1-copy.y
+        
+        d1 = abs(copy.y - copy.x)
+        d2 = abs(copy.x-copy.y)/np.sqrt(2)
+        
+        diff_curve = d1-d2
+        knee = np.argmax(diff_curve)
+        
+        if Plot:
+            plt.subplot(3,1,1)
+            plt.plot(copy.x,copy.y)
+            plt.subplot(3,1,2)
+            plt.plot(copy.x,diff_curve)
+            plt.axvline(x=copy.x[knee])
+            plt.subplot(3,1,3)
+            self.plot()
+            plt.axvline(x=self.x[knee])
+        
+        return knee, self.x[knee]
+
             
     def extend_clustering(self,extend):
         diff = abs(np.diff(self.y))
@@ -3729,8 +3762,9 @@ class tableXY(object):
                             np.hstack([self.yerr[0:idx1],self.yerr[idx2:]]))
         return chunk
     
-    def baseline_oversampled(self):
-        return tableXY(np.linspace(np.nanmin(self.x),np.nanmax(self.x),1000),np.zeros(1000))
+    def baseline_oversampled(self,oversampling=1000):
+        return tableXY(np.linspace(np.nanmin(self.x),np.nanmax(self.x),oversampling),np.zeros(oversampling))
+
     
     def substract_rolling(self, windows, replace=False, Draw=False,color='r',color_p='k',lw=1.5,alpha_p=0.5,zorder=10):
         model = np.ravel(pd.DataFrame(self.y).rolling(windows,center=True,min_periods=1).quantile(0.5))
@@ -3806,6 +3840,8 @@ class tableXY(object):
     
     def substract_polyfit(self, deg, replace=False, Draw=False):
         model = None
+        self.replace_nan()
+        
         if sum(self.yerr):
             w = 1/(self.yerr+np.max(self.yerr[self.yerr!=0])*100)**2
             if len(np.unique(self.yerr))==1:
@@ -5187,8 +5223,9 @@ class tableXY(object):
             self.yerr = self.yerr[mask]
             self.xerr = self.xerr[mask]
         
-    def replace_outliers(self, m=2, kind='inter'):
-        mask = rm_out(self.y, m=m, kind=kind)[0]
+    def replace_outliers(self, m=2, kind='inter',mask=None):
+        if mask is None:
+            mask = rm_out(self.y, m=m, kind=kind)[0]
         self.mask = mask
         num = np.arange(len(self.x))[~mask]
         for j in num:
@@ -5199,12 +5236,13 @@ class tableXY(object):
             else:
                 self.y[j] = 0.5*(self.y[j+1]+self.y[j-1])
     
-    def fft(self,Plot=False):
+    def fft(self,Plot=False,verbose=True):
         dx = np.unique(np.round(np.diff(self.x),4))
         self.power = np.fft.fft(self.y)
         dstep = np.unique(np.diff(self.x))
-        if len(dstep)!=1:
-            print('WARNING not equidistant in x')
+        if (len(dstep)!=1):
+            if verbose:
+                print('WARNING not equidistant in x')
             dstep = np.median(np.diff(self.x))
         self.freq = np.fft.fftfreq(len(self.y))/dstep
         self.sig_fft = tableXY(1/self.freq[1:len(self.freq)//2],abs(self.power)[1:len(self.freq)//2])
@@ -5505,7 +5543,7 @@ class tableXY(object):
                 list = list+[[np.nan]*5]*int(box/2)
             self.rolling_values = pd.DataFrame(np.array(list), columns=['slope','intercept', 'Rcorr', 'pval','err_slope'])
     
-    def periodogram_l1(self, starname='', dataset_name='', photon_noise=0, max_n_significant=9, p_min=2, text_output=1, fap_min = -3, method_signi=['fap','evidence_laplace'],sort_val='log10faps',species=None):
+    def periodogram_l1(self, starname='', dataset_name='', photon_noise=0, max_n_significant=9, p_min=2, Plot=True, text_output=1, fap_min = -3, method_signi=['fap','evidence_laplace'],sort_val='log10faps',species=None, verbose=True):
         """Based on Nathan code"""
         c = l1periodogram_v1.l1p_class(self.x,self.y)
         sigmaW = photon_noise #We add in quadrature 1 m/s to the nominal HARPS errors 
@@ -5535,7 +5573,8 @@ class tableXY(object):
         
         c.l1_perio(numerical_method='lars',
                    significance_evaluation_methods = method_signi,
-                   max_n_significance_tests=max_n_significant,verbose=text_output)
+                   max_n_significance_tests=max_n_significant,verbose=text_output,
+                   plot_output = Plot)
         
         signi = len(c.significance['log10faps']<-3)
         
@@ -5554,6 +5593,7 @@ class tableXY(object):
         c.peakvalues = c.peakvalues[:signi]
         c.significance['log10_bayesf_laplace'] = c.significance['log10_bayesf_laplace']
         c.significance['log10faps'] = c.significance['log10faps']
+        self.l1_nb_nonull = np.sum(c.smoothed_solution!=0)
         
         if len(c.omega_peaks)>0:
             sort = np.argsort(c.significance['log10faps'])
@@ -5565,22 +5605,24 @@ class tableXY(object):
             matrix = np.array([2*np.pi/c.omega_peaks, amp, phi, c.peakvalues, c.significance['log10faps'],c.significance['log10_bayesf_laplace']]).T
             dataframe = pd.DataFrame(matrix,index=['peak%.0f'%(k) for k in range(1,1+signi)],columns=['period','amp','phi','peak_amp','log10faps','log10_bayesf_laplace'])
             dataframe = dataframe.sort_values(by='log10faps')
-            print('\nTABLE OF SIGNALS')
-            print('----------------')
-            print(dataframe[['period','peak_amp','log10faps','log10_bayesf_laplace']])
-            print('\nTABLE OF SIGNALS SIGNIFICANT (FAP < %.1f%%)'%(10**(2+fap_min)))
-            print('----------------------------')
-            print(dataframe.loc[dataframe['log10faps']<fap_min,['period','peak_amp','log10faps','log10_bayesf_laplace']])      
-            print('\nPARAMETERS OF SIGNALS SIGNIFICANT (FAP < %.1f%%)'%(10**(2+fap_min)))
-            print('----------------------------')
-            print(dataframe.loc[dataframe['log10faps']<fap_min,['period','amp','phi','log10faps']])      
+            if verbose:
+                print('\nTABLE OF SIGNALS')
+                print('----------------')
+                print(dataframe[['period','peak_amp','log10faps','log10_bayesf_laplace']])
+                print('\nTABLE OF SIGNALS SIGNIFICANT (FAP < %.1f%%)'%(10**(2+fap_min)))
+                print('----------------------------')
+                print(dataframe.loc[dataframe['log10faps']<fap_min,['period','peak_amp','log10faps','log10_bayesf_laplace']])      
+                print('\nPARAMETERS OF SIGNALS SIGNIFICANT (FAP < %.1f%%)'%(10**(2+fap_min)))
+                print('----------------------------')
+                print(dataframe.loc[dataframe['log10faps']<fap_min,['period','amp','phi','log10faps']])      
             
             self.l1_table = dataframe.loc[dataframe['log10faps']<fap_min,['period','peak_amp','amp','phi','log10faps']]
-        
-            c.plot_with_list(sum(dataframe['log10faps']<fap_min), significance_values = 'log10faps', save = True, sort_val=sort_val)
+            if Plot:
+                c.plot_with_list(sum(dataframe['log10faps']<fap_min), significance_values = 'log10faps', save = True, sort_val=sort_val)
         else:
             self.l1_table = {'period':[None]}
-            c.plot_with_list(1, significance_values = 'log10faps', save = True, sort_val=sort_val)
+            if Plot:
+                c.plot_with_list(1, significance_values = 'log10faps', save = True, sort_val=sort_val)
 
     def diff_phase_periodogram(self, vec2, detrend_deg=2, Plot=True):
         self.substract_polyfit(detrend_deg,replace=False,Draw=False)
@@ -5711,12 +5753,20 @@ class tableXY(object):
         new_grid = np.arange(np.min(power_spectrum.x),np.max(power_spectrum.x),width_peak_freq/20)
         power_spectrum.interpolate(new_grid=new_grid)
         power_spectrum2.interpolate(new_grid=new_grid)
-        
     
-    def periodogram(self, nb_perm=1, ofac=10, p_min=0, detrending=0, p_max=None, Plot=True, Norm=False, norm_val=False, supp=None, infos=False, level=None, color='k', ls='-', P_th=None, axis_y_var='p', axis_x_var='p', xlim=[None,None], all_outputs=False, compute_fap_levels=True, legend='', zorder=1, lw=1.5, alpha=1, warning=True):
+    def hist_weighted(self):
+        v = []
+        for mean,sigma in zip(self.y,self.yerr):
+            values = sigma*np.random.randn(100)+mean
+            v.append(values)
+        v = np.array(v)
+        v = np.ravel(v)
+        return v
+        
+    def periodogram(self, nb_perm=1, ofac=10, p_min=0, detrending=0, p_max=None, Plot=True, Norm=False, norm_val=False, supp=None, infos=False, level=None, color='k', ls='-', P_th=None, axis_y_var='p', axis_x_var='p', xlim=[None,None], all_outputs=False, compute_fap_levels=True, legend='', zorder=1, lw=1.5, alpha=1, warning=True, planet = [0,365.25,2*np.pi]):
         """nb_perm : number of permutation for the bootsrap and fap, ofac : oversampling for the plot, Plot : Draw the plot, Norm : normalise by the 1% fap value"""
         self.supress_nan()
-                
+        
         if supp!=None:
             self.x_backup = self.x.copy()
             self.y_backup = self.y.copy()
@@ -5775,8 +5825,11 @@ class tableXY(object):
             self.substract_polyfit(detrending,replace=False)
             self2 = self.detrend_poly.copy()
             
-        if cond>5:
-
+        if planet[0]:
+            self2.y += planet[0]*np.sin(2*np.pi*self2.x/planet[1]+planet[2])
+            P_th = planet[1]
+            
+        if cond>5:            
             pXav = f3.periodogram(self2.x, self2.y, sig_y = self2.yerr, ofac = ofac, all_outputs = all_outputs, min_P=p_min)
             
             n = []
@@ -5965,7 +6018,7 @@ class tableXY(object):
             if warning:
                 print('Less than 6 points, periodogram not launched')
         
-    def periodogram_keplerian_hierarchical(self, periods=[None], fap=0.1, photon_noise=0, nb_planet=8, Plot=False, deg=0, ms = 1, ofac=20, p_min=0, model=False, auto_long_trend=True, fit_ecc=True, mcmc=False, jitter=0.8, periodic=True, species=None, min_nb_cycle=1.5, nb_bins=9, capsize=0, eval_on_t=None, transits=None, sort_planets=True,known_planet=[]):
+    def periodogram_keplerian_hierarchical(self, periods=[None], fap=0.1, photon_noise=0, nb_planet=8, Plot=False, deg=0, ms = 1, rs=1, ofac=20, p_min=0, model=False, auto_long_trend=True, fit_ecc=True, mcmc=False, jitter=0.8, periodic=True, species=None, min_nb_cycle=1, nb_bins=9, capsize=0, eval_on_t=None, transits=None, sort_planets=True,known_planet=[]):
         
         
         yerr = np.sqrt(self.yerr**2+photon_noise**2)
@@ -6079,7 +6132,7 @@ class tableXY(object):
                 al = myf.calculate_alias(per_max)[0][0:-2]
                 for l in al:
                     plt.axvline(x=l, color='r', alpha=0.1)
-                plt.scatter(per_max, pow_max,color='r',marker='o',zorder=100,label='FAP=%.2e'%(fap_max))
+                plt.scatter(per_max, pow_max, color='r', marker='o', zorder=100, label=r'$\log_{10}$(FAP) = %.1f'%(np.log10(fap_max)-2))
                 plt.legend(loc=1)  
             
             
@@ -6233,6 +6286,12 @@ class tableXY(object):
         
         self.rv_model = rv_model
         self.nb_planet_fitted = nb_planet
+        self.model_periods = P_kep
+        
+        proba_transit = [np.round(myf.transit_proba(i,Rs=rs,Ms=ms),2) for i in P_kep]
+        dt_transit = [np.round(myf.transit_circular_dt(i,Rs=rs,Ms=ms),2) for i in P_kep]
+        Tc = np.array(epoch_rjd)-np.array(la0_kep)/360*np.array(P_kep)+np.array(P_kep)/4 #empirical formulae
+                
         self.planet_fitted = pd.DataFrame({'p':P_kep, 'p_std':0,
                                            'k':K_kep, 'k_std':0,
                                            'e':e_kep, 'e_std':0,
@@ -6242,7 +6301,10 @@ class tableXY(object):
                                            'a':a_kep, 'a_std':0,
                                            'mass':mass_kep, 'mass_std':0,
                                            'i':[0]*len(P_kep), 'i_std':0,
-                                           't0':epoch_rjd
+                                           't0':epoch_rjd,
+                                           'proba_t':proba_transit,
+                                           'dt':dt_transit,
+                                           'Tc':Tc
                                            })
         
         if sort_planets:
@@ -6276,11 +6338,15 @@ class tableXY(object):
 
         if eval_on_t is not None:
             self.model_eval_t = np.zeros(len(eval_on_t))
+            self.model_eval_t_i = []
             for kpla in range(nb_planet):
                 if spleaf_version=='old':
                     self.model_eval_t += rv_model.kep[kpla].rv(eval_on_t - epoch_rjd) 
+                    self.model_eval_t_i.append(tableXY(eval_on_t,rv_model.kep[kpla].rv(eval_on_t - epoch_rjd)))
                 else:
                     self.model_eval_t += rv_model.keplerian[str(kpla)].rv(eval_on_t - epoch_rjd) 
+                    self.model_eval_t_i.append(tableXY(eval_on_t,rv_model.keplerian[str(kpla)].rv(eval_on_t - epoch_rjd)))
+                
                     
         if Plot:
             if i:
@@ -6631,6 +6697,7 @@ class tableXY(object):
         for kpla in table_keplerian.index:
             nkep+=1
             period = table_keplerian.loc[kpla,'P']
+            #print(table_keplerian.loc[kpla])
             if epoch_rjd is None:
                 try:
                     t0 = table_keplerian.loc[kpla,'t0']
@@ -6648,8 +6715,11 @@ class tableXY(object):
                 rv_model.add_keplerian_from_period(period)
                 rv_model.set_keplerian_param(f'{rv_model.nkep-1}', param=params2[:-1])
                 rv_model.set_param(np.array(table_keplerian.loc[kpla][params2[:-1]]), rv_model.fit_param)
-                model_keplerian += rv_model.keplerian[str(nkep-1)].rv(self.x - t0) 
-        
+                model_keplerian += rv_model.keplerian['0'].rv(self.x - t0) 
+                #print(rv_model.keplerian['0'].get_value())
+                #plt.subplot(len(table_keplerian.index),1,nkep)
+                #plt.plot(self.x,rv_model.keplerian['0'].rv(self.x - t0),marker='.')
+
         self.model_keplerian = model_keplerian
         self.keplerian = tableXY(self.x,model_keplerian)
         self.keplerian.null()
@@ -6869,10 +6939,17 @@ class tableXY(object):
     
     def night_stack(self,db=0,bin_length=1,replace=False):
         
-        weights = 1/self.yerr**2
-        
         jdb = self.x
         vrad = self.y
+        vrad_std = self.yerr.copy()
+
+        if not np.sum(vrad_std): #to avoid null vector
+            vrad_std+=1    
+
+        vrad_std[vrad_std==0] = np.nanmax(vrad_std[vrad_std!=0]*10)    
+        
+        weights = 1/(vrad_std)**2
+
 
         if bin_length:
             groups = ((jdb-db)//bin_length).astype('int')
@@ -7085,7 +7162,17 @@ class tableXY(object):
         self.gauss_cov = pcov
         print('chi2 : %.3f'%(sum((selfy-yfit)**2)))
    
-            
+    def underpolate(self,factor,replace=True):
+        x = self.x[::factor]
+        y = self.y[::factor]
+        xerr = self.xerr[::factor]
+        yerr = self.yerr[::factor]
+        
+        if replace:
+            self.x, self.y, self.xerr, self.yerr = x, y, xerr, yerr
+        else:
+            self.underpolated = tableXY(x,y,xerr,yerr)
+     
     def interpolate(self, new_grid = 'auto', method = 'cubic', replace = True, interpolate_x=True, fill_value='extrapolate', scale='lin'):
         
         if scale!='lin':
@@ -7190,3 +7277,296 @@ class tableXY(object):
         if sigma!=False:
             self.env = np.array([np.std(self.y[j-box:j+box])*sigma for j in grille])
 
+    def gp_derivative(self,kernel=['M52', 1, 3.0], Plot=True):
+        if cwd.split('/')[2]=='cretignier':
+            self.gp_interp(kernel=kernel, Plot=Plot)
+            new_vec = np.gradient(self.gp_interpolated.y)/np.gradient(self.gp_interpolated.x)
+            new_vec = tableXY(self.gp_interpolated.x,new_vec,np.sqrt(np.roll(self.gp_interpolated.yerr,1)**2+np.roll(self.gp_interpolated.yerr,-1)**2))
+    
+            new_vec.interpolate(new_grid=self.x,replace=False)
+    
+            new_vec.yerr /= myf.mad(new_vec.interpolated.y) ; new_vec.yerr *= myf.mad(self.y)        
+            new_vec.y -= np.median(new_vec.y) ; new_vec.y /= myf.mad(new_vec.interpolated.y)
+            new_vec.y *= myf.mad(self.y) ; new_vec.y += np.median(self.y)
+            
+            plt.plot(new_vec.x,new_vec.y,color='b')
+            plt.fill_between(new_vec.x,new_vec.y+new_vec.yerr,new_vec.y-new_vec.yerr,color='b',alpha=0.3)
+            self.gp_gradient = new_vec.interpolated
+        else:
+            self.gp_gradient = self.copy()
+        
+        
+
+    def gp_interp(self, kernel=['M52', 1, 3.0], Plot=True):
+        if cwd.split('/')[2]=='cretignier':
+            import george
+            dt = np.nanmedian(np.diff(self.x))
+            over = int(10*(np.nanmax(self.x)-np.nanmin(self.x))/dt)
+            new_vec = self.baseline_oversampled(oversampling=over)      
+            
+            if kernel[0]=='M52':
+                k = kernel[1] * george.kernels.Matern52Kernel(kernel[2])
+                
+            gp = george.GP(k)
+            p0 = gp.get_parameter_vector()
+            
+            def neg_ln_like(p):
+                gp.set_parameter_vector(p)
+                return -gp.log_likelihood(zobs)
+                
+            def grad_neg_ln_like(p):
+                gp.set_parameter_vector(p)
+                return -gp.grad_log_likelihood(zobs)
+            
+            gp.compute(self.x,yerr=self.yerr)
+            zobs = self.y
+            result = minimize(neg_ln_like, p0, jac=grad_neg_ln_like)
+            gp.set_parameter_vector(result.x)
+            new_vec.y, var = gp.predict(zobs,new_vec.x,return_var=True,return_cov=False)
+            s = np.sqrt(var)     
+            new_vec.yerr = s
+            self.gp_interpolated = new_vec
+            if Plot:
+                #self.plot()
+                new_vec.plot(ls='-',color='r')
+                plt.fill_between(new_vec.x,new_vec.y+s,new_vec.y-s,color='r',alpha=0.3,lw=0)  
+                
+    def gp_interp2d(self,zobs,zerr=None, coupled=True, grid=1000, Plot=False):
+        if cwd.split('/')[2]=='cretignier':
+            import george        
+            
+            if zerr is None:
+                zerr = np.ones(len(zobs))*myf.mad(zobs)/10
+            
+            X2D,Y2D = np.meshgrid(np.linspace(np.nanmin(self.x),np.nanmax(self.x),grid),np.linspace(np.nanmin(self.y),np.nanmax(self.y),grid))
+            
+            if coupled:
+                k = 1.0 * george.kernels.ExpSquaredKernel(1.0, ndim = 2, axes = 0) * george.kernels.ExpSquaredKernel(1.0, ndim = 2, axes = 1) 
+            else:
+                k1 = 1.0 * george.kernels.ExpSquaredKernel(1.0, ndim = 2, axes = 0)
+                k2 = 1.0 * george.kernels.ExpSquaredKernel(1.0, ndim = 2, axes = 1)
+                k = k1 + k2
+            
+            gp = george.GP(k)
+            Xobs = np.array([self.x,self.y]).T
+            gp.compute(Xobs, yerr=zerr)
+            
+            def neg_ln_like(p):
+                gp.set_parameter_vector(p)
+                return -gp.log_likelihood(zobs)
+                
+            def grad_neg_ln_like(p):
+                gp.set_parameter_vector(p)
+                return -gp.grad_log_likelihood(zobs)
+
+            print(gp.get_parameter_vector())
+            res = minimize(neg_ln_like, gp.get_parameter_vector(), jac=grad_neg_ln_like)
+            print(res.x)
+            gp.set_parameter_vector(res.x)
+            Xpred = np.array([X2D.flatten(),Y2D.flatten()]).T
+            zpred = gp.predict(zobs, Xpred, return_var=False, return_cov=False)
+            Z2D = zpred.reshape(X2D.shape)
+            if Plot:
+                plt.scatter(self.x,self.y,c=zobs,cmap='brg',ec='k')
+                plt.contour(X2D,Y2D,Z2D,cmap='brg')
+
+
+    def gp_prot(self, Prot=None, evol=None, gamma=1.0,Plot=True):
+        if cwd.split('/')[2]=='cretignier':
+            import george           
+
+            dt = np.nanmedian(np.diff(self.x))
+            over = int(10*(np.nanmax(self.x)-np.nanmin(self.x))/dt)
+            new_vec = self.baseline_oversampled(oversampling=over)      
+            
+            if Prot is None:
+                self.periodogram(Plot=False)
+                print('[INFO] Highest period = %.1f days'%(self.perio_max))
+                Prot = self.perio_max
+            
+            if evol is None:
+                evol=5*Prot
+                        
+            k = np.var(self.y) * george.kernels.ExpSine2Kernel(log_period=np.log(Prot),gamma=gamma) * george.kernels.ExpSquaredKernel(2 * evol**2)
+            
+            gp = george.GP(k,mean=np.nanmedian(self.y),fit_mean=True)
+            
+            gp.compute(self.x,yerr=self.yerr)
+            p0 = gp.get_parameter_vector()
+            def nll_qp(p):
+                if abs(np.exp(p[-2])-Prot)*100/Prot>10: #10%prior on Prot
+                    return 1e25
+                else:
+                    gp.set_parameter_vector(p)
+                    try:
+                        return -gp.log_likelihood(self.y)
+                    except:
+                        return 1e25
+                
+            def grad_nll_qp(p):
+                if abs(np.exp(p[-2])-Prot)*100/Prot>10:
+                    return np.array([1e25]*len(p))
+                else:
+                    gp.set_parameter_vector(p)
+                    try:
+                        return -gp.grad_log_likelihood(self.y)
+                    except:
+                        return np.array([1e25]*len(p))
+                
+            res=minimize(nll_qp,p0,jac=grad_nll_qp)
+            print('P={}, l_e={}'.format(np.exp(res.x[-2]), np.exp(res.x[-1])/2))
+            self.gp_param_prot = np.exp(res.x[-2])
+            self.gp_param_evol = np.exp(res.x[-1]/2)
+            
+            gp.set_parameter_vector(res.x)
+            gp.compute(self.x,yerr=self.yerr)
+            mu, var = gp.predict(self.y,self.x, return_var=True)
+            s = np.sqrt(var)
+            
+            self.plot()
+            
+            mu, var = gp.predict(self.y, new_vec.x, return_var=True)
+            s = np.sqrt(var)            
+            new_vec.yerr = s
+            new_vec.y = mu
+
+            plt.plot(new_vec.x,mu,'C0-')
+            plt.fill_between(new_vec.x,mu+s,mu-s,color='C0',alpha=0.3,lw=0)  
+
+    def light_curve_plot(self,table_keplerian):
+
+        all_periods = np.array(table_keplerian['p'])
+        all_transit_time = np.array(table_keplerian['Tc'])
+        all_transit_duration = np.array(table_keplerian['dt'])
+
+        lc = self.copy()
+        lc.supress_nan()
+        
+        plt.figure(figsize=(18,6))
+        for count in range(1,1+len(all_periods)):
+            dura = all_transit_duration[count-1]/2
+            p_fold = all_periods[count-1]
+            dura_norm = (dura/24)/p_fold #demi transit
+            
+            tc = all_transit_time[count-1]
+            
+            plt.subplot(1,len(all_periods),count)
+            new_t = ((lc.x - tc%p_fold+p_fold/2)%p_fold)/p_fold
+            new_t = (new_t - 0.5)/dura_norm
+            
+            out_t = abs(new_t)>2 
+            conti = np.mean(lc.y[out_t])
+            plt.scatter(new_t,lc.y-conti,c=lc.x)            
+            plt.xlim(-2.5,2.5)
+            plt.axhline(y=0,color='gray',alpha=0.5,zorder=101)
+    
+    def light_curve_periodogram(self, table_keplerian, std_p=3, nb_period=1000, std_phase=1/18, pts_transit=15, exclude_out=True):
+        
+        all_periods = np.array(table_keplerian['p'])
+        all_transit_time = np.array(table_keplerian['Tc'])
+        all_transit_proba = np.array(table_keplerian['proba_t'])
+        all_transit_duration = np.array(table_keplerian['dt'])
+        
+        table_keplerian2 = table_keplerian.copy()
+        
+        lc = self.copy()
+        lc.supress_nan()
+        
+        model_i = []
+        best_p_i = []
+        best_tc_i = []
+        best_d_i = []
+        plt.figure(figsize=(18,10))
+        for count in range(1,1+len(all_periods)):
+            print(' [INFO] Light_curve_periodogram planet : %.0f'%(count))
+            p,proba,tc,dura = all_periods[count-1],all_transit_proba[count-1],all_transit_time[count-1],all_transit_duration[count-1]
+            freq = 1/p
+            binning_transit = (dura/24)/p/pts_transit
+            all_p_scanned = 1/np.linspace(freq+std_p/100*freq,freq-std_p/100*freq,nb_period)
+            plt.subplot(2,len(all_periods),count)
+            for j in range(2):
+                m1 = []
+                m2 = []
+                tc_corr = []
+                for p_fold in all_p_scanned:
+                    lc.modulo(p_fold,phase_mod=tc%p_fold+p_fold/2,modulo_norm=True)
+                    lc.mod.x-=0.5
+                    lc.mod.clip(min=[-std_phase,None],max=[std_phase,None])
+                    if len(lc.mod.x)>10:
+                        lc.mod.binning(binning_transit)
+                        tc_corr.append(lc.mod.binned.x[np.argmin(lc.mod.binned.y)])
+                        lc.mod.binned.interpolate(new_grid=lc.mod.x,method='linear')
+                        m1.append(np.std(lc.mod.binned.y))
+                        m2.append(np.std(lc.mod.y)/np.std(lc.mod.y-lc.mod.binned.y))
+                    else:
+                        m1.append(0)
+                        m2.append(1)
+                        tc_corr.append(np.nan)
+                    
+                plt.plot(all_p_scanned,m2)            
+                p2 = all_p_scanned[np.argmax(m2)]
+                t2 = tc_corr[np.argmax(m2)]
+                freq = 1/p2
+                std_p2 = 0.5
+                all_p_scanned = 1/np.linspace(freq+std_p2/100*freq,freq-std_p2/100*freq,nb_period)
+            
+            plt.xlabel('Period [days]')
+            plt.title('Best period = %.6f days'%(p2))
+            p_fold = p2
+            best_p_i.append(p2)
+            best_tc_i.append(tc+t2*p2)
+            lc.modulo(p_fold,phase_mod=tc%p_fold+p_fold/2,modulo_norm=True)
+            lc.mod.binning(binning_transit)
+            lc.mod.binned.interpolate(new_grid=lc.mod.x,method='linear') 
+                        
+            model = np.zeros(len(lc.x))
+            model[lc.mod.old_index_modulo] = lc.mod.binned.y
+            
+            if exclude_out:
+                dura_norm = (dura/24)/p_fold #demi transit            
+                new_t = ((lc.x - best_tc_i[-1]%p_fold+p_fold/2)%p_fold)/p_fold
+                new_t = (new_t - 0.5)/dura_norm            
+                out_t = abs(new_t)>2 
+                model[out_t] = np.median(model)
+
+            model_i.append(model)
+            lc.y-=model
+            
+        
+        table_keplerian2['d_transit'] = 0
+        for count in range(1,1+len(all_periods)):
+            dura = all_transit_duration[count-1]/2
+            p_fold = best_p_i[count-1]
+            proba = all_transit_proba[count-1]
+            dura_norm = (dura/24)/p_fold #demi transit
+            
+            tc = best_tc_i[count-1]
+            
+            plt.subplot(2,len(all_periods),count+len(all_periods))
+            lc.y+=model_i[count-1]
+            new_t = ((lc.x - tc%p_fold+p_fold/2)%p_fold)/p_fold
+            new_t = (new_t - 0.5)/dura_norm
+            
+            in_t = abs(new_t)<0.5 
+            out_t = abs(new_t)>2 
+            conti = np.mean(model_i[count-1][out_t])
+            depth = np.mean(model_i[count-1][in_t]-conti)
+            depth_std = np.std(model_i[count-1][in_t])
+            best_d_i.append(depth)
+            
+            plt.title('Depth = %.0f $\pm$ %.0f \n Transit proba = %.1f %%'%(abs(depth),depth_std,proba))
+            plt.scatter(new_t,lc.y-conti,c=lc.x)            
+            plt.scatter(new_t,model_i[count-1]-conti,zorder=100,color='k')
+            lc.y-=model_i[count-1]
+            plt.xlim(-2.5,2.5)
+            plt.axhline(y=0,color='gray',alpha=0.5,zorder=101)
+            
+            if -depth/depth_std>5:
+                table_keplerian2.loc['planet %.0f'%(count),'p'] = p_fold
+                table_keplerian2.loc['planet %.0f'%(count),'Tc'] = tc
+                table_keplerian2.loc['planet %.0f'%(count),'d_transit'] = abs(depth)
+        
+        plt.subplots_adjust(hspace=0.5,top=0.96,left=0.07,right=0.95,bottom=0.11)
+        
+        self.planet_fitted2 = table_keplerian2
+        self.transit_model = model_i

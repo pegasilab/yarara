@@ -66,14 +66,19 @@ if len(sys.argv)>1:
             force_reduction = bool(int(j[1]))   
         elif j[0] == '-o':
             raw_directory = bool(int(j[1]))   
-            
+
 print('\n[INFO] Parameters used : star(%s), instrument(%s), sig_clipping(%.1f), DRS(%s)'%(star, instrument, sigma_clipping, DRS_version))
+
+temporary_solution = False
+if ((instrument[0:5]=='HARPS')&(DRS_version=='new')):
+    temporary_solution = False
+
 
 #also change the import_dace_query function inside YARARA <----
 if DRS_version=='new':
-    dico = {'HARPS03':['HARPS','3.5','/hpcstorage/harps_drs/HARPS/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
-            'HARPS15':['HARPS','3.5','/hpcstorage/harps_drs/HARPS/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
-            'HARPN':['HARPN','2.3.1','/projects/astro/HARPNNEWDRS/DRS-2.3.1/reduced','r.','_'+import_raw.upper()+'_A.fits','1'],
+    dico = {'HARPS03':['HARPS','2.3.1','/projects/astro/HARPSNEWDRS/DRS-2.3.1/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
+            'HARPS15':['HARPS','2.3.1','/projects/astro/HARPSNEWDRS/DRS-2.3.1/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
+            'HARPN':['HARPN','2.3.5','/projects/astro/HARPNNEWDRS/DRS-2.3.5/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
             'ESPRESSO18':['SINGLEHR11','2.2.8-HR11','/hpcstorage/cretigni/ESPRESSO/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
             'ESPRESSO19':['SINGLEHR11','2.2.8-HR11','/hpcstorage/cretigni/ESPRESSO/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
             'CORALIE98':['CORALIE','3.3','/hpcstorage/cretigni/CORALIE/reduced','r.','_'+import_raw.upper()+'_A.fits','0'],
@@ -122,14 +127,34 @@ if not os.path.exists(root+'/Yarara/'+star+'/data/'+import_raw+'/'):
 if not os.path.exists(root+'/Yarara/'+star+'/data/'+import_raw+'/'+instrument+'/'):
     os.system('mkdir '+root+'/Yarara/'+star+'/data/'+import_raw+'/'+instrument+'/')
 
+night_selected = None
+if len(star.split('_N'))>1:
+    night_selected = star.split('_N')[1]
+    night_selected = night_selected[0:4]+'-'+night_selected[4:6]+'-'+night_selected[6:]
+    old_star = star
+    star = star.split('_N')[0]
+    print('\n[INFO] Night %s selected to be reduce for the star %s !'%(night_selected,star))
+
 
 print('------------------------------------------------\n STAR LOADED FROM DACE : %s (%s)\n------------------------------------------------'%(star,instrument))
 
 if star=='Sun':    
-    data_extract = Sun.get_timeseries()
-    data_extract = pd.DataFrame(data_extract)
+    if False:
+        print('[INFO] Read the dynamic solar table by DACE query')
+        data_extract = Sun.get_timeseries()
+        data_extract = pd.DataFrame(data_extract)
+    else:
+        data_extract = pd.read_csv('/hpcstorage/cretigni/Python/Material/Sun_table.csv',index_col=0)
+        data_extract = data_extract.loc[data_extract['rejected']==0]
+        print('[INFO] Read the static solar table')
     data_extract = data_extract.loc[data_extract['obs_quality']>0.90]
     data_extract = data_extract.loc[data_extract['airmass']<2.25] #correction <= 1m/s due to extinction
+    
+    if night_selected is not None:
+        data_extract = data_extract.loc[data_extract['date_night']==night_selected]
+        star = old_star 
+        
+    data_extract['filename'] = np.array([i.replace(':','-') for i in np.array(data_extract['filename'])])
     data_extract['raw_file'] = data_extract['filename']
     data_extract['sindex'] = data_extract['smw']
     data_extract['sindex_err'] = data_extract['smw_err']
@@ -137,13 +162,20 @@ if star=='Sun':
     data_extract['spectroFluxSn50'] = data_extract['sn_order_50']
     data_extract['rjd'] = data_extract['date_bjd']    
     data_extract['bispan'] = data_extract['bis_span']    
-    data_extract['berv'] /= 1000 
+    data_extract['berv'] /= 1000
 
     for k in ['drift_used','haindex','haindex_err','naindex','naindex_err','caindex','caindex_err','bispan_err']:
         data_extract[k] = 0
     data_extract = data_extract.reset_index(drop=True)
 else:
-    data_extract = Spectroscopy.get_timeseries(star)[instrument][drs_version][instrument_mode]
+    if temporary_solution:
+        path_table = '/hpcstorage/dumusque/ESPRESSO_DRS_for_HARPS/extract_FITS_data/'
+        data_extract = myf.convert_to_dace(star,instrument,drs_version,instrument_mode,path_table)
+    else:
+        data_extract = Spectroscopy.get_timeseries(star)[instrument][drs_version][instrument_mode]
+        for kw in list(data_extract.keys()): #some new exotic error with DACE query... 16.11.21
+            if type(kw)==tuple:
+                del data_extract[kw]
 
     if instrument[0:8]=='ESPRESSO':
         if not len(data_extract):
@@ -159,15 +191,20 @@ else:
                 if len(data_extract):
                     print('[INFO] mode %s detected for ESPRESSO drs version %s'%(instrument_mode,drs_version))
 
-        
     data_extract = pd.DataFrame(data_extract)
+    data_extract = data_extract[['rjd','berv','raw_file','drs_qc','spectroFluxSn50','drift_used',
+                    'rv','rv_err','fwhm','fwhm_err','contrast','contrast_err','bispan','bispan_err','rhk','rhk_err',
+                    'sindex','sindex_err']] #,'haindex','haindex_err','naindex','naindex_err','caindex','caindex_err']]
+        
+
 if len(data_extract):
+
     print(' Total number of files found : %.0f'%(len(data_extract)))
     print(' K-IQ clipping will be performed with k = %.1f'%(sigma_clipping))
-
+    
     data_extract['raw_file'] = np.array([i.split('/')[-1] for i in data_extract['raw_file']])
     first = np.where(np.array([i for i in data_extract['raw_file'][0]])=='.')[0]
-
+    
     if DRS_version=='new':
         b1 = first[0]+1
         b2 = first[1]+1
@@ -211,7 +248,7 @@ if len(data_extract):
             vec.masked((vec.y<=sup)&(vec.y>=inf))
 
         vec.night_stack(bin_length=1,replace=False)
-        if sum(abs(vec.stacked.y)):
+        if (sum(abs(vec.stacked.y))!=0)&(len(vec.stacked.y)>1):
             if instrument!='HARPN':
                 vec.stacked.substract_polyfit(5, replace=False, Draw=False)
             else:
@@ -331,13 +368,14 @@ if len(data_extract):
     # =============================================================================
     
     treshold = 1
-    nb_night = len(np.unique(data_extract_selected['night']))
+    nights = np.sort(np.unique(data_extract_selected['night']))
+    nb_night = len(nights)
     nb_files = len(data_extract_selected)
     if (nb_files<treshold)&(not force_reduction):
         print(' [ERROR] Not enough days of observations for the star : %s, current value of %.0f(%.0f) is below the treshold of %.0f days'%(star,nb_files,nb_night,treshold))
     else:
         print(' [INFO] %.0f days of observations (%.0f) for the star : %s'%(nb_night,nb_files,star))
-        
+        print(' [INFO] First night : %s, Last night : %s'%(nights[0],nights[-1]))
         berv = myc.tableXY(data_extract_selected['rjd'],data_extract_selected['berv'].astype('float'))
         rv = myc.tableXY(data_extract_selected['rjd'],data_extract_selected['rv'].astype('float'),data_extract_selected['rv_err'].astype('float'))
         fwhm = myc.tableXY(data_extract_selected['rjd'],data_extract_selected['fwhm'].astype('float'),data_extract_selected['fwhm_err'].astype('float'))
@@ -396,18 +434,21 @@ if len(data_extract):
                                                                       'rhk_err':'sig_rhk',
                                                                       'sindex':'s_mw',
                                                                       'sindex_err':'sig_s',
-                                                                      'haindex':'ha',
-                                                                      'haindex_err':'sig_ha',
-                                                                      'naindex':'na',
-                                                                      'naindex_err':'sig_na',
-                                                                      'caindex':'ca',
-                                                                      'caindex_err':'sig_ca',
+                                                                      #'haindex':'ha',
+                                                                      #'haindex_err':'sig_ha',
+                                                                      #'naindex':'na',
+                                                                      #'naindex_err':'sig_na',
+                                                                      #'caindex':'ca',
+                                                                      #'caindex_err':'sig_ca',
                                                                       'bispan':'bis_span',
                                                                       'bispan_err':'sig_bis_span',
                                                                       'drift_used':'drift_used'
                                                                       })
         
-        kw = ['rjd', 'vrad', 'svrad', 'fwhm', 'sig_fwhm', 'bis_span', 'sig_bis_span', 'contrast', 'sig_contrast', 's_mw', 'sig_s', 'ha', 'sig_ha', 'na', 'sig_na', 'ca', 'sig_ca', 'rhk', 'sig_rhk', 'berv','drift_used']
+        kw = ['rjd', 'vrad', 'svrad', 'fwhm', 'sig_fwhm', 'bis_span', 'sig_bis_span', 'contrast', 'sig_contrast', 's_mw', 'sig_s', 
+        #'ha', 'sig_ha', 'na', 'sig_na', 'ca', 'sig_ca', 
+        'rhk', 'sig_rhk', 'berv','drift_used']
+
         data_extract_selected = data_extract_selected.reset_index(drop=True)
         data_extract_selected['drift_used'] = data_extract_selected['drift_used'].astype('float')*use_drift
         data_extract_selected = data_extract_selected[kw+list(np.setdiff1d(np.array(list(data_extract_selected.keys())),np.array(kw)))]
@@ -427,7 +468,7 @@ if len(data_extract):
         
         n = np.array(data_extract_selected['night'])
         f = np.array(data_extract_selected['dace_data'])
-         
+        
         f = fileroot_format(f,replace_code)
         complete_fileroot = raw_directory+'/'+n+'/'+pre_ext+f+post_ext
         for number in np.arange(len(complete_fileroot)):
@@ -439,7 +480,7 @@ if len(data_extract):
         file_exist = []
         night_saved = []
         fileroot_saved = []
-        counter=0
+        counter = 0
         #for index in tqdm(np.array(data_extract_selected.index)):
         for f,old_night,index in zip(np.array(data_extract_selected['fileroot']),np.array(data_extract_selected['night']),np.array(data_extract_selected.index)):
             #f = data_extract_selected.loc[index,'fileroot']
@@ -502,8 +543,7 @@ if len(data_extract):
                 
         data_extract_selected.to_csv(directory_to_yarara+'/%s_%s_DRS-%s.rdb'%(star,instrument,drs_version.replace('.','-')),sep='\t',index=False, float_format='%.6f')
         
-        print(' [INFO] file saved '%(directory_to_yarara+'/%s_%s_DRS-%s.rdb'%(star,instrument,drs_version.replace('.','-'))))
-        
+        print(' [INFO] file saved %s'%(directory_to_yarara+'/%s_%s_DRS-%s.rdb'%(star,instrument,drs_version.replace('.','-'))))
     
     plt.close('all')
 else:

@@ -65,20 +65,20 @@ root = '/'.join(cwd.split('/')[:-1])
 
 def print_iter(verbose):
     if verbose==-1:
-        print(Fore.BLUE + " ==============================================================================\n [INFO] Extracting data with RASSINE...\n ==============================================================================\n"+ Fore.WHITE)
+        print(Fore.BLUE + " ==============================================================================\n [INFO] Extracting data with RASSINE...\n ==============================================================================\n"+ Fore.RESET)
     elif verbose==0:
-        print(Fore.BLUE + " ==============================================================================\n [INFO] Preprocessing data with RASSINE...\n ==============================================================================\n"+ Fore.WHITE)
+        print(Fore.BLUE + " ==============================================================================\n [INFO] Preprocessing data with RASSINE...\n ==============================================================================\n"+ Fore.RESET)
     elif verbose==1:
-        print(Fore.GREEN + " ==============================================================================\n [INFO] First iteration is beginning...\n ==============================================================================\n"+ Fore.WHITE)
+        print(Fore.GREEN + " ==============================================================================\n [INFO] First iteration is beginning...\n ==============================================================================\n"+ Fore.RESET)
     elif verbose==2:
-        print(Fore.YELLOW + " ==============================================================================\n [INFO] Second iteration is beginning...\n ==============================================================================\n"+ Fore.WHITE)
+        print(Fore.YELLOW + " ==============================================================================\n [INFO] Second iteration is beginning...\n ==============================================================================\n"+ Fore.RESET)
     elif verbose==42:
-        print(Fore.YELLOW + " ==============================================================================\n [INFO] Merging is beginning...\n ==============================================================================\n"+ Fore.WHITE)
+        print(Fore.YELLOW + " ==============================================================================\n [INFO] Merging is beginning...\n ==============================================================================\n"+ Fore.RESET)
     else:
         hours = verbose // 3600 % 24
         minutes = verbose // 60 % 60
         seconds = verbose % 60
-        print(Fore.RED + " ==============================================================================\n [INFO] Intermediate time : %.0fh %.0fm %.0fs \n ==============================================================================\n"%(hours,minutes,seconds)+ Fore.WHITE)
+        print(Fore.RED + " ==============================================================================\n [INFO] Intermediate time : %.0fh %.0fm %.0fs \n ==============================================================================\n"%(hours,minutes,seconds)+ Fore.RESET)
 
 
 def move_extract_dace(path, instrument='HARPS'):
@@ -142,7 +142,7 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
     instruments = []
     for ins in instrument:
         loc_files = glob.glob(path+'*'+ins+'*.rdb')
-        if (not len(loc_files))|(force_reduction):
+        if (not bool(len(loc_files)))|(bool(force_reduction)): #only redo a dace query if 
             if os.path.exists(path+'/spectroDownload'):
                 out_dir = '0'
             else:
@@ -154,7 +154,7 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
             elif ins=='HARPS03':
                 print(' python produce_dace_summary.py -s %s -i HARPS03 -c %.1f -D %s -f %s -o %s \n'%(starname, m ,drs_version, str(force_reduction),out_dir))
                 os.system('python produce_dace_summary.py -s %s -i HARPS03 -c %.1f -D %s -f %s -o %s'%(starname, m ,drs_version, str(force_reduction),out_dir))
-            elif ins=='HARPS03':
+            elif ins=='HARPS15':
                 print(' python produce_dace_summary.py -s %s -i HARPS15 -c %.1f -D %s -f %s -o %s \n'%(starname, m ,drs_version, str(force_reduction),out_dir))
                 os.system('python produce_dace_summary.py -s %s -i HARPS15 -c %.1f -D %s -f %s -o %s'%(starname, m, drs_version, str(force_reduction),out_dir))
             elif ins=='CORALIE':
@@ -180,7 +180,6 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
     
     if not len(dico):
         print(' [ERROR] Summary table is empty or not found')
-        return 
     
     
     dico = dico.sort_values(by='rjd')
@@ -191,7 +190,7 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
         Dico['HARPS'] =  dico.loc[dico['instrument']=='HARPS']
     if 'HARPS03' in instruments:
         Dico['HARPS03'] =  dico.loc[dico['instrument']=='HARPS03']
-    if 'HARPS' in instruments:
+    if 'HARPS15' in instruments:
         Dico['HARPS15'] =  dico.loc[dico['instrument']=='HARPS15']
     if 'CORALIE' in instruments:
         Dico['CORALIE'] =  dico.loc[dico['instrument']=='CORALIE']
@@ -265,7 +264,9 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
         stop = False
         dico_match = Dico[k].copy()
         dico_match['lamp_offset'] = 0
-        dico_match['model'] = 0
+        
+        if 'model' not in dico_match.keys():
+            dico_match['model'] = 0
         
         if len(all_files)!=0:
             print('Number of new files to reduce : %.0f'%(len(all_files)))
@@ -467,10 +468,10 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
                         vrad.binning(bin_width=1)
                         rv_span = np.nanpercentile(vrad.binned.y*1000,97.5) - np.nanpercentile(vrad.binned.y*1000,2.5)
                         if rv_span>=50:
-                            print(Fore.YELLOW + ' [WARNING] RV span too large (binary?,large amplitude planet?, transit?), get a look on the model selected (2) : current value of %.1f m/s'%(rv_span) + Fore.WHITE)
+                            print(Fore.YELLOW + ' [WARNING] RV span too large (binary?,large amplitude planet?, transit?), get a look on the model selected (2) : current value of %.1f m/s'%(rv_span) + Fore.RESET)
                             degree = 2
                         elif (rv_span>10)&(rv_span<50):
-                            print(Fore.YELLOW + ' [WARNING] RV span large (ins.offset?,binary?,large amplitude planet?, transit?), get a look on the model selected (0) : current value of %.1f m/s'%(rv_span) + Fore.WHITE)                    
+                            print(Fore.YELLOW + ' [WARNING] RV span large (ins.offset?,binary?,large amplitude planet?, transit?), get a look on the model selected (0) : current value of %.1f m/s'%(rv_span) + Fore.RESET)                    
                             degree = 0
                         else:
                             print(' [INFO] No trend detected in RV, get a look on the model selected (0) : current value of %.1f m/s'%(rv_span))
@@ -489,7 +490,8 @@ def extract_table_dace(starname, instrument=['HARPS'], update_table=False, auto_
                         model += vrad.y
             
             if starname=='Sun':
-                ephemerides = sun_model(match_x = np.array(jdb_dace))
+                ephemerides = myc.tableXY(np.array(jdb_dace),np.array(dico_match['model']).astype('float'))
+                #ephemerides = sun_model(match_x = np.array(jdb_dace))
                 model += ephemerides.y/1000
             
             drift_used = dico_match['drift_used'].astype('float')/1000
@@ -958,7 +960,7 @@ class spec_time_series(object):
         directory = self.directory
         
         files = glob.glob(directory+'RASSI*.p')
-        if len(files)==0:
+        if len(files)<=1: #1 when merged directory
             print('No RASSINE file found in the directory : %s'%(directory))
             if return_name:
                 return [], []
@@ -1010,53 +1012,80 @@ class spec_time_series(object):
             mask[:,0] = myf.doppler_r(mask[:,0],self.star_info['Rv_sys']['fixed']*1000)[0]
         self.ccf_mask_harps = mask
 
-    def import_photometry(self):
+    def import_photometry(self,which=None,periodogram=False):
+        """which : Kepler, TESS, K2"""
         directory = self.dir_root
         directory = '/'.join(directory.split('/')[0:-3])+'/photometry'
-        table = pd.read_csv(glob.glob(directory+'/*'+self.starname+'*')[0])
-        vec = myc.tableXY(table[table.columns[0]],table[table.columns[1]])
-        self.debug = vec
-        try:
-            vec.y -= table[table.columns[2]]
-        except:
-            pass
+
+        lightcurve = False
         
-        vec.split_seasons()
-        vector = []
-        for k in vec.seasons_splited:
-            k.substract_polyfit(2,replace=True)
-            vector.append(list(k.y))
+        if which is None:
+            which = ['Kepler','K2','TESS']
+        else:
+            which = [which]
         
-        vector = myc.tableXY(vec.x,np.hstack(vector))
+        for w in which:
+            files = glob.glob(directory+'/*'+self.starname+'*'+w+'*')
             
-        vec.periodogram(Plot=False) 
-        
-        vec.periodogram_keplerian_hierarchical(Plot=True,periods=[vec.perio_max],fit_ecc=False)
-        plt.close('all')
-        
-        plt.figure(2,figsize=(18,6))
-        plt.subplot(2,1,1)
-        vec.plot()
-        vector.plot(color='r')
-        plt.xlabel('Time [days]',fontsize=14)
-        plt.ylabel(r'$\Delta$ mag',fontsize=14)
-        
-        plt.subplot(2,1,2)
-        vec.periodogram(Norm=True,legend='raw')
-        if vec.perio_max>100:
-            vec.rv_residues.periodogram(color='b',Norm=True,legend='kep fitted')
-        vector.periodogram(color='r',Norm=True,legend='seasons detrending')
-        plt.legend()
-        plt.xlim(2,2000)     
-        plt.subplots_adjust(top=0.95,left=0.10,right=0.95,hspace=0.3)
-        plt.savefig(self.dir_root+'IMAGES/Photometry.pdf')
+            if len(files):
+                table = pd.read_csv(files[0],index_col=0)
+                vec = myc.tableXY(table[table.columns[0]],table[table.columns[1]])
+                try:
+                    vec.y -= table[table.columns[2]] #correction ?
+                except:
+                    pass
+                lightcurve = True
+            else:
+                database = pd.read_pickle(root+'/Python/database/LIGHTCURVE/lk_database.p')
+                if self.starname in database.keys():
+                    database = database[self.starname]
+                    if w in database.keys():
+                        vec = database[w]                    
+                        lightcurve = True
+            if lightcurve:
+                print('\n [INFO] Lightcurve found for instrument : %s \n'%(w))
+                break
 
-        plt.figure()
-        vector.periodogram_rolling(prot_estimated=vector.perio_max)
-        plt.savefig(self.dir_root+'IMAGES/Photometry2.jpg')
-
-        self.photometry = vec
+        if lightcurve:
+            vec.split_seasons()
+            vector = []
+            for k in vec.seasons_splited:
+                k.substract_polyfit(2,replace=True)
+                vector.append(list(k.y))
+            
+            vector = myc.tableXY(vec.x,np.hstack(vector))
+                
+            if periodogram:
+                vec.periodogram(Plot=False) 
+                
+                vec.periodogram_keplerian_hierarchical(Plot=True,periods=[vec.perio_max],fit_ecc=False)
+                plt.close('all')
+                
+                plt.figure(2,figsize=(18,6))
+                plt.subplot(2,1,1)
+                vec.plot()
+                vector.plot(color='r')
+                plt.xlabel('Time [days]',fontsize=14)
+                plt.ylabel(r'$\Delta$ mag',fontsize=14)
+                
+                plt.subplot(2,1,2)
+                vec.periodogram(Norm=True,legend='raw')
+                if vec.perio_max>100:
+                    vec.rv_residues.periodogram(color='b',Norm=True,legend='kep fitted')
+                vector.periodogram(color='r',Norm=True,legend='seasons detrending')
+                plt.legend()
+                plt.xlim(2,2000)     
+                plt.subplots_adjust(top=0.95,left=0.10,right=0.95,hspace=0.3)
+                plt.savefig(self.dir_root+'IMAGES/Photometry.pdf')
+        
+                plt.figure()
+                vector.periodogram_rolling(prot_estimated=vector.perio_max)
+                plt.savefig(self.dir_root+'IMAGES/Photometry2.jpg')
     
+            self.photometry = vec
+        else:
+            print('No photometry found for instrument : %s'%(which))
+
     def import_telluric_water(self,ext='',method='cubic'):
         self.import_material()
         water_model = pd.read_pickle(root+'/Python/Material/model_telluric_water'+ext+'.p')
@@ -1109,7 +1138,6 @@ class spec_time_series(object):
                         val[0] = 'SINGLEHR21'
                         print('[INFO] mode %s detected for ESPRESSO drs version %s'%(val[1],val[0]))
                         data_extract = pd.DataFrame(Spectroscopy.get_timeseries(self.starname)[i][val[1]][val[0]])
-            self.debug = data_extract
             data_extract['raw_file'] = data_extract['raw_file'].str[:-5]
             if (drs_version=='new')&(i=='HARPN'):
                 vec = np.array([string.split('T')[0].split('r.')[-1]+'T'+string.split('T')[1].replace('-',':') for string in np.array(data_extract['raw_file'])])
@@ -1330,6 +1358,22 @@ class spec_time_series(object):
         
         self.import_ccf()
         self.import_table()
+
+        valid = True        
+        if len(mask)<7:
+            if mask not in list(self.table_ccf.keys()):
+                valid = False
+            else:
+                if (sub_dico not in self.table_ccf[mask]):
+                    valid = False
+        if not valid:
+            all_mask = []
+            for mask_iter in self.table_ccf.keys():
+                if sub_dico in self.table_ccf[mask_iter]:
+                    all_mask.append(mask_iter)
+            print(' [WARNING] No CCF found for sub dico %s and CCF mask %s, switch for : %s'%(sub_dico, mask, all_mask[0]))
+            mask = all_mask[0]
+        
         self.ccf_rv = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['rv'])*1000, np.array(self.table_ccf[mask][sub_dico]['table']['rv_std'])*1000)
         self.ccf_fwhm = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['fwhm']), np.array(self.table_ccf[mask][sub_dico]['table']['fwhm_std']))
         self.ccf_contrast = myc.tableXY(np.array(self.table_ccf[mask][sub_dico]['table']['jdb']), np.array(self.table_ccf[mask][sub_dico]['table']['contrast']), np.array(self.table_ccf[mask][sub_dico]['table']['contrast_std']))
@@ -1353,12 +1397,12 @@ class spec_time_series(object):
         self.import_table()
         
         model = np.array(self.table['rv_shift'])*1000
-        if not substract_model:
-            model*=0
+        vector = np.array(self.table['rv_dace'])
         
-        vec = myc.tableXY(self.table['jdb'],self.table['rv_dace']-model,self.table['rv_dace_std'])
-        if self.starname=='Sun':
-            vec.y+=np.array(self.table['rv_shift']*1000)
+        coeff = np.argmin([myf.mad(vector-model), myf.mad(vector-0*model), myf.mad(vector+model)])
+        print('[INFO] Coefficient selected :',coeff)
+        
+        vec = myc.tableXY(self.table['jdb'],self.table['rv_dace']+(coeff-1)*model,self.table['rv_dace_std'])
         
         if self.planet:
             self.import_planet()
@@ -1487,7 +1531,8 @@ class spec_time_series(object):
         
         table = pd.DataFrame(matrix.T,columns=['jdb','vrad','svrad'])
 
-        for i,j in zip(['fwhm','contrast','bis_span','s_mw','ha','na','ca','rhk'],['sig_fwhm','sig_contrast','sig_bis_span','sig_s','sig_ha','sig_na','sig_ca','sig_rhk']):
+        #for i,j in zip(['fwhm','contrast','bis_span','s_mw','ha','na','ca','rhk'],['sig_fwhm','sig_contrast','sig_bis_span','sig_s','sig_ha','sig_na','sig_ca','sig_rhk']):
+        for i,j in zip(['fwhm','contrast','bis_span','s_mw','rhk'],['sig_fwhm','sig_contrast','sig_bis_span','sig_s','sig_rhk']):
             dace_X = myc.tableXY(tab['rjd'].copy(),tab[i].copy(),tab[j].copy())
             if bin_length:
                 dace_X.night_stack(bin_length=bin_length,replace=True)
@@ -1528,6 +1573,7 @@ class spec_time_series(object):
         rvi = np.zeros(len(self.table.jdb))
         for k in range(len(par['amp'])):
             amp,period,phi = par['amp'][k],par['period'][k],par['phase'][k]
+            print('Planet %.0f : %.1f,%.2f,%.2f'%(k+1,amp,period,phi))
             rvj = amp*np.sin(2*np.pi*(self.table.jdb-np.min(self.table.jdb))/period+phi)
             rvi+=rvj
             rv.append(myc.tableXY(self.table.jdb,rvj,np.std(rvj)/10+0*rvj))
@@ -1705,7 +1751,7 @@ class spec_time_series(object):
                 query = customSimbad.query_objects([starname])
                 
                 if query is None:
-                    print(Fore.YELLOW + '\n [WARNING] Target not founded in the SIMBAD database under the speficied name : %s\n'%(starname)+Fore.WHITE)
+                    print(Fore.YELLOW + '\n [WARNING] Target not founded in the SIMBAD database under the speficied name : %s\n'%(starname)+Fore.RESET)
                     print(' Cross-matching with DACE query...')
                     
                     name = myf.crossmatch_dace_simbad(starname,direction='simbad')
@@ -1718,12 +1764,12 @@ class spec_time_series(object):
                             time.sleep(0.5)
                             second_query = Simbad.query_region(astrocoord.SkyCoord(ra=hour, dec=dec, unit=(u.hourangle, u.deg), frame='fk5'), radius='0d0m10s')
                             if second_query is None:
-                                print(Fore.YELLOW + '\n [WARNING] Target not founded in the SIMBAD database in the sky specified region : ra=%s dec=%s\n'%(hour,dec)+Fore.WHITE)
+                                print(Fore.YELLOW + '\n [WARNING] Target not founded in the SIMBAD database in the sky specified region : ra=%s dec=%s\n'%(hour,dec)+Fore.RESET)
                             else:     
                                 name = second_query['MAIN_ID'][0].decode("utf-8")
                                 print('\n [INFO] Target founded in SIMBAD database by skycoord crossmatch (10s radius) under the name : %s\n'%(name))
                         else:
-                            print(Fore.YELLOW + '\n [WARNING] Target or sky coordinates not founded in the DACE database under the speficied name : %s\n'%(starname)+Fore.WHITE)
+                            print(Fore.YELLOW + '\n [WARNING] Target or sky coordinates not founded in the DACE database under the speficied name : %s\n'%(starname)+Fore.RESET)
                             name = 'Sun'
                     else:
                         print(' Starname found in database under : %s'%(name))
@@ -1735,7 +1781,7 @@ class spec_time_series(object):
                 else:
                     simbad_name = self.starname
             except:
-                print(Fore.YELLOW + '\n [WARNING] Simbad query failed !'+ Fore.WHITE)
+                print(Fore.YELLOW + '\n [WARNING] Simbad query failed !'+ Fore.RESET)
                 query = None
                         
             if query is None:
@@ -1778,17 +1824,17 @@ class spec_time_series(object):
                 
                 if np.isnan(np.round(b-v,2)):
                     bv = -3.684*np.log10(t) + 14.551 #http://www.isthe.com/chongo/tech/astro/HR-temp-mass-table-byhrclass.html
-                    print(Fore.YELLOW + ' [WARNING] BV extracted from the effective temperature since not found on Simbad : BV = %.2f'%(bv) + Fore.WHITE)
+                    print(Fore.YELLOW + ' [WARNING] BV extracted from the effective temperature since not found on Simbad : BV = %.2f'%(bv) + Fore.RESET)
                     if np.isnan(v)&(not np.isnan(b)):
                         v = np.round(b - bv,2)
-                        print(Fore.YELLOW + ' [WARNING] magV extracted from the effective temperature since not found on Simbad : mV = %.2f'%(v) + Fore.WHITE)
+                        print(Fore.YELLOW + ' [WARNING] magV extracted from the effective temperature since not found on Simbad : mV = %.2f'%(v) + Fore.RESET)
                     if np.isnan(b)&(not np.isnan(v)):
                         b = np.round(bv + v,2)        
-                        print(Fore.YELLOW + ' [WARNING] magB extracted from the effective temperature since not found on Simbad : mB = %.2f'%(b) + Fore.WHITE)
+                        print(Fore.YELLOW + ' [WARNING] magB extracted from the effective temperature since not found on Simbad : mB = %.2f'%(b) + Fore.RESET)
     
                 if np.isnan(t):
                     t = np.round(10**((bv - 14.551)/(-3.684)),0) #http://www.isthe.com/chongo/tech/astro/HR-temp-mass-table-byhrclass.html
-                    print(Fore.YELLOW + ' [WARNING] Teff extracted from the BV since not found on Simbad : Teff = %.2f'%(t) + Fore.WHITE)
+                    print(Fore.YELLOW + ' [WARNING] Teff extracted from the BV since not found on Simbad : Teff = %.2f'%(t) + Fore.RESET)
                     
                 dico = self.star_info
                 dico['Simbad_name']['fixed'] = simbad_name
@@ -1818,6 +1864,9 @@ class spec_time_series(object):
 
 
         myf.pickle_dump(dico,open(self.dir_root+'STAR_INFO/Stellar_info_'+self.starname+'.p','wb'))
+        
+        sp = dico['Sp_type']['fixed']
+        self.mask_harps = ['G2','K5','M2'][int((sp[0]=='K')|(sp[0]=='M'))+int(sp[0]=='M')]
 
         del dico['Name']                
                 
@@ -1884,10 +1933,14 @@ class spec_time_series(object):
         
         myf.pickle_dump(self.star_info,open(self.dir_root+'STAR_INFO/Stellar_info_'+self.starname+'.p','wb'))
     
-    def yarara_master_ccf(self,sub_dico = 'matching_diff',name_ext=''):
+    def yarara_master_ccf(self, sub_dico = 'matching_diff', name_ext='', rvs=None):
+        self.import_table()
         
         vrad, ccfs = (self.all_ccf_saved[sub_dico][0],self.all_ccf_saved[sub_dico][1])
-        rvs = self.ccf_rv.y.copy()
+        
+        if rvs is None:
+            rvs = self.ccf_rv.y.copy()
+        
         med_rv = np.nanmedian(rvs)
         rvs -= med_rv
         
@@ -1919,7 +1972,7 @@ class spec_time_series(object):
         vmin = -vlim ; vmax=vlim
 
         contrast = (1-np.nanmin(stack))
-
+        
         plt.figure()
         plt.plot(new_vrad,stack,color='k',label='Contrast = %.1f %%'%(100*contrast))
         
@@ -1935,6 +1988,13 @@ class spec_time_series(object):
                 pass
         elif extension=='HARPS':
             myf.pickle_dump({'vrad':new_vrad,'ccf_power':stack},open(self.dir_root+'MASTER/MASTER_CCF_HARPS.p','wb'))
+        else:
+            try:
+                old = pd.read_pickle(self.dir_root+'MASTER/MASTER_CCF'+name_ext+'.p')
+                plt.plot(old['vrad'],old['ccf_power'],alpha=0.5,color='k',ls='--')
+            except:
+                pass
+            myf.pickle_dump({'vrad':new_vrad,'ccf_power':stack},open(self.dir_root+'MASTER/MASTER_CCF'+name_ext+'.p','wb'))            
         
         plt.xlim(vmin,vmax)
         
@@ -2208,7 +2268,7 @@ class spec_time_series(object):
             myf.pickle_dump(new_file,open(new_name,'wb'))
         
         myf.pickle_dump(table,open(directory+instrument+'/UTILITIES/Analyse_summary.p','wb'))        
-                
+            
 
     def yarara_poissonian_noise(self, noise_wanted=1/100, wave_ref=None, flat_snr=True, seed=9):
         self.import_table()
@@ -2247,6 +2307,23 @@ class spec_time_series(object):
         
         return matrix_noise,noise_values
         
+    def yarara_add_noise(self,sub_dico,noise=1/500):
+        noise_matrix, noise2 = self.yarara_poissonian_noise(noise_wanted=noise, wave_ref=None, flat_snr=True, seed=9)
+        
+        directory = self.directory                        
+        files = glob.glob(directory+'RASSI*.p')
+        files = np.sort(files) 
+        
+        for i,j in enumerate(files):
+            file = pd.read_pickle(j)
+            f = file['flux']
+            c = file[sub_dico]['continuum_linear']
+            n = noise_matrix[i]
+            new_c = f/(f/c+n)
+            file[sub_dico]['continuum_linear'] = new_c
+            ras.save_pickle(j,file)
+        
+        print('Noise successfully injected in the spectra from %s at SNR %.0f'%(sub_dico,1/noise))
 
     def snr_statistic(self,version=1):
         self.import_table()
@@ -2304,6 +2381,32 @@ class spec_time_series(object):
     # =============================================================================
         
     def periodogram_l1(self, vec, name_ext='', photon_noise=0, max_n_significant=9, p_min=2, fap_min=-2, sort_val='log10faps', species=None):
+        
+        if photon_noise=='auto':
+            save = []
+            noise_liste = np.arange(0.5,2.5,0.1)
+            for n in noise_liste:
+                print('\n [INFO] Noise values set to : %.2f m/s \n'%(n))
+                vec.periodogram_l1(starname=self.starname, dataset_name=self.starname, verbose=False, Plot=False, p_min=p_min, fap_min=fap_min, photon_noise=n, sort_val=sort_val, max_n_significant=max_n_significant, text_output=0, method_signi=['fap','evidence_laplace'], species=species)
+                save.append([vec.l1_nb_nonull,len(vec.l1_table)])
+            
+            plt.close('all')
+            
+            save = np.array(save)
+            curve = myc.tableXY(noise_liste,save[:,0])
+            knee = curve.knee_detection(Plot=False)[0]
+            photon_noise = noise_liste[knee]
+            print(Fore.CYAN + '\n [INFO] Optimal noise value for %s set to : %.2f m/s \n'%(name_ext, photon_noise) + Fore.RESET)
+            
+            # plt.figure()
+            # plt.subplot(2,1,1)
+            # plt.plot(noise_liste,save[:,0])
+            # plt.axvline(x=noise_liste[knee])
+            # plt.subplot(2,1,2)
+            # plt.plot(noise_liste,save[:,1])
+            # plt.axvline(x=noise_liste[knee])
+            # self.debug = (noise_liste, save)
+        
         vec.periodogram_l1(starname=self.starname, dataset_name=self.starname, p_min=p_min, fap_min=fap_min, photon_noise=photon_noise, sort_val=sort_val, max_n_significant=max_n_significant, text_output=1, method_signi=['fap','evidence_laplace'], species=species)
         os.system('mv '+self.starname+'_l1_periodogram_period.pdf '+self.dir_root+'KEPLERIAN/'+self.starname+'_l1_periodogram'+name_ext+'.pdf')
         self.l1_n_signals = len(vec.l1_table)
@@ -2346,18 +2449,30 @@ class spec_time_series(object):
         
         self.yarara_analyse_summary()
 
-    def periodogram_kep(self, vec2, name_ext='', name_pre='iterative_', photon_noise=0, fap=0.1, deg=0, p_min=0, m_out=2, model=False, ms_kw = 'Gray', jitter=0.7, periods=[None],fit_ecc=True, periodic=True, species=None,  eval_on_t=None, k_tol=0.15, e_tol=0.70, transits=None, known_planet=[]):
+    def periodogram_kep(self, vec2, name_ext='', name_pre='iterative_', photon_noise=0, fap=0.1, deg=0, p_min=0, m_out=2, supress_outliers=True, model=False, ms=None, ms_kw = 'Gray', rs=None, rs_kw='Gray', jitter=0.7, periods=[None], fit_ecc=True, periodic=True, species=None,  eval_on_t=None, k_tol=0.15, e_tol=0.70, transits=None, known_planet=[], auto_long_trend=True):
         self.import_star_info()
         
         vec = vec2.copy()
         mask_out = myf.rm_outliers(vec.y,m=m_out,kind='inter')[0]
-        vec.masked(mask_out)
+        if not supress_outliers:
+            vec.yerr[~mask_out]=10*vec.yerr[~mask_out]
+        else:
+            vec.masked(mask_out)
         if species is not None:
             species = np.array(species)[mask_out]
-        try:
-            ms = self.star_info['Mstar'][ms_kw]
-        except:
-            ms = 1    
+        
+        if ms is None:
+            try:
+                ms = self.star_info['Mstar'][ms_kw]
+            except:
+                ms = 1
+
+        if rs is None:
+            try:
+                rs = self.star_info['Rstar'][rs_kw]
+            except:
+                rs = 1   
+        
         iteratif = 'l1_'
         
         try:
@@ -2371,13 +2486,13 @@ class spec_time_series(object):
         
         if periods[0] is None:
             print('Iteratif keplerian fit')
-            vec.periodogram_keplerian_hierarchical(photon_noise=photon_noise, Plot=False, fap=fap, deg=deg, ms=ms, p_min=p_min, jitter=jitter, periods = periods, fit_ecc= fit_ecc, periodic=periodic, species=species, eval_on_t=eval_on_t,transits=transits,known_planet=known_planet)
+            vec.periodogram_keplerian_hierarchical(photon_noise=photon_noise, Plot=False, fap=fap, deg=deg, ms=ms, rs=rs, p_min=p_min, jitter=jitter, periods=periods, fit_ecc=fit_ecc, periodic=periodic, species=species, eval_on_t=eval_on_t, transits=transits, known_planet=known_planet, auto_long_trend=auto_long_trend)
         else:
             vec.nb_planet_fitted = len(periods)
         
         for j in range(5): #10 attempt to converge
             plt.close(1)
-            vec.periodogram_keplerian_hierarchical(photon_noise=photon_noise, Plot=True, model=model, fap=fap, nb_planet=vec.nb_planet_fitted, deg=deg, ms=ms, p_min=p_min, jitter=jitter, periods=periods, fit_ecc= fit_ecc, periodic=periodic, species=species, eval_on_t=eval_on_t,transits=transits,known_planet=known_planet)    
+            vec.periodogram_keplerian_hierarchical(photon_noise=photon_noise, Plot=True, model=model, fap=fap, nb_planet=vec.nb_planet_fitted, deg=deg, ms=ms, rs=rs, p_min=p_min, jitter=jitter, periods=periods, fit_ecc=fit_ecc, periodic=periodic, species=species, eval_on_t=eval_on_t, transits=transits, known_planet=known_planet, auto_long_trend=auto_long_trend)    
             ks = np.min(vec.planet_fitted['k'])
             es = np.max(vec.planet_fitted['e'])
             if (ks>k_tol)&(es<e_tol): #refuse signals smaller than 0.20 and
@@ -2389,6 +2504,9 @@ class spec_time_series(object):
         plt.savefig(self.dir_root+'KEPLERIAN/'+self.starname+'_'+name_pre+'keplerian_fit'+name_ext+'.png')
         
         vec2.rv_residues = vec.rv_residues
+        vec2.model_keplerian_i = vec.model_keplerian_i
+        vec2.model_periods = vec.model_periods
+        
         self.planet_fitted[name_ext[1:]] = vec.planet_fitted
         self.planet_fitted['info_'+name_ext[1:]] = vec.model_info
     
@@ -2561,8 +2679,15 @@ class spec_time_series(object):
         except:
             pass
 
-    def mcmc_import_model(self,filename,sigma=1):
+    def mcmc_import_model(self,filename=None,sigma=1):
+        
+        if filename is None:
+            filename = glob.glob(self.dir_root+'KEPLERIAN/MCMC/*')[0]
+            print(' [INFO] MCMC found in the directory : %s'%(filename))
+            filename = filename.split('/')[-1]
+            
         filename = np.sort(glob.glob(self.dir_root+'KEPLERIAN/MCMC/'+filename+'/results/current/tables/stats.tex')) 
+        
         try:
             self.planet_fitted
         except:
@@ -2574,6 +2699,105 @@ class spec_time_series(object):
             kep.index = ['planet %s'%(int(k)) for k in range(1,1+len(kep))]
             self.planet_fitted[fname] = kep
             
+    def mcmc_corner(self,filename=None, corner=True, kde_plot=True, fraction=0.20, alpha_s=0.1, alpha_c=0.1, nb_draw=500, ms=None, title=None, ext=None):
+        
+        self.mcmc_import_model(filename=filename)
+        if ms is None:
+            self.import_star_info()
+            ms = self.star_info['Mstar']['Gray']
+            print(' [INFO] Stellar mass found with Gray calibrations curves : %.2f Ms'%(ms))
+        
+        if filename is None:
+            filename = glob.glob(self.dir_root+'KEPLERIAN/MCMC/*')[0]
+            print(' [INFO] MCMC found in the directory : %s'%(filename))
+            filename = filename.split('/')[-1]
+        
+        if ext is None:
+            ext = '_'+filename.split('_')[-1]
+        
+        if title is None:
+            title = filename.upper()
+        
+        directory = self.dir_root+'KEPLERIAN/MCMC/'+filename+'/results/current/FITS/'
+        tab = self.planet_fitted[filename]
+        nb_keplerian = len(tab)
+        dico1 = {}
+        dico2 = {}
+        kw = ['P_DAY','K_MPS','ECC','OMEGA_DEG','ML0_DEG','PLANET_M_MEARTH','A_AU']
+        periods = []
+        for index in np.arange(nb_keplerian):
+            c = 0
+            for f in kw:
+                c+=1
+                t = fits.open(directory+'KEPLERIAN'+str(index)+'_'+f+'_stat.fits')[1]
+                v = t.data[t.header['TTYPE1']]
+                name = t.header['TTYPE1']
+                dico1[name.replace('KEPLERIAN','P')[:-5]] = np.array(v).astype('float')
+                if c==1:
+                    periods.append(np.median(np.array(v).astype('float')))
+                if c<6:
+                    dico2[name.replace('KEPLERIAN','P')[:-5]] = np.array(v).astype('float')
+                    
+            
+        dico1 = pd.DataFrame(dico1)
+        test1 = myc.table(dico1)
+
+        dico2 = pd.DataFrame(dico2)
+        test2 = myc.table(dico2)
+        
+        periods1 = np.array(periods)
+        periods2 = np.array(self.planet_fitted[filename]['P'])
+        match = myf.match_nearest(periods1,periods2)[:,0].astype('int')
+        
+        if corner:
+            plt.figure(figsize=(22,16))
+            test2.pairplot(kde_plot=kde_plot,fraction=fraction,alpha_s=alpha_s)
+            plt.savefig(self.dir_root+'KEPLERIAN/MCMC_Corner_plot'+ext+'.png')
+        
+        #plot of the keplerians
+        
+        plt.figure(figsize=(9,9))
+        if len(dico1)>nb_draw:
+            draw_index = np.random.choice(np.arange(len(dico1)),nb_draw,replace=False)
+        else:
+            draw_index = np.arange(len(dico1))
+            
+        pos_x = []
+        pos_y = []
+        for values in tqdm(draw_index):
+            new_table = tab.copy()
+            for index in np.arange(nb_keplerian):
+                for k1,k2 in zip(['P_DAY','ECC','OMEGA_DEG','ML0_DEG','PLANET_M_MEARTH','A_AU'],['P','e','w','L0','m_p','a']):
+                    new_table.at['planet '+str(index+1),k2] = dico1['P'+str(match[index])+'_'+k1][values]
+                    
+            curves = myf.fit_planet(new_table,alpha=alpha_c,legend=False)
+            pos_x.append(curves[:,0,0])
+            pos_y.append(curves[:,0,1])
+
+        pos_x = np.array(pos_x)
+        pos_y = np.array(pos_y)
+                    
+        plt.title(title,fontsize=14)
+        curves = myf.fit_planet(self.planet_fitted[filename])#.loc[['planet %.0f'%(i+1) for i in match]])
+        hill_radii = np.array(myf.get_hill(self.planet_fitted[filename]['a'],self.planet_fitted[filename]['e'],self.planet_fitted[filename]['m_p'],ms))
+            
+        #k_amp = np.argsort(np.array(self.planet_fitted[filename]['k']))
+        for j in range(nb_keplerian):
+            plt.plot(curves[j,:,0],curves[j,:,1],color='k',lw=5,zorder=9)
+            plt.plot(curves[j,:,0],curves[j,:,1],color=myf.colors_cycle_mpl[j],lw=1.5,zorder=9)
+            all_init = myc.tableXY(pos_x[:,j],pos_y[:,j])
+            all_init.kde(levels=['2d',[0.5,1]],alpha=0.4,zorder=10)
+            #all_init.kde(levels=['2d',[0.5]],alpha=0.1,contour_color='k',zorder=10)
+            plt.plot(all_init.vertices_curve[1][:,0],all_init.vertices_curve[1][:,1],color='k',zorder=10)
+            myf.plot_hill(curves[j,0,0],curves[j,0,1],hill_radii[j],color='k',ls=':',zorder=11)
+        
+        
+        plt.plot(curves[:,0,0],curves[:,0,1],'ko',zorder=20,mec='white')
+        myf.plot_hz(ms=ms,ls_inf='-.', ls_sup=':', color_inf='k', color_sup='k')
+        plt.legend(loc=1)
+        plt.savefig(self.dir_root+'KEPLERIAN/MCMC_orbits'+ext+'.png')
+
+        
 
     def keplerian_draw_model(self, label=None, name_ext=''):
         """
@@ -2793,7 +3017,46 @@ class spec_time_series(object):
             
             myf.pickle_dump(dico,open(self.dir_root+'DETECTION_LIMIT/Simulation_K_%.1f_%.1f_P_%.0f_%.0f_%.0fp_%.0f.p'%(np.min(k),np.max(k),np.min(p),np.max(p),nb_phase,cpu+1),'wb'))
             print('\nFile'+self.dir_root+'DETECTION_LIMIT/Simulation_K_%.1f_%.1f_P_%.0f_%.0f_%.0fp_%.0f.p'%(np.min(k),np.max(k),np.min(p),np.max(p),nb_phase,cpu+1)+' saved')
-            
+    
+    def plot_basis_fitted(self):
+        file = pd.read_pickle(self.dir_root+'KEPLERIAN/Vectors_fitted.p')
+        sb = list(file.keys())
+        
+        self.import_table()
+        time = np.array(self.table['jdb'])
+        
+        self.import_dico_tree()
+        dico_tree = self.dico_tree
+        tree = dico_tree.loc[np.in1d(dico_tree['dico'],sb)].sort_values(by='step')['dico'].values
+        
+        maxi = len(file[tree[-1]])
+        rows = int((maxi+1)/2)
+        print('Nb vec fitted between V1 and V2 : %.0f'%(maxi))
+        
+        color_cycle = ['k','b','r','g','purple','magenta','limegreen']
+        
+        k = 0
+        old = 0
+        plt.figure(figsize=(18,9))
+        for n,t in enumerate(tree[1:]):
+            basis = file[t][old:]
+            old += len(basis)
+            print('stage : %s, nb comp : %.0f'%(t,len(basis)))
+            for c in np.arange(len(basis)):
+                k+=1
+                vec = myc.tableXY(time,basis[c])
+                plt.subplot(rows,4,2*k-1)
+                vec.periodogram(Norm=True,color=color_cycle[n])
+                plt.subplot(rows,4,2*k)
+                vec.null()
+                plt.scatter(vec.x,vec.y,color=color_cycle[n],s=10)
+                plt.title('%s : %.0f'%(t.split('_')[1],c+1))
+        
+        plt.subplots_adjust(left=0.05,right=0.96,top=0.96,bottom=0.09,hspace=0.5,wspace=0.35)
+        plt.show(block=False)
+        plt.savefig(self.dir_root+'KEPLERIAN/All_vectors_YARARA_V2_basis.png')
+
+
     def plot_detection_limit(self, files='', faps=1, Mstar=1, tresh_diff=0.1, tresh_phase=0.2, cmap='gist_earth', color_line='k', xscale='linear', overfit=1, button_phi = 1, button_k = 1, highest=True):
                   
         files = np.sort(glob.glob(self.dir_root+'DETECTION_LIMIT/Simu*'+files+'*')) 
@@ -3543,7 +3806,7 @@ class spec_time_series(object):
             transits = (abs(phases)<(duration/2)).astype('int')
             
             plt.figure(figsize=(15,5))
-            plt.xlabel('Jdb - 2,400,000 [days]',fontsize=14)
+            plt.subplot(2,1,1)
             plt.ylabel('SNR',fontsize=14)
             plt.scatter(time,self.table.snr,c=transits,zorder=10)
             
@@ -3553,6 +3816,18 @@ class spec_time_series(object):
             plt.xlim(np.min(time)-length,np.max(time)+length)
             
             plt.title('%s In/Out spectra : %.0f/%.0f'%(self.starname,sum(transits),len(transits)-sum(transits)))
+            ax = plt.gca()
+            
+            plt.subplot(2,1,2,sharex=ax)
+            plt.xlabel('Jdb - 2,400,000 [days]',fontsize=14)
+            plt.ylabel('RV',fontsize=14)
+            plt.scatter(time,self.table.rv_dace,c=transits,zorder=10)
+            
+            myf.transit_draw(period,T0,duration)
+            
+            length = (np.max(time)-np.min(time))*0.1
+            plt.xlim(np.min(time)-length,np.max(time)+length)            
+            
             
             plt.savefig(self.dir_root+'IMAGES/Transit_definition.pdf')
             
@@ -3900,7 +4175,97 @@ class spec_time_series(object):
             plt.xlabel(r'Wavelength [$\AA$]',fontsize=14)
 
             plt.subplots_adjust(hspace=0,left=0.07,right=0.97,top=0.94,bottom=0.11)
-            
+          
+    def yarara_instrumental_offset(self,instrument, smooth_box=100, weight_ccf=0.25):
+        self.import_material()        
+        self.import_table()
+        
+        table = self.table
+        load = self.material
+        starname = self.starname
+        ins = self.instrument
+        dir_root = self.dir_root
+        
+        wave_grid = load['wave']
+                           
+        time1 = np.array(table['jdb'])
+        time2 = np.array(pd.read_csv(dir_root.replace(ins,instrument)+'/WORKSPACE/Analyse_summary.csv')['jdb'])
+        time = np.hstack([time1,time2])
+        
+        sub_dico = 'matching_mad'
+        all_spec = []
+        for j in tqdm(np.sort(glob.glob(dir_root+'/WORKSPACE/RASSINE*'))):
+            spec1 = pd.read_pickle(j)
+            spec1 = myc.tableXY(spec1['wave'],spec1['flux']/spec1[sub_dico]['continuum_linear'])
+            spec1.interpolate(new_grid=wave_grid,method='linear',replace=True)
+            all_spec.append(spec1.y)
+        
+        for j in tqdm(np.sort(glob.glob(dir_root.replace(ins,instrument)+'/WORKSPACE/RASSINE*'))):
+            spec1 = pd.read_pickle(j)
+            spec1 = myc.tableXY(spec1['wave'],spec1['flux']/spec1[sub_dico]['continuum_linear'])
+            spec1.interpolate(new_grid=wave_grid,method='linear',replace=True)
+            all_spec.append(spec1.y)
+        
+        all_spec = np.array(all_spec)
+
+        #ref = np.median(all_spec[0:len(time1)],axis=0)
+        kitcat1 = pd.read_pickle(dir_root+'/KITCAT/kitcat_mask_'+starname+'.p')
+        kitcat2 = pd.read_pickle(dir_root.replace(ins,instrument)+'/KITCAT/kitcat_mask_'+starname+'.p')
+
+        ref1 = myc.tableXY(kitcat1['spectre']['wave'],kitcat1['spectre']['flux']/kitcat1['spectre']['correction_factor'])
+        ref2 = myc.tableXY(kitcat2['spectre']['wave'],kitcat2['spectre']['flux']/kitcat2['spectre']['correction_factor'])
+        ref2.interpolate(new_grid=ref1.x, method='cubic',replace=True)
+        ratio = myc.tableXY(ref1.x,ref1.y/ref2.y)
+        
+        continuum = abs(np.gradient(ref1.y)) ; cutoff = np.percentile(continuum,75)
+        continuum[continuum>cutoff] = np.nan
+        continuum[abs(ratio.y-1)>1] = np.nan
+        continuum[continuum<=cutoff] = 1
+        ratio.y*=continuum
+        ratio.supress_nan()
+        ratio.smooth(box_pts=20,replace=True,shape='gaussian')
+        ratio.interpolate(new_grid = ref1.x, method='linear', replace=True)
+        continuum_correction = ratio.y
+        
+        corr = np.zeros(len(time)) ; corr[len(time1):] = 1
+        corr =  continuum_correction*corr[:,np.newaxis]
+        corr[corr==0] = 1
+
+        all_spec2 = all_spec*corr
+        
+        contamination = abs(np.mean(all_spec2[len(time1):]-ref1.y,axis=0))
+
+        contam_line = []   
+        num=-1
+        for left,right in zip(np.array(kitcat1['catalogue']['wave_left']),np.array(kitcat1['catalogue']['wave_right'])):
+            num+=1
+            l = myf.find_nearest(wave_grid,left)[0][0]
+            r = myf.find_nearest(wave_grid,right)[0][0]
+            contam_line.append(np.nansum(contamination[l:r+1]))
+        contam_line = np.array(contam_line)
+        
+        weight_rv = np.array(kitcat1['catalogue']['weight_rv'])
+        curve_info_rv = np.cumsum(weight_rv[np.argsort(contam_line)])/sum(weight_rv)
+        limite_contam = np.sort(contam_line)[myf.find_nearest(curve_info_rv,weight_ccf)[0][0]]
+        
+        good_lines = contam_line<limite_contam
+        line_table = kitcat1['catalogue'][good_lines].reset_index(drop=True)
+        
+        ccf_output = self.yarara_ccf(mask = line_table, plot=True, sub_dico='matching_mad', save=False, rv_range = None, delta_window=5, ccf_oversampling=3)
+        
+        #TBD
+
+        wave_left = myf.find_nearest(wave_grid,3800)[0][0]
+        wave_right = myf.find_nearest(wave_grid,4200)[0][0]
+        
+        order = np.argsort(time%100000)
+        
+        plt.figure()
+        plt.subplot(2,1,1)
+        plt.imshow((all_spec-ref1.y)[order,wave_left:wave_right],cmap='plasma',aspect='auto',vmin=-0.005,vmax=0.005)
+        plt.subplot(2,1,2)
+        plt.imshow((all_spec*corr-ref1.y)[order,wave_left:wave_right],cmap='plasma',aspect='auto',vmin=-0.005,vmax=0.005)        
+
 
     def yarara_inject_planet(self, sub_dico='matching_mad', amp=1, period=16.45, phase=0, berv_shift=False, vector=None, export=False):
         
@@ -3933,10 +4298,10 @@ class spec_time_series(object):
         t0 = np.min(jdb)
         
         if (len(amp)==len(period))&(len(amp)==len(phase)):
-            vec_lbl = self.import_ccf_timeseries('LBL_ITER_kitcat_mask_'+self.starname,sub_dico,'rv')
+            vec_lbl = self.import_ccf_timeseries('CCF_'+self.mask_harps,sub_dico,'rv')
             k_std = self.yarara_keplerian_fit(vec_lbl,periods=period)['k']
             k_std = list(np.array(['%.3f'%(i) for i in k_std]).astype('float'))   
-
+            
             if vector is not None:
                 planet = vector
                 t = myc.tableXY(jdb-t0,planet)
@@ -4065,7 +4430,7 @@ class spec_time_series(object):
         rv_sys1 = self.star_info['Rv_sys']['fixed']
         
         
-        if 2*abs(rv_sys2-rv_sys1)/abs(rv_sys1+rv_sys2)*100>20:
+        if 2*abs(rv_sys2-rv_sys1)/abs(rv_sys1+rv_sys2+1e-6)*100>20:
             print('[WARNING] RV_sys incompatible between star_info (%.1f) and RASSINE output (%.1f)'%(rv_sys1,rv_sys2))
             mask = np.genfromtxt(root+'/Python/MASK_CCF/'+self.mask_harps+'.txt')
             mask = np.array([0.5*(mask[:,0]+mask[:,1]),mask[:,2]]).T
@@ -4138,6 +4503,21 @@ class spec_time_series(object):
             table['ccf_'+name+'_std'] = vec.yerr*factor
         table = pd.DataFrame(table)
         self.yarara_obs_info(kw=table)
+
+    def yarara_change_flux_unit(self,factor):
+        directory = self.directory
+        
+        files = glob.glob(directory+'RASSI*.p')
+        files = np.sort(files)        
+
+        for i,j in enumerate(files):
+            file = pd.read_pickle(j)
+            file['flux']*=factor
+            file['flux_used']*=factor
+            file['matching_anchors']['continuum_linear']*=factor
+            file['matching_diff']['continuum_linear']*=factor
+            ras.save_pickle(j,file)
+        
 
     def yarara_obs_info(self, kw=[None,None], jdb=None, berv=None, rv=None, airmass=None, texp=None, seeing=None, humidity=None):
         """
@@ -4604,10 +4984,14 @@ class spec_time_series(object):
         """
         
         files_to_process = np.sort(glob.glob(self.directory+'R*.p'))     
+        mask = np.zeros(len(files_to_process))
+        c=-1
         for j in files_to_process:
+            c+=1
             file = pd.read_pickle(j)
             if 'parameters' not in file.keys():
                 if file['SNR_5500']<snr_cutoff:
+                    mask[c] = 1
                     if supress:
                         print('File deleted : %s '%(j))
                         os.system('rm '+j)  
@@ -4617,6 +5001,7 @@ class spec_time_series(object):
                         os.system('mv '+j+' '+new_name)
             else:
                 if file['parameters']['SNR_5500']<snr_cutoff:
+                    mask[c] = 1
                     if supress:
                         print('File deleted : %s '%(j))
                         os.system('rm '+j)
@@ -4628,6 +5013,8 @@ class spec_time_series(object):
         os.system('rm '+self.directory+'Analyse_summary.p')
         os.system('rm '+self.directory+'Analyse_summary.csv')
         self.yarara_analyse_summary()
+        mask = mask.astype('bool')
+        self.supress_time_RV(mask)
         
 
     # =============================================================================
@@ -4778,7 +5165,6 @@ class spec_time_series(object):
             
             self.supress_time_RV(mask)
             
-            
  
     def add_spectra(self,name_ext):
         directory = self.directory
@@ -4796,7 +5182,8 @@ class spec_time_series(object):
     # =============================================================================
     #     SPLIT REDUCTION IF CHANGE OF INSTRUMENT
     # =============================================================================
-            
+                    
+    
     def split_instrument(self,instrument='HARPS'):
         """
         Split spectra in subdirectories based on the jdb values (modification of the instruments)
@@ -4877,6 +5264,9 @@ class spec_time_series(object):
 
         if not os.path.exists(parent+'/INS_merged/DACE_TABLE'):
            os.system('mkdir '+parent+'/INS_merged/DACE_TABLE')  
+
+        if not os.path.exists(parent+'/INS_merged/TEMP'):
+           os.system('mkdir '+parent+'/INS_merged/TEMP')  
         
         #summary merging
         dir_found = []
@@ -4933,8 +5323,16 @@ class spec_time_series(object):
                 star_name_dir = path.split('Yarara/')[1].split('/')[0]
                 ins_dir = path.split('s1d/')[1].split('/')[0].lower()
                 #print(' python trigger_yarara_%s.py -s %s -b 38 -r master'%(ins_dir,star_name_dir))
-                os.system('python trigger_yarara_%s.py -s %s -b 38 -r master'%(ins_dir,star_name_dir))
+                #os.system('python trigger_yarara_%s.py -s %s -b 38 -r master'%(ins_dir,star_name_dir))
                 plt.close('all')
+    
+            #material
+            material_file = pd.read_pickle(parent+'/'+main_ins+'/WORKSPACE/Analyse_material.p')
+            for path in dir_found:
+                material = pd.read_pickle(path+'/WORKSPACE/Analyse_material.p') 
+                material_file['mask_brute'] = material_file['mask_brute']|material['mask_brute']
+            myf.pickle_dump(material_file,open(parent+'/INS_merged/WORKSPACE/Analyse_material.p','wb'))
+                
     
             #kitcat cleaned merging
             kitcat_file = pd.read_pickle(parent+'/'+main_ins+'/KITCAT/kitcat_cleaned_mask_'+self.starname+'.p')
@@ -4948,9 +5346,10 @@ class spec_time_series(object):
                 kitcat_wave = kitcat_wave[match[:,0].astype('int')]
             
             kitcat = pd.merge(kitcat,pd.DataFrame({'freq_mask0':kitcat_wave}),how='inner',left_on='freq_mask0',right_on='freq_mask0')
-            kitcat = kitcat.reset_index(drop=True)
+            kitcat = kitcat.reset_index(drop=True)            
+            kitcat_file['catalogue'] = kitcat
             
-            myf.pickle_dump(kitcat,open(parent+'/INS_merged/KITCAT/kitcat_cleaned_mask_'+self.starname+'.p','wb'))
+            myf.pickle_dump(kitcat_file,open(parent+'/INS_merged/KITCAT/kitcat_cleaned_mask_'+self.starname+'.p','wb'))
             
             #kitcat merging
             kitcat_file = pd.read_pickle(parent+'/'+main_ins+'/KITCAT/kitcat_mask_'+self.starname+'.p')
@@ -4965,9 +5364,10 @@ class spec_time_series(object):
             
             kitcat = pd.merge(kitcat,pd.DataFrame({'freq_mask0':kitcat_wave}),how='inner',left_on='freq_mask0',right_on='freq_mask0')
             kitcat = kitcat.reset_index(drop=True)
+            kitcat_file['catalogue'] = kitcat
     
             os.system('cp '+parent+'/'+main_ins+'/KITCAT/kitcat_spectrum.p '+parent+'/INS_merged/KITCAT/kitcat_spectrum.p')
-            myf.pickle_dump(kitcat,open(parent+'/INS_merged/KITCAT/kitcat_mask_'+self.starname+'.p','wb'))
+            myf.pickle_dump(kitcat_file,open(parent+'/INS_merged/KITCAT/kitcat_mask_'+self.starname+'.p','wb'))
 
             #dace table
             dace_file = pd.read_csv(parent+'/'+main_ins+'/DACE_TABLE/Dace_extracted_table.csv',index_col=0) 
@@ -4991,8 +5391,9 @@ class spec_time_series(object):
                             tab = pd.read_pickle(path+'/WORKSPACE/Analyse_ccf.p')[mask][sub_dico]['table']
                             ccf_file[mask][sub_dico]['table'] = pd.concat([ccf_file[mask][sub_dico]['table'],tab])
                             ccf_file[mask][sub_dico]['table'] = ccf_file[mask][sub_dico]['table'].sort_values(by='jdb').reset_index(drop=True)
-                        except:
+                        except KeyError:
                             pass
+                            
             myf.pickle_dump(ccf_file,open(parent+'/INS_merged/WORKSPACE/Analyse_ccf.p','wb'))
                         
             #lbl
@@ -5038,11 +5439,11 @@ class spec_time_series(object):
             
             #morpho
             for fname,kw in zip(['depth_by_depth','asym_by_asym','width_by_width','bt_by_bt'],['dbd','aba','wbw','bt']):
-                try:
-                    lbl_file = pd.read_pickle(parent+'/'+main_ins+'/WORKSPACE/Analyse_'+fname+'.p') 
-                    for sub_dico in lbl_file.keys():
-                        valid_lines = np.array(lbl_file[sub_dico]['catalog']['valid'])
-            
+                lbl_file = pd.read_pickle(parent+'/'+main_ins+'/WORKSPACE/Analyse_'+fname+'.p') 
+                dic = np.array(list(lbl_file.keys())).copy()
+                for sub_dico in dic:
+                    valid_lines = np.array(lbl_file[sub_dico]['catalog']['valid'])
+                    try:
                         for j, path in enumerate(dir_found):
                             tab = pd.read_pickle(path+'/WORKSPACE/Analyse_'+fname+'.p')[sub_dico]
                             match = myf.match_nearest(kitcat_wave, np.array(tab['catalog']['freq_mask0']))
@@ -5068,10 +5469,11 @@ class spec_time_series(object):
                         lbl_file[sub_dico][kw+'_std'] = lbl_file[sub_dico][kw+'_std'][:,:,sorting]
                         
                         lbl_file[sub_dico]['catalog']['valid'] = valid_lines
-        
-                    myf.pickle_dump(ccf_file,open(parent+'/INS_merged/WORKSPACE/Analyse_'+fname+'.p','wb'))
-                except:
-                    pass
+                    except KeyError:
+                        del lbl_file[sub_dico]
+    
+                myf.pickle_dump(lbl_file,open(parent+'/INS_merged/WORKSPACE/Analyse_'+fname+'.p','wb'))
+
             
     
     # =============================================================================
@@ -5686,9 +6088,10 @@ class spec_time_series(object):
     def yarara_kernel_integral(self, sub_dico, kernel, noise_kernel='unique', reference='master', p_noise=1/np.inf, doppler_free=False, substract_map=[], add_map=[], wave_min=None, wave_max=None, contam=True, power_snr=1):
         self.import_table()
         self.import_material()
+        self.import_ccf()
         wave = np.array(self.material.wave)
         master = np.array(self.material.reference_spectrum*self.material.correction_factor)
-        if doppler_free:
+        if doppler_free:            
             rv = self.import_ccf_timeseries('CCF_'+self.mask_harps,'matching_mad','rv')
             doppler_free = rv.y
             doppler_free -= np.median(doppler_free)
@@ -5718,13 +6121,20 @@ class spec_time_series(object):
                 kernel_coeff[abs(kernel_coeff)==np.inf] = 0
                         
             kernel = myc.tableXY(tab[:,0],kernel_coeff)
+            if wave_min is None:
+                wave_min = np.min(tab[:,0])
+            if wave_max is None:
+                wave_max = np.max(tab[:,0])
+            
             kernel.rv_shift(rv_sys)
             kernel.interpolate(new_grid=wave)
             kernel = kernel.y
         
         if wave_min is not None:
+            print('\n [INFO] Wavelength cut below %.2f'%(wave_min))
             kernel[wave<=wave_min] = 0
         if wave_max is not None:
+            print('\n [INFO] Wavelength cut above %.2f'%(wave_max))
             kernel[wave>=wave_max] = 0
             
         if not contam:
@@ -5883,7 +6293,8 @@ class spec_time_series(object):
         plt.axes([0.06,0.28,0.91,0.19]) ; ax2 = plt.gca()
         self.ca2.periodogram(color='r',Norm=True,detrending=5)
         magnetic_cycle.periodogram(color='k',Norm=True,detrending=5)
-        plt.ylim(0,None)
+        ymax = 3*self.ca2.fap
+        plt.ylim(0,ymax)
         plt.tick_params(direction='inout',top=True,which='both',labelbottom=False)
 
         plt.axes([0.06,0.09,0.91,0.19],sharey=ax2)
@@ -5893,7 +6304,7 @@ class spec_time_series(object):
         diff.detrend_poly.min_noise()
         diff.detrend_poly.periodogram(color='purple',Norm=True)
         
-        plt.ylim(0,None)
+        plt.ylim(0,ymax)
         plt.tick_params(direction='inout',top=True,which='both')
         
         power_snr = power_snr[loc]
@@ -5923,6 +6334,14 @@ class spec_time_series(object):
         
         if sub_dico is None:
             loc = np.where(self.dico_chain=='matching_mad')[0][0]
+            print(' [INFO] Dico selected %s \n'%(self.dico_chain[loc+1]))
+            sub_dico = self.dico_chain[loc+1]
+            a = self.import_spectrum()
+            if 'continuum_linear' not in list(a[sub_dico].keys()):
+                sub_dico='matching_mad'
+
+        print('---- DICO %s used ----\n'%(sub_dico))
+
         if substract_map is None:
             substract_map = []
         
@@ -5935,7 +6354,8 @@ class spec_time_series(object):
             if type(power_snr)!=np.ndarray:
                 power_snr = np.array([power_snr])
         
-        integral, integral_std = self.yarara_kernel_integral(self.dico_chain[loc+1], kernel, doppler_free=doppler_free, substract_map=substract_map, p_noise=p_noise, wave_min=wave_min, wave_max=wave_max, contam=contam, power_snr=power_snr, noise_kernel=noise_kernel)
+        
+        integral, integral_std = self.yarara_kernel_integral(sub_dico, kernel, doppler_free=doppler_free, substract_map=substract_map, p_noise=p_noise, wave_min=wave_min, wave_max=wave_max, contam=contam, power_snr=power_snr, noise_kernel=noise_kernel)
         
         proxy = self.wb.copy()
         proxy.znorm(recenter=True)
@@ -6031,17 +6451,18 @@ class spec_time_series(object):
         plt.axes([0.06,0.28,0.91,0.19]) ; ax2 = plt.gca()
         self.wb.periodogram(color='r',Norm=True,detrending=5)
         magnetic_cycle.periodogram(color='k',Norm=True,detrending=5)
-        plt.ylim(0,None)
+        ymax = 3*self.wb.fap
+        plt.ylim(0,ymax)
         plt.tick_params(direction='inout',top=True,which='both',labelbottom=False)
 
-        plt.axes([0.06,0.09,0.91,0.19],sharey=ax2)
+        plt.axes([0.06,0.09,0.91,0.19],sharey=ax2,sharex=ax2)
         #diff.periodogram(color='gray',Norm=True)
         
         diff.substract_polyfit(5)
         diff.detrend_poly.min_noise()
         diff.detrend_poly.periodogram(color='purple',Norm=True)
-        
-        plt.ylim(0,None)
+        plt.xlim(None,700)
+        plt.ylim(0,ymax)
         plt.tick_params(direction='inout',top=True,which='both')
         
         power_snr = power_snr[loc]
@@ -6139,7 +6560,7 @@ class spec_time_series(object):
                         
         span_berv = np.max(self.table.berv) - np.min(self.table.berv) 
         if span_berv<5:
-            print(Fore.YELLOW + ' [WARNING] The berv span is %.1f which is not sufficient to provide reliable master telluric'%(span_berv) + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] The berv span is %.1f which is not sufficient to provide reliable master telluric'%(span_berv) + Fore.RESET)
             myf.make_sound('Warning')
             template_telluric  = True
         
@@ -6154,12 +6575,12 @@ class spec_time_series(object):
         rv_sys = file_test['parameters']['RV_sys']
         
         if rv_sys is None:
-            print(Fore.YELLOW + ' [WARNING] No systemics velocity RV_sys found' + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] No systemics velocity RV_sys found' + Fore.RESET)
             myf.make_sound('Warning')
         try:
             Teff = file_test['parameters']['Teff_gray']
         except KeyError:
-            print(Fore.YELLOW + ' [WARNING] No effective temperature found' + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] No effective temperature found' + Fore.RESET)
             myf.make_sound('Warning')
             Teff = np.nan
                 
@@ -7020,11 +7441,11 @@ class spec_time_series(object):
         fwhm_min = [2,3][self.instrument[:-2]=='CORALIE']
         fwhm_default = [3,5][self.instrument[:-2]=='CORALIE']
         if np.percentile(fwhm,95)>fwhm_max:
-            print(Fore.YELLOW + '\n [WARNING] FWHM of tellurics larger than %.0f km/s (%.1f), reduced to default value of %.0f km/s'%(fwhm_max,np.percentile(fwhm,95),fwhm_default)+ Fore.WHITE)
+            print(Fore.YELLOW + '\n [WARNING] FWHM of tellurics larger than %.0f km/s (%.1f), reduced to default value of %.0f km/s'%(fwhm_max,np.percentile(fwhm,95),fwhm_default)+ Fore.RESET)
             myf.make_sound('warning')
             fwhm = np.array([fwhm_default]*len(self.table.jdb))
         if np.percentile(fwhm,95)<fwhm_min:
-            print(Fore.YELLOW + '\n [WARNING] FWHM of tellurics smaller than %.0f km/s (%.1f), increased to default value of %.0f km/s'%(fwhm_min,np.percentile(fwhm,95),fwhm_default)+ Fore.WHITE)
+            print(Fore.YELLOW + '\n [WARNING] FWHM of tellurics smaller than %.0f km/s (%.1f), increased to default value of %.0f km/s'%(fwhm_min,np.percentile(fwhm,95),fwhm_default)+ Fore.RESET)
             myf.make_sound('warning')
             fwhm = np.array([fwhm_default]*len(self.table.jdb))
         
@@ -7062,7 +7483,7 @@ class spec_time_series(object):
             mask = (np.array(self.table.jdb)<jdb_range[0])|(np.array(self.table.jdb)>jdb_range[1])
             
         if sum(mask)<40:
-            print(Fore.YELLOW + '\n [WARNING] Not enough spectra %s the specified temporal range'%(['inside','outside'][jdb_range[2]==0]) + Fore.WHITE)
+            print(Fore.YELLOW + '\n [WARNING] Not enough spectra %s the specified temporal range'%(['inside','outside'][jdb_range[2]==0]) + Fore.RESET)
             mask = np.ones(len(self.table.jdb)).astype('bool')
         else:
             print('\n [INFO] %.0f spectra %s the specified temporal range can be used for the median\n'%(sum(mask),['inside','outside'][jdb_range[2]==0]))
@@ -7814,13 +8235,15 @@ class spec_time_series(object):
             database['num'] = database['Spec'].str[1]
 
             sp = self.star_info['Sp_type']['fixed']
+            if sp=='Unfound':
+                sp = 'G2V'
             
             database = database.loc[database['class']==sp[0]]
             database = database.reset_index(drop=True)
             match = database.loc[myf.find_nearest(np.array(database['num']).astype('int'),int(sp[1]))[0][0]]
             t_gray2 = int(np.round(10**match['log(T)'],-2))
 
-            print(Fore.YELLOW + ' [WARNING] Effective temperature not reliable (%.0f K), matching with spectral type %s provide Teff = %.0f K'%(t_gray,sp,t_gray2) + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] Effective temperature not reliable (%.0f K), matching with spectral type %s provide Teff = %.0f K'%(t_gray,sp,t_gray2) + Fore.RESET)
             t_gray = t_gray2
             time.sleep(1)
     
@@ -7828,16 +8251,16 @@ class spec_time_series(object):
         v = self.star_info['magV']['fixed']
         if np.isnan(self.star_info['BV']['fixed']):
             bv = -3.684*np.log10(t_gray) + 14.551 #http://www.isthe.com/chongo/tech/astro/HR-temp-mass-table-byhrclass.html
-            print(Fore.YELLOW + ' [WARNING] BV extracted from the effective temperature since not found on Simbad : BV = %.2f'%(bv) + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] BV extracted from the effective temperature since not found on Simbad : BV = %.2f'%(bv) + Fore.RESET)
             self.yarara_star_info(BV=['fixed',np.round(bv,2)])
         
         if np.isnan(v)&(not np.isnan(b)):
             v = np.round(b - bv,2)
-            print(Fore.YELLOW + ' [WARNING] magV extracted from the effective temperature since not found on Simbad : mV = %.2f'%(v) + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] magV extracted from the effective temperature since not found on Simbad : mV = %.2f'%(v) + Fore.RESET)
             self.yarara_star_info(magV=['fixed',np.round(v,2)])
         if np.isnan(b)&(not np.isnan(v)):
             b = np.round(bv + v,2)        
-            print(Fore.YELLOW + ' [WARNING] magB extracted from the effective temperature since not found on Simbad : mB = %.2f'%(b) + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] magB extracted from the effective temperature since not found on Simbad : mB = %.2f'%(b) + Fore.RESET)
             self.yarara_star_info(magB=['fixed',np.round(b,2)])
     
         if debug:
@@ -8144,16 +8567,16 @@ class spec_time_series(object):
             
             t = teff_model[metric.argmin()]
             if (t==4000)&(model=='ATLAS'):
-                print(Fore.YELLOW +'\n [WARNING] Minimum temperature of the ATLAS stellar template grid reached \n' + Fore.WHITE)
+                print(Fore.YELLOW +'\n [WARNING] Minimum temperature of the ATLAS stellar template grid reached \n' + Fore.RESET)
 
             if (t==5000)&(model=='MARCS'):
-                print(Fore.YELLOW +'\n [WARNING] Minimum temperature of the MARCS stellar template grid reached \n' + Fore.WHITE)
+                print(Fore.YELLOW +'\n [WARNING] Minimum temperature of the MARCS stellar template grid reached \n' + Fore.RESET)
 
             if (t==7000)&(model=='ATLAS'):
-                print(Fore.YELLOW +'\n [WARNING] Maximum temperature of the ATLAS stellar template grid reached \n' + Fore.WHITE)
+                print(Fore.YELLOW +'\n [WARNING] Maximum temperature of the ATLAS stellar template grid reached \n' + Fore.RESET)
 
             if (t==7000)&(model=='MARCS'):
-                print(Fore.YELLOW +'\n [WARNING] Maximum temperature of the MARCS stellar template grid reached \n' + Fore.WHITE)
+                print(Fore.YELLOW +'\n [WARNING] Maximum temperature of the MARCS stellar template grid reached \n' + Fore.RESET)
             
             
             if count==1:
@@ -8482,7 +8905,7 @@ class spec_time_series(object):
             bv = self.star_info['BV']['fixed']
             if np.isnan(bv):
                 bv=0
-                print(Fore.YELLOW + ' [WARNING] No BV value given for the star' + Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] No BV value given for the star' + Fore.RESET)
             # conv_offset = -0.60 - 5.99*bv + 2.51*bv**2 #old calib
             # conv_slope = 4.55 - 7.30*bv + 3.61*bv**2 #old calib
 
@@ -9496,6 +9919,7 @@ class spec_time_series(object):
                 test.order()
                 if m_out:
                     test.rm_outliers(kind='inter',m=m_out)
+                test.interpolate(new_grid=master_wave, method='linear', replace=False, interpolate_x=False)                    
                 model_x = myf.smooth(test.x,box_pts=smooth_box,shape='rectangular')        
                 model_y = myf.smooth(test.y,box_pts=smooth_box,shape='rectangular')
                 model = myc.tableXY(model_x,model_y)
@@ -9507,7 +9931,9 @@ class spec_time_series(object):
         
         all_vec_name = np.array(all_vec_name)
         all_vec = np.array(all_vec)
+        master_wave = master_wave[~np.isnan(np.sum(all_vec,axis=0))]
         all_vec = all_vec[:,~np.isnan(np.sum(all_vec,axis=0))]
+        
         coeff = myc.table(pd.DataFrame(all_vec.T,columns=all_vec_name))
                 
         plt.figure(figsize=(12,12))
@@ -9593,12 +10019,31 @@ class spec_time_series(object):
         
         cluster_min_size = np.round(nb_stars*frac_affected,0)
         self.slice_map_auto_produced = []
-        counter=num0-1
+        self.slice_vec_auto_produced = []
+        counter = num0-1
+        nb_cluster = np.sum(cluster_loc[1:]-cluster_loc[0:-1]>cluster_min_size)
         for n,m in zip(cluster_loc[0:-1],cluster_loc[1:]):
             if (m-n)>cluster_min_size:
                 counter+=1
-                                
+                
                 loc = np.array([np.where(np.in1d(all_vec_name,name_comp))[0][0] for name_comp in var_kept[block_order][mask_kept][n:m]])
+                fig = plt.figure(69,figsize=(18,6))
+                plt.subplots_adjust(left=0.04,right=0.97,top=0.95,bottom=0.12,hspace=0.35,wspace=0.20)
+                vec = 0 
+                plt.subplot(nb_cluster, 1, counter)
+                for l,k in enumerate(loc): 
+                    sign_component = np.sign(coeff.matrix_corr[n,n+l])
+                    plt.plot(master_wave, sign_component*coeff.table[all_vec_name[k]],color=None,alpha=0.5,label=all_vec_name[k].split('_')[0])      
+                    vec+=sign_component*coeff.table[all_vec_name[k]]
+                plt.axhline(y=0,color='k',ls=':')
+                plt.plot(master_wave, vec/len(loc), color='k')
+                plt.ylim(-4,3)
+                plt.ylabel(r'Z-score ($Z_{%.0f}$)'%(counter),fontsize=16)
+                plt.xlabel(r'Wavelength $\lambda$ [$\AA$]',fontsize=16)
+                plt.legend(loc=3,ncol=10)
+                plt.xlim(np.min(master_wave),np.max(master_wave))
+                plt.savefig(root+'/Yarara/database/%s/%s_Z_autoslice_%s.png'%(self.instrument,self.instrument,sub_dico))
+                self.slice_vec_auto_produced.append(vec/len(loc))
                 
                 fig = plt.figure(figsize=(18,14))
                 plt.subplots_adjust(left=0.04,right=0.97,top=0.95,bottom=0.05,hspace=0.35,wspace=0.20)
@@ -9629,10 +10074,10 @@ class spec_time_series(object):
                 mask = np.isnan(complete_map[2])
                 complete_map = complete_map[:,~mask]
                 self.slice_map_auto_produced.append(complete_map)
-        
+                
                 test = myc.tableXY(complete_map[1],complete_map[2])
                 test.reject_twin() #understand what is happening
-                model_x = myf.smooth(test.x,box_pts=smooth_box,shape='rectangular')        
+                model_x = myf.smooth(test.x,box_pts=smooth_box,shape='rectangular')
                 model_y = myf.smooth(test.y,box_pts=smooth_box,shape='rectangular')
                 model = myc.tableXY(model_x,model_y)
                 model.order()
@@ -9659,7 +10104,7 @@ class spec_time_series(object):
                 ax.ax.set_ylabel(r'Z score $(\gamma)$',fontsize=15)
                 plt.xlabel('Pixels',fontsize=15)
                 plt.ylabel(r'Wavelength $\lambda$ [$\AA$]',fontsize=15)
-                plt.title('Smoothed model')        
+                plt.title('Smoothed model')
                 plt.subplots_adjust(left=0.07,right=0.96,wspace=0.3)
                 
                 plt.show(block=False)
@@ -9671,8 +10116,10 @@ class spec_time_series(object):
                     slices = pd.read_pickle(kernels_file)
                 else:
                     slices = {}
-                
-                slices['kernel_%.0f'%(counter)] = {'var':pd.DataFrame({'wave':model.x}),'strength':model.y}
+                                
+                slices['kernel_%.0f'%(counter)] = {'var':pd.DataFrame({'wave':master_wave}),'strength':vec/len(loc),
+                                                   'var2':pd.DataFrame({'wave':model.x}),'strength2':model.y
+                                                   }
                 myf.pickle_dump(slices,open(kernels_file,'wb'))  
     
     
@@ -9680,7 +10127,7 @@ class spec_time_series(object):
                              continuum='linear', offset=False, substract_map=[], add_map=[], continuum_absorption=True, mask_rejection=True, fap=0.1,
                              wave_min=None, wave_max=None, m=2, m_shell=3, kind='inter', nb_comp=10, nb_comp_kept=5, power_max=None, min_element_nb=30, snr_min=1, 
                              ordering='lbl_var', force_reduction=False, blended_lines=True, photon_noise=0.7, distortion_amplitude=0.05, proxies_to_corr=None, paper_plot=False,
-                             cross_validation=False, cv_sim=100, cv_percent_rm=10, cv_frac_affected=0.01, treshold_percent=95, p_noise=1/np.inf, rv_ref=None):
+                             cross_validation=False, cv_sim=100, cv_percent_rm=10, cv_frac_affected=0.01, treshold_percent=95, p_noise=1/np.inf, rv_ref=None, vec_binning=None):
         
         """lbl_var,rvm_rms,laplacien or divergence for ordering pca vectors"""
         myf.print_box('\n---- RECIPE : CORRECTION LINE PROFILE ACTIVITY ----\n')
@@ -9748,7 +10195,7 @@ class spec_time_series(object):
             f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
             all_flux.append(f_norm)
             all_flux_std.append(f_norm_std)
-            conti.append(c)       
+            conti.append(c)
 
         step = file[sub_dico]['parameters']['step']
 
@@ -9760,7 +10207,7 @@ class spec_time_series(object):
         #all_flux+=noise_matrix
         #all_flux_std = np.sqrt(all_flux_std**2+noise_values**2)  
         
-        minimum_flux = np.nanmin(all_flux,axis=0)        
+        minimum_flux = np.nanmin(all_flux,axis=0)
         mask_neg_flux = (minimum_flux>0).astype('bool')
         
         if reference=='snr':
@@ -9982,7 +10429,39 @@ class spec_time_series(object):
         
         def xlim_shell():
             plt.scatter(self.shell[sub_dico]['x'],np.ones(len(self.shell[sub_dico]['x']))*0.5,alpha=0)
-                    
+         
+        if vec_binning is not None:
+            vmin = np.percentile(new_matrix,16)
+            vmax = np.percentile(new_matrix,84)
+            plt.subplot(2,3,1)
+            plt.imshow(new_matrix, vmin=vmin, vmax=vmax,aspect='auto')            
+            plt.subplot(2,3,4)
+            plt.imshow(new_matrix_std, vmin=vmin, vmax=vmax,aspect='auto')  
+            new_matrix = new_matrix[:,np.argsort(vec_binning)]
+            new_matrix_std = new_matrix_std[:,np.argsort(vec_binning)]
+            plt.subplot(2,3,2)
+            plt.imshow(new_matrix, vmin=vmin, vmax=vmax,aspect='auto')
+            plt.subplot(2,3,5)
+            plt.imshow(new_matrix_std, vmin=vmin, vmax=vmax,aspect='auto')
+            new_matrix = new_matrix[np.argsort(sts.shell['matching_mad']['x'])]
+            new_matrix_std = new_matrix_std[np.argsort(sts.shell['matching_mad']['x'])]
+            plt.subplot(2,3,3)
+            plt.imshow(new_matrix, vmin=vmin, vmax=vmax,aspect='auto')            
+            plt.subplot(2,3,6)
+            plt.imshow(new_matrix_std, vmin=vmin, vmax=vmax,aspect='auto')
+            
+            x = x[np.argsort(sts.shell['matching_mad']['x'])]
+
+            base_fixed = np.array([-x/np.std(x),np.ones(len(x))])
+                          
+            matrix_init = myc.table(new_matrix.T)
+            w = 1/new_matrix_std.T**2
+            matrix_init.fit_base(base_fixed,weight=w)
+            
+            matrix = myc.table(matrix_init.vec_residues.T) 
+            
+            zscore,phi,base_vec = matrix.dim_reduction('pca',5,w)
+
         m1 = np.median(myf.mad(new_matrix,axis=1)[:,np.newaxis]/new_matrix_std,axis=0)
         m2 = np.median(myf.mad(new_matrix,axis=0)/new_matrix_std,axis=1)
         
@@ -10130,7 +10609,7 @@ class spec_time_series(object):
         plt.xlabel('# components',fontsize=14)
         plt.ylabel('Variance explained',fontsize=14)
         plt.plot(np.arange(1,len(matrix.var_ratio)+1), matrix.var_ratio, marker='o')
-        plt.xlim(-1.5,None)    
+        plt.xlim(-1.5,None)
         ax2 = plt.gca()
         yspan = ax2.get_ylim()[1]-ax2.get_ylim()[0]
             
@@ -10667,7 +11146,8 @@ class spec_time_series(object):
         plt.subplot(4,1,2)
         rv.periodogram(nb_perm=1,Norm=True,p_min=0.7,color='b',lw=1,level=level)
         rv.vec_residues.periodogram(nb_perm=1,Norm=True,p_min=0.7,color='g',lw=1,level=level)
-        plt.ylim(0,power_max)
+        rv.plot_lowest_perio(rv.vec_residues) 
+        
         if kw!='':
             self.yarara_indicate_planet(color='r',ls='-',alpha=0.1)
         
@@ -10800,7 +11280,7 @@ class spec_time_series(object):
 
     def yarara_correct_slice(self, sub_dico='matching_mad', save_correction=True, reduction='empca', reference='median', metric='median',
                              continuum='linear', offset=False, substract_map=[], add_map=[], continuum_absorption=True, mask_rejection=True,
-                             wave_min=None, wave_max=None, m=2, kind='inter', nb_comp=10, nb_comp_kept=5, nb_cut = 8, power_max=None, 
+                             wave_min=None, wave_max=None, m=2, kind='inter', nb_comp=10, nb_comp_kept=5, nb_cut = 10, power_max=None, ext='',
                              ordering='lbl_var',force_reduction=False, blended_lines=True, photon_noise=0.7):
         
         """lbl_var,rvm_rms,laplacien or divergence for ordering pca vectors"""
@@ -11290,7 +11770,8 @@ class spec_time_series(object):
         plt.subplot(4,1,2)
         rv.periodogram(nb_perm=1,Norm=True,p_min=0.7,color='b',lw=1)
         rv.vec_residues.periodogram(nb_perm=1,Norm=True,p_min=0.7,color='g',lw=1)
-        plt.ylim(0,power_max)
+        rv.plot_lowest_perio(rv.vec_residues.poly) 
+
         self.yarara_indicate_planet(color='r',ls='-',alpha=0.1)
         
         plt.subplot(4,1,3)
@@ -12760,7 +13241,7 @@ class spec_time_series(object):
             reference=False
             ratio=False
             myf.make_sound('warning')
-            print(Fore.YELLOW +'\n [WARNING] BERV SPAN too low to consider ratio spectra as reliable. Diff spectra will be used.\n' + Fore.WHITE)
+            print(Fore.YELLOW +'\n [WARNING] BERV SPAN too low to consider ratio spectra as reliable. Diff spectra will be used.\n' + Fore.RESET)
         
         berv_max = np.max(abs(self.table['berv'+kw]))
         directory = self.directory
@@ -12854,7 +13335,7 @@ class spec_time_series(object):
         mask_fail = mask_fail|np.isnan(self.ccf_rv.y)
         if sum(mask_fail):
             myf.make_sound('warning')
-            print(Fore.YELLOW +' \n[WARNING] There are %.0f datapoints incompatible with the BERV values'%(sum(mask_fail)) + Fore.WHITE)
+            print(Fore.YELLOW +' \n[WARNING] There are %.0f datapoints incompatible with the BERV values'%(sum(mask_fail)) + Fore.RESET)
             for k in range(len(output)):
                 output[k][mask_fail] = np.nanmedian(output[k][~mask_fail])
         
@@ -12924,8 +13405,11 @@ class spec_time_series(object):
         kw = '_planet'*planet
         if kw!='':
             print('\n---- PLANET ACTIVATED ----')
+
+        self.import_table()
         
         files = glob.glob(directory+'RASSI*.p')
+        files = np.array(self.table['filename']) #updated 29.10.21 to allow ins_merged
         files = np.sort(files)
     
         flux = [] ; snr = [] ; conti = [] ; flux_err = []
@@ -12937,6 +13421,7 @@ class spec_time_series(object):
         self.import_table()
         self.import_material()
         load = self.material
+        
         
         mask_loc = mask_name
         if mask_name is None:
@@ -13024,7 +13509,7 @@ class spec_time_series(object):
         berv = np.array(berv)
         grid = wave
         
-        flux,flux_err,wave = self.yarara_map(sub_dico=sub_dico, wave_min=None, wave_max=None, Plot=False, reference=False, substract_map=substract_map, add_map=add_map, correction_factor=False) #04.08.21 in order to include add and substract map
+        flux,flux_err,wave = self.yarara_map(sub_dico=sub_dico, planet=self.planet, wave_min=None, wave_max=None, Plot=False, reference=False, substract_map=substract_map, add_map=add_map, correction_factor=False) #04.08.21 in order to include add and substract map
         
         flux *= np.array(load['correction_factor'])
         flux_err *= np.array(load['correction_factor'])
@@ -13765,7 +14250,7 @@ class spec_time_series(object):
                         reference = False, plot=False, display_ccf=display_ccf, save=save, save_ccf_profile=save_ccf_profile,
                         normalisation=normalisation, rv_range=rv_range, ccf_oversampling=ccf_oversampling)
 
-    def yarara_ccf_fit(self, dico_name, sub_dico = 'matching_diff', proxies = ['CaII','WB'], time_detrending = 2, substract_rv = None):
+    def yarara_ccf_fit(self, dico_name, sub_dico = 'matching_diff', proxies = ['CaII','WB'], time_detrending = 2, substract_rv = None, rm_keplerian=True):
 
         self.import_table()
         self.import_ccf()
@@ -13780,8 +14265,10 @@ class spec_time_series(object):
         jdb = tab_ccf[list(tab_ccf.keys())[-1]][sub_dico]['table']['jdb']
         
         directory = self.directory
+        
         files = glob.glob(directory+'RASSI*.p')
-        files = np.sort(files)                
+        files = np.array(self.table['filename']) #updated 29.10.21 to allow ins_merged
+        files = np.sort(files)              
         
         masks = list(tab_ccf.keys())[1:]
         
@@ -13798,6 +14285,27 @@ class spec_time_series(object):
                 base_vec = np.vstack([base_vec,np.array(tab[p])])
             else:
                 base_vec = np.vstack([base_vec,p])
+                
+        keplerians_founded = False
+        if rm_keplerian:
+            files_keplerians = glob.glob(self.dir_root+'KEPLERIAN/Vectors_keplerian_fitted*.p')
+            if len(files_keplerians):
+                print('\n [INFO] File keplerians selected : %s'%(np.sort(files_keplerians)[-1]))
+                tab_keplerian = pd.read_pickle(np.sort(files_keplerians)[-1])
+                nb_v = np.sum([i[0]=='V' for i in tab_keplerian.keys()])
+                nb_p = np.sum([i[0]=='P' for i in tab_keplerian.keys()])
+                nb_vec_kep = nb_v+2*nb_p
+                keplerians_founded = True
+                print('\n [INFO] Keplerians model founded : ',list(tab_keplerian.keys()))
+                
+                for i in tab_keplerian.keys():
+                    if i[0]=='V':
+                        base_vec = np.vstack([base_vec,tab_keplerian[i]])
+    
+                for i in tab_keplerian.keys():
+                    if i[0]=='P':
+                        base_vec = np.vstack([base_vec,tab_keplerian[i]])                    
+        
         print('\n-------- DICO %s --------'%(sub_dico))
         
         masks = []
@@ -13806,6 +14314,7 @@ class spec_time_series(object):
                 if m[0]=='C':
                     masks.append(m.split('CCF_')[1])
         
+        self.model_keplerian_fitted = {}
         for mask in masks:
             canevas = np.array(tab_ccf['CCF_'+mask][sub_dico]['table']).copy()
             new_canevas = pd.DataFrame(canevas,columns=tab_ccf['CCF_'+mask][sub_dico]['table'].keys())
@@ -13813,6 +14322,14 @@ class spec_time_series(object):
             rv = myc.tableXY(jdb,tab_ccf['CCF_'+mask][sub_dico]['table']['rv']*1000,tab['rv_dace_std'])
             rv.y -= substract_rv
             rv.fit_base(base_vec)
+            
+            model_keplerian = 0
+            if keplerians_founded:
+                model_keplerian = np.sum(rv.all_vec_fitted[:,-2*nb_p-nb_v:],axis=1)                
+            
+            self.model_keplerian_fitted[mask] = model_keplerian #only save for the gaussian
+            rv.vec_residues.y+=model_keplerian
+            
             rv.y += substract_rv
             rv.rms_w()
             rv.vec_residues.rms_w()
@@ -13823,6 +14340,12 @@ class spec_time_series(object):
             rv = myc.tableXY(jdb,tab_ccf['CCF_'+mask][sub_dico]['table']['center']*1000,tab['rv_dace_std'])
             rv.y -= substract_rv
             rv.fit_base(base_vec)
+            
+            model_keplerian = 0
+            if keplerians_founded:
+                model_keplerian = np.sum(rv.all_vec_fitted[:,-2*nb_p-nb_v:],axis=1)
+            rv.vec_residues.y+=model_keplerian
+            
             rv.y += substract_rv
             rv.rms_w()
             rv.vec_residues.rms_w()
@@ -14057,7 +14580,7 @@ class spec_time_series(object):
         dace.detrend_poly.periodogram(Norm=True, nb_perm=1, color='b', ofac=10, zorder=2, p_min=p_min, p_max=baseline)   
         new.detrend_poly.periodogram(Norm=True, nb_perm=1,color='g', ofac=10, zorder=zorder2, p_min=p_min, p_max=baseline)
         dace.detrend_poly.plot_lowest_perio(new.detrend_poly) 
-        plt.ylim(0,None)
+        #plt.ylim(0,None)
 
         plt.xlabel('Period [days]',fontsize=16)
         plt.ylabel('Power',fontsize=16)
@@ -14098,6 +14621,7 @@ class spec_time_series(object):
         old.yerr = np.sqrt(old.yerr**2+photon_noise**2)
         new.yerr = np.sqrt(new.yerr**2+photon_noise**2)
         last.yerr = np.sqrt(last.yerr**2+photon_noise**2)
+        dace.yerr = np.sqrt(dace.yerr**2+photon_noise**2)
 
         old.substract_polyfit(deg,replace=True)
         new.substract_polyfit(deg,replace=True)
@@ -14113,20 +14637,32 @@ class spec_time_series(object):
         lg2 = 'YARARA V1'#' (rms : %.2f m/s)'%(new.rms)
         lg3 = 'YARARA V2'#' (rms : %.2f m/s)'%(last.rms)
         
+        pmax = 0
         plt.figure(figsize=(15,7))
         plt.subplot(3,1,1) ; ax=plt.gca()
+        if self.planet:
+            self.yarara_indicate_planet(color='g')
         if reference=='DRS':
             dace.periodogram(Norm=True, nb_perm=1, color='k', ofac=10, p_min=p_min, p_max=baseline, legend=reference) ; plt.legend(loc=1)   
+            pmax = np.max([pmax,dace.power_max])
         else:
             old.periodogram(Norm=True, nb_perm=1, color='k', ofac=10, p_min=p_min, p_max=baseline, legend=reference) ; plt.legend(loc=1)               
-        plt.tick_params(top=True,direction='in',which='both')
+            pmax = np.max([pmax,old.power_max])
+        plt.tick_params(top=True,direction='inout',which='both')
         plt.subplot(3,1,2,sharex=ax,sharey=ax)
+        if self.planet:
+            self.yarara_indicate_planet(color='g')
         new.periodogram(Norm=True, nb_perm=1, color='k', ofac=10, p_min=p_min, p_max=baseline, legend=lg2) ; plt.legend(loc=1)   
-        plt.tick_params(top=True,direction='in',which='both')
+        pmax = np.max([pmax,new.power_max])
+        plt.tick_params(top=True,direction='inout',which='both')
         plt.subplot(3,1,3,sharex=ax,sharey=ax)
+        if self.planet:
+            self.yarara_indicate_planet(color='g')
         last.periodogram(Norm=True, nb_perm=1, color='k', ofac=10, p_min=p_min, p_max=baseline, legend=lg3) ; plt.ylim(0,None) ; plt.legend(loc=1) 
+        pmax = np.max([pmax,last.power_max])
+        plt.ylim(0,pmax+0.02)
         plt.subplots_adjust(hspace=0, left=0.08, right=0.97, top=0.95, bottom=0.09)
-        plt.tick_params(top=True,direction='in',which='both')
+        plt.tick_params(top=True,direction='inout',which='both')
         plt.savefig(self.dir_root+'IMAGES/Global_periodogram_reduction_%s.pdf'%(mask))
         
         
@@ -14223,13 +14759,17 @@ class spec_time_series(object):
         dace.detrend_poly.periodogram(Norm=True, nb_perm=1, color='b', ofac=10,zorder=2, p_min=p_min, p_max=baseline)   
         last.detrend_poly.periodogram(Norm=True, nb_perm=1,color='g', ofac=10,zorder=zorder2, p_min=p_min, p_max=baseline)
         dace.detrend_poly.plot_lowest_perio(last.detrend_poly,color1='b',color2='g')
-        plt.ylim(0,None)
+        #plt.ylim(0,None)
+        plt.xlabel('Period [days]',fontsize=16)
+        plt.ylabel('Power',fontsize=16)
 
         ax = plt.gca()
         plt.subplot(4,1,4,sharex=ax)
         #diff.periodogram(Norm=True, nb_perm=1, color='gray', ofac=10)
         diff.detrend_poly.periodogram(Norm=True,nb_perm=1,color='k',ofac=10, p_min=p_min, p_max=baseline)  
         plt.ylim(0,None)
+        plt.xlabel('Period [days]',fontsize=16)
+        plt.ylabel('Power',fontsize=16)
         plt.subplots_adjust(top=0.94,left=0.08,right=0.95,bottom=0.10,hspace=0.35)
         plt.savefig(self.dir_root+'IMAGES/RV_after_YARARA_v2_%s.pdf'%(mask))
         
@@ -14268,7 +14808,7 @@ class spec_time_series(object):
             self.import_planet()
             planet = self.rv_planet.y 
                         
-        dace = self.import_dace_sts(substract_model=True)
+        dace = self.import_dace_sts(substract_model=False)
 
         #dace = myc.tableXY(self.table['jdb'],self.table['rv_dace']+planet,self.table['rv_dace_std'])
         dace.yerr = np.sqrt(dace.yerr**2+noise**2)
@@ -14296,6 +14836,7 @@ class spec_time_series(object):
                     new = myc.tableXY(dace.x, table_ccf[j]['table'][column]*1000, dace.yerr)
                     self.debug = new,j,mask
                     if len(new.x)==len(new.y):
+                        new.replace_nan()
                         new.substract_polyfit(poly_deg,replace=True)                
                         new.rms_w()   
                         dico_tree.loc[dico_tree['dico']==j,'rms'] = new.rms
@@ -14392,7 +14933,7 @@ class spec_time_series(object):
         #table_ccf = self.table_ccf[mask]
         
         dico_reduced = np.array(self.dico_tree['dico'])
-        dace = self.import_dace_sts(substract_model=True)
+        dace = self.import_dace_sts(substract_model=False)
         
         dace.yerr = np.sqrt(dace.yerr**2+photon_noise**2)
         dace.periodogram(Plot=False, p_min=p_min, ofac=ofac,level=1-fap/100)
@@ -14517,6 +15058,66 @@ class spec_time_series(object):
        
         plt.subplots_adjust(top=0.95,left=0.07,right=0.93,bottom=0.06,hspace=0.45,wspace=0.4)
         plt.savefig(self.dir_root+'IMAGES/Map_periodogram_%s.png'%(mask))
+    
+    def yarara_add_keplerians(self, vec=[], periods=[], from_data=True, p_tol=10):
+        
+        def return_intersection(v1,v2):
+            match = myf.match_nearest(np.array(v1),np.array(v2))
+            mean_p = 0.5*(match[:,-2]+match[:,-3])
+            diff = 100*abs(match[:,-1])/(mean_p)
+            diff = diff.astype('int')
+            periods = list(mean_p[diff<=p_tol])
+            return periods
+        
+        self.import_table()
+        t0 = 0
+        time = np.array(self.table.jdb)
+        ext = '0'
+        
+        if from_data:
+            periods = []
+            table = pd.read_pickle(self.dir_root+'KEPLERIAN/Planets_fitted_table_iter.p')
+            v1 = np.array(table['yarara_v1_lbl']['p'])
+            v2 = np.array(table['yarara_v2_lbl']['p'])
+            converged = 0
+            if (len(v1)!=0)&(len(v2)!=0):
+                periods = return_intersection(v1,v2) #take as reference the intersection of v1 and v2
+                print('\n [INFO] %.0f Keplerians detected in V1 and V2 at : '%(len(periods)),['%.2f'%(i) for i in periods],' days')
+                print('\n [INFO] Planets added in the model and will be used if rerunning the pipeline')
+
+                if len(periods): 
+                    if os.path.exists(self.dir_root+'KEPLERIAN/Vectors_keplerian_fitted_1.p'):
+                        old_table = pd.read_pickle(self.dir_root+'KEPLERIAN/Vectors_keplerian_fitted_1.p')
+                        old_periods = []
+                        for k in list(old_table.keys()):
+                            if k[0]=='P':
+                                old_periods.append(float(k[1:]))
+                        old_periods= np.array(old_periods)
+                        new_periods = return_intersection(old_periods,periods)
+                        if len(new_periods)==len(old_periods):
+                            converged = 1
+                            periods = v2 #if converged take v2 as the new reference
+                            print('\n [INFO] Keplerians model already converged, changing from V1&V2 to V2 model')
+                            print('\n [INFO] %.0f Keplerians detected in V2 at : '%(len(periods)),['%.2f'%(i) for i in periods],' days')
+                            
+                        if os.path.exists(self.dir_root+'KEPLERIAN/Vectors_keplerian_fitted_2.p'):
+                            converged = 1
+                            periods = v2 #if converged take v2 as the new reference
+                            print('\n [INFO] %.0f Keplerians detected in V2 at : '%(len(periods)),['%.2f'%(i) for i in periods],' days')
+                            
+            ext = ['1','2'][converged]
+        base = {}
+        
+        for n,v in enumerate(vec):
+            base['V%.0f'%(n+1)] = v
+        
+        for p in periods:
+            base['P%.2f'%(p)] = np.array([np.sin(2*np.pi*(time-t0)/p),
+                                          np.cos(2*np.pi*(time-t0)/p)])
+        
+        if len(base):
+            myf.pickle_dump(base,open(self.dir_root+'KEPLERIAN/Vectors_keplerian_fitted_%s.p'%(ext),'wb'))
+                        
         
     def yarara_keplerian_fit(self, vec, periods=[365.25], time_detrending=0, t0=None):
         
@@ -14547,18 +15148,20 @@ class spec_time_series(object):
         
         return {'p':np.array(periods),'k':amp, 'phi':phase, 'k_std':amp_err,'phi_std':0*amp_err}
         
-    def yarara_keplerian_chain(self, mask, periods=None, time_detrending=0, p_max=3000, substract_model=False):
+    def yarara_keplerian_chain(self, mask, sub_dico='matching_empca', periods=None, time_detrending=0, p_max=3000, substract_model=False):
         self.import_dico_tree()
         self.import_ccf()
         self.import_table()
         ccfs = self.table_ccf[mask]
         dico_reduced = ccfs.keys()
         dico_tree = self.dico_tree
+        if sub_dico in list(dico_tree['dico']):
+            val = dico_tree.loc[dico_tree['dico'].isin([sub_dico])].copy()['step'].values[0]
+            dico_tree = dico_tree.loc[dico_tree['step']<=val]
         dico_tree = list(dico_tree.loc[dico_tree['dico'].isin(dico_reduced)].copy()['dico'])
-
+        
         parameter = []
-
-
+        
         if periods is None:
             file_test = self.import_spectrum()
             periods = file_test['parameters']['planet_injected']['period']
@@ -14605,6 +15208,8 @@ class spec_time_series(object):
         plt.subplots_adjust(hspace=0.75,wspace=0.4,top=0.95,left=0.07,right=0.95,bottom=0.05)
         dico_tree = np.hstack([np.array(['drs']),dico_tree])
         
+        v1_loc = np.where(dico_tree=='matching_morpho')[0]+0.5
+        
         mat = np.array(parameter)
         mat[:,2,:]*=180/np.pi
         mat[:,4,:]*=180/np.pi
@@ -14613,26 +15218,28 @@ class spec_time_series(object):
         
         fig = plt.figure(figsize=(17,12))
         plt.subplot(4,1,3)
+        plt.axvline(x=v1_loc,ls=':',color='k')
         for j in range(len(periods)):
             plt.plot(np.arange(len(mat)),mat[:,1,j],marker='o',label=('P=%.2f'%(periods[j])),color=colors[j])
             plt.fill_between(np.arange(len(mat)),mat[:,1,j]-np.ones(len(mat))*amplitudes_std[j],mat[:,1,j]+np.ones(len(mat))*amplitudes_std[j],color=colors[j],alpha=0.15)
         for j in range(len(amplitudes)):
             plt.axhline(y=amplitudes[j],color=colors[j],ls=':')
-        plt.ylabel('K amplitude [m/s]',fontsize=14)
-        plt.xticks(np.arange(len(dico_tree)),len(dico_tree)*[''],rotation=45,ha='right')
+        plt.ylabel('K amplitude [m/s]',fontsize=16)
+        plt.xticks(np.arange(len(dico_tree)),len(dico_tree)*[''],rotation=45,ha='right',fontsize=16)
         plt.tick_params(direction='in',top=True)
 
         mat[:,1,:] = (mat[:,1,:]-amplitudes)*100/amplitudes
         amplitudes_std = np.array(amplitudes_std)/np.array(amplitudes)*100
 
         plt.subplot(4,1,4)
+        plt.axvline(x=v1_loc,ls=':',color='k')
         for j in range(len(periods)):
             plt.plot(np.arange(len(mat)),mat[:,1,j],marker='o',label=('P=%.2f'%(periods[j])),color=colors[j])
             plt.fill_between(np.arange(len(mat)),mat[:,1,j]-np.ones(len(mat))*amplitudes_std[j],mat[:,1,j]+np.ones(len(mat))*amplitudes_std[j],color=colors[j],alpha=0.15)
         plt.axhline(y=0,color='k')
-        plt.legend()
-        plt.ylabel(r'$\Delta$ K [%]',fontsize=14)
-        plt.xticks(np.arange(len(dico_tree)),dico_tree,rotation=45,ha='right')
+        plt.legend(fontsize=16)
+        plt.ylabel(r'$\Delta$ K [%]',fontsize=16)
+        plt.xticks(np.arange(len(dico_tree)),dico_tree,rotation=45,ha='right',fontsize=16)
         plt.tick_params(direction='in',top=True)
         #plt.ylim(-29,29)
         mat[:,1,:] = mat[:,1,:]*amplitudes/100+amplitudes
@@ -14647,7 +15254,7 @@ class spec_time_series(object):
 
             plt.axvline(x=phases[j],color='k',lw=2.5,ls='-',alpha=alpha)
             plt.polar(mat[:,2,j]*np.pi/180,mat[:,1,j],color=colors[j],marker='o')
-            plt.title('P=%.2f days'%(periods[j]))
+            plt.title('P=%.2f days'%(periods[j]),fontsize=16)
             
         plt.subplots_adjust(left=0.05,right=0.95,top=0.92,bottom=0.15,hspace=0.15)
             
@@ -14691,7 +15298,6 @@ class spec_time_series(object):
         all_dico_name = []
         self.all_ccf = []
         i=0
-        print(dico_chain)
         for last in dico_chain:
             i+=1
             all_dico_name.append(last)
@@ -14719,7 +15325,7 @@ class spec_time_series(object):
             self.import_planet()
             planet = self.rv_planet.y
         
-        dace = self.import_dace_sts(substract_model=True)
+        dace = self.import_dace_sts(substract_model=False)
 
         # dace = myc.tableXY(self.table['jdb'], self.table['rv_dace']+planet, self.table['rv_dace_std'])
         # model_prefitted = np.array(self.table['rv_shift'])*1000
@@ -14934,7 +15540,7 @@ class spec_time_series(object):
         new.detrend_poly.periodogram(Norm=True, nb_perm=1,color='g', ofac=10)
         dace.detrend_poly.periodogram(Norm=True, nb_perm=1, color='b', ofac=10)  
         dace.detrend_poly.plot_lowest_perio(new.detrend_poly,color1='b',color2='g') 
-        plt.ylim(0,None)
+        #plt.ylim(0,None)
 
         ax = plt.gca()
         plt.subplot(4,1,4,sharex=ax)
@@ -15793,6 +16399,8 @@ class spec_time_series(object):
         self.import_material()
         load = self.material
         
+        self.import_table()
+        
         kw = '_planet'*planet
         if kw!='':
             print('\n---- PLANET ACTIVATED ----')
@@ -15804,6 +16412,8 @@ class spec_time_series(object):
         high_cmap = self.high_cmap
         
         files = glob.glob(directory+'RASSI*.p')
+        files = np.array(self.table['filename']) #updated 29.10.21 to allow ins_merged
+        
         files = np.sort(files)
         
         flux = [] ; err_flux = [] ; snr = []
@@ -15825,6 +16435,7 @@ class spec_time_series(object):
             snr.append(file['parameters']['SNR_5500'])
             flux.append(f_norm)
             err_flux.append(f_norm_std)
+            
             
             try:
                 jdb.append(file['parameters']['jdb'])
@@ -15856,6 +16467,8 @@ class spec_time_series(object):
         rv = np.array(rv)
         rv = rv-np.median(rv)
                
+        self.debug = flux
+        
         if correction_factor:
             flux *= np.array(load['correction_factor'])
             err_flux *= np.array(load['correction_factor'])    
@@ -15892,6 +16505,7 @@ class spec_time_series(object):
         noise_matrix, noise_values = self.yarara_poissonian_noise(noise_wanted=p_noise, wave_ref=None, flat_snr=True)
         flux+=noise_matrix
         err_flux = np.sqrt(err_flux**2+noise_values**2)   
+        
             
         old_length = len(wave)
         wave = wave[int(idx_min):int(idx_max)]
@@ -17194,7 +17808,7 @@ class spec_time_series(object):
         plt.scatter(kitcat['wave'],kitcat[mask_col]/coeff,c=kitcat['rel_contam'],vmax=0.1,cmap='jet',zorder=100,label='weights')
         plt.legend(loc=2)
         plt.xlim(np.min(kitcat['wave']),np.max(kitcat['wave']))
-        plt.ylim(None,1.2)
+        plt.ylim(-0.1,1.2)
         ax = plt.gca()
         plt.xlabel(r'Wavelengh [$\AA$]',fontsize=14)
         plt.ylabel(r'Normalised flux',fontsize=14)
@@ -17280,7 +17894,7 @@ class spec_time_series(object):
         plt.scatter(kitcat['wave'],kitcat[mask_col]/coeff,c=kitcat['rel_contam'],vmax=0.1,cmap='jet',zorder=100,label='weights')
         plt.legend(loc=2)
         plt.xlim(np.min(kitcat['wave']),np.max(kitcat['wave']))
-        plt.ylim(None,1.2)
+        plt.ylim(-0.1,1.2)
         ax = plt.gca()
         plt.xlabel(r'Wavelengh [$\AA$]',fontsize=14)
         plt.ylabel(r'Normalised flux',fontsize=14)
@@ -17396,7 +18010,7 @@ class spec_time_series(object):
             rv_sys1 = self.star_info['Rv_sys']['fixed']
             rv_sys2 = np.round(np.median(self.table.rv_dace)/1000,2)
             if abs(rv_sys2-rv_sys1)>1.5:
-                print(Fore.YELLOW + ' [WARNING] There is a conflict between the DACE RV_sys and the star_info RV_sys'+Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] There is a conflict between the DACE RV_sys and the star_info RV_sys'+Fore.RESET)
                 print(' [INFO] RV_dace = %.2f / RV_found = %.2f'%(rv_sys2,rv_sys1))
             else:
                 rv_sys = rv_sys1
@@ -17534,8 +18148,9 @@ class spec_time_series(object):
         load = self.material
         jdb = self.table['jdb']
         directory = self.directory
-        
+                
         files = glob.glob(directory+'RASSI*.p')
+        files = np.array(self.table['filename']) #updated 29.10.21 to allow ins_merged
         files = np.sort(files)
 
         file_test = self.import_spectrum()
@@ -17679,6 +18294,7 @@ class spec_time_series(object):
         directory = self.directory
         
         files = glob.glob(directory+'RASSI*.p')
+        files = np.array(self.table['filename']) #updated 29.10.21 to allow ins_merged
         files = np.sort(files)
 
         file_test = self.import_spectrum()
@@ -18163,7 +18779,7 @@ class spec_time_series(object):
         rv_max = np.max(abs(np.array(self.table_ccf['LBL_'+kitcat_name]['matching_diff']['table']['rv']*1000)))
         if rv_max>rv_range:
             if False:
-                print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.RESET)
                 myf.make_sound('Warning')
                 rv_range = rv_max + 5
 
@@ -18242,6 +18858,7 @@ class spec_time_series(object):
         plt.legend()
         
         files = glob.glob(directory+'RASSI*.p')
+        files = np.array(self.table['filename']) #updated 29.10.21 to allow ins_merged
         files = np.sort(files)
     
         for sub_dico in all_dico:
@@ -18252,7 +18869,7 @@ class spec_time_series(object):
             ccf_rv = np.array(self.table_ccf[kw_dico.upper()+'_'+kitcat_name][sub_dico]['table']['rv']*1000)
                         
             if np.sum(abs(ccf_rv)>rv_range):
-                print(Fore.YELLOW + '\n[WARNING] The RV is out of the calibration curve range' + Fore.WHITE)
+                print(Fore.YELLOW + '\n[WARNING] The RV is out of the calibration curve range' + Fore.RESET)
                 myf.make_sound('Warning')
             
             index_calib = np.round(ccf_rv*100,0).astype('int')+int(rv_range/0.01) #only work for the fine rv grid = np.arange(-100,100.01,0.01)
@@ -18369,7 +18986,7 @@ class spec_time_series(object):
         
         if rv_max>rv_range:
             if False:
-                print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] The RV range of matching_diff is about %.1f m/s which is higher than the calibration curve between +/- %.0f m/s'%(rv_max,rv_range) + Fore.RESET)
                 myf.make_sound('Warning')
                 rv_range = rv_max + 5
 
@@ -18444,7 +19061,7 @@ class spec_time_series(object):
             ccf_rv = np.array(self.table_ccf['LBL_'+kitcat_name][sub_dico]['table']['rv']*1000)
                         
             if np.sum(abs(ccf_rv)>rv_range):
-                print(Fore.YELLOW + ' [WARNING] The RV is out of the calibration curve range' + Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] The RV is out of the calibration curve range' + Fore.RESET)
                 myf.make_sound('Warning')
             
             index_calib = np.round(ccf_rv*100,0).astype('int')+int(rv_range/0.01) #only work for the fine rv grid = np.arange(-100,100.01,0.01)
@@ -18875,7 +19492,10 @@ class spec_time_series(object):
             
         smooth_map = self.smooth_map
         
+        self.import_table()
+        
         files = glob.glob(directory+'RASSI*.p')
+        files = np.array(self.table['filename']) #updated 29.10.21 to allow ins_merged
         files = np.sort(files)
         
         file_test = self.import_spectrum()
@@ -19522,7 +20142,7 @@ class spec_time_series(object):
         self.lbl_to_ccf(all_dico=[sub_dico,based_dico],kw_dico=kw_dico)
         
         
-    def lbl_subselection(self,sub_dico='matching_diff', kw_dico='lbl', mask=None, inv=False,col=0,valid_lines=True):
+    def lbl_subselection(self, sub_dico='matching_diff', kw_dico='lbl', mask=None, inv=False, col=0, valid_lines=True, wave_min=None, wave_max=None):
         
         self.import_table()
         self.import_material()
@@ -19544,11 +20164,14 @@ class spec_time_series(object):
         
         catalog = mat[sub_dico]['catalog']
         wave = np.array(load['wave'])
+        wave_lines = np.array(catalog['wave'])
 
         if valid_lines:
             mask_bool = np.array(catalog['valid'])
         else:
             mask_bool = np.ones(len(catalog['valid'])).astype('bool')
+            
+        
             
         if mask is not None:
             if type(mask) == str:
@@ -19561,7 +20184,13 @@ class spec_time_series(object):
                     mask_bool = mask_bool&mask
                 else:
                     mask_bool = mask_bool&np.in1d(np.arange(len(mask_bool)),mask)
-            
+        
+        if wave_min is not None:
+            mask_bool = mask_bool&(wave_lines>wave_min)
+
+        if wave_max is not None:
+            mask_bool = mask_bool&(wave_lines<wave_max)
+        
         lbl = mat[sub_dico][name][col]
         lbl_std = mat[sub_dico][name+'_std'][col]
                 
@@ -19657,7 +20286,7 @@ class spec_time_series(object):
 
         supress = []        
         if np.max(jdb) - np.min(jdb)<365.25:
-            print(Fore.YELLOW + ' [WARNING] The baseline is not sufficient for 1 year detection, rcorr increased up to 1.1' + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] The baseline is not sufficient for 1 year detection, rcorr increased up to 1.1' + Fore.RESET)
             myf.make_sound('Warning')
             r_corr = 1
             liste = []
@@ -19741,7 +20370,7 @@ class spec_time_series(object):
         if criterion[0]=='period':
             period = criterion[1]
             if period>0.5*(np.max(self.table.jdb)-np.min(self.table.jdb)):
-                print(Fore.YELLOW + ' [WARNING] The baseline of the observations is not long enough to produce a reliable vector' + Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] The baseline of the observations is not long enough to produce a reliable vector' + Fore.RESET)
                 myf.make_sound('Warning')
             
             a,b = self.lbl_fit_sinus(period, season=season, kw_dico = kw_dico, col = col, sub_dico=sub_dico, num_sim=1, good_morpho=good_morpho, radial_axis=criterion[2], plot_proxies=False,kde=False)
@@ -19835,9 +20464,106 @@ class spec_time_series(object):
         
         return sas, sas_smooth.demod
 
+    def lbl_planet(self, sub_dico='matching_planet', kw_dico='lbl_iter', photon_noise=0.0, periods=None, ext=''):
+        if kw_dico=='lbl':
+            self.import_lbl()
+            imported_lbl_std = self.lbl[sub_dico]['lbl_std'][0].copy()
+            kitcat = self.lbl[sub_dico]['catalog'].copy()
+            amp = self.lbl[sub_dico]['base_vec'][1:]
+        
+        elif kw_dico == 'lbl_iter':
+            self.import_lbl_iter()
+            imported_lbl_std = self.lbl_iter[sub_dico]['lbl_std'][0].copy()
+            kitcat = self.lbl_iter[sub_dico]['catalog'].copy()
+            amp = self.lbl_iter[sub_dico]['base_vec'][1:]
+        
+        amp = 0.5*(np.max(amp,axis=1) - np.min(amp,axis=1))
+        lbl_std = np.median(imported_lbl_std,axis=1)
+        lbl_std = np.sqrt(lbl_std**2 + photon_noise**2)
+        wave = np.array(kitcat['wave'])
+        
+        if periods is None:
+            periods = int(sum(np.array([len(i.split('s_proxy'))==2 for i in list(kitcat.keys())]))/2)
+            periods= np.arange(1,1+periods)
+        nb_planet = len(periods)
+        
+        gamma = []
+        gamma_std = []
+        for i in range(1,1+nb_planet):
+            coeff = np.array(kitcat['s_proxy_%.0f'%(i)])
+            coeff_std = np.array(kitcat['s_proxy_%.0f_std'%(i)])
+            
+            gamma.append(coeff)
+            gamma_std.append(coeff_std)
+        
+        gamma = np.array(gamma)
+        gamma_std = np.array(gamma_std)
+        gamma_weight = 1/gamma_std**2
+        
+        kappa = []
+        kappa_white = []
+        for i in range(0,nb_planet):
+            test = myc.tableXY(wave,gamma[i],gamma_std[i])
+            test.supress_nan()
+            kappa.append(test.hist_weighted())
+            test.y*=0
+            #test.yerr*=1.33
+            kappa_white.append(test.hist_weighted())
+            
+        kappa = np.array(kappa)
+        kappa_white = np.array(kappa_white)
+        
+        kappa /= np.mean(kappa,axis=1)[:,np.newaxis]
+        kappa *= amp[:,np.newaxis]
+
+        kappa_white *= amp[:,np.newaxis]
+        reference = 0.5*(np.percentile(kappa_white,75,axis=1) - np.percentile(kappa_white,25,axis=1))
+        
+        limite = myf.IQ(kappa)*4
+        
+        kappa2 = kappa - np.mean(kappa,axis=1)[:,np.newaxis]
+        kappa2 /= reference[:,np.newaxis]
+        
+        delta = (0.5*(np.percentile(kappa2,75,axis=1) - np.percentile(kappa2,25,axis=1))-1)*100
+        
+        curve_hist = []
+        curve_hist_white = []
+        for i in range(0,nb_planet):
+            a,b,c = plt.hist(kappa[i], bins=np.linspace(-limite,limite,100),density=True)
+            test = myc.tableXY(b[0:-1]+0.5*np.diff(b),a)
+            test.interpolate(new_grid=np.linspace(-limite,limite,1000),method='cubic',replace=False)
+            curve_hist.append(test.y_interp)
+            a,b,c = plt.hist(kappa_white[i], bins=np.linspace(-limite,limite,100),density=True)
+            test = myc.tableXY(b[0:-1]+0.5*np.diff(b),a)
+            test.interpolate(new_grid=np.linspace(-limite,limite,1000),method='cubic',replace=False)
+            curve_hist_white.append(test.y_interp)
+        plt.close()
+        
+        plt.figure()
+        plt.boxplot(kappa2.T,showcaps=False,showfliers=False,whis=0)
+        plt.xticks(ticks=np.arange(1,1+nb_planet),labels=['%s days \n ($\Delta$ = %.0f %%)'%(myf.format_number(i,digit=2),j) for i,j in zip(periods,delta)])
+        plt.axhline(y=1,color='k',ls=':')
+        plt.axhline(y=-1,color='k',ls=':')
+        plt.axhline(y=2,color='r',ls='-',alpha=0.5)
+        plt.axhline(y=-2,color='r',ls='-',alpha=0.5)
+        plt.ylabel(r'$\Delta = \frac{\kappa_{i,j} - <\kappa_j>}{<\epsilon>}$',fontsize=16)
+        plt.ylim(-3.5,3.5)
+        plt.subplots_adjust(left=0.15,bottom=0.13,top=0.97)
+        plt.savefig(self.dir_root+'KEPLERIAN/Signals_elongations%s.pdf'%(ext))
+        
+        if False:
+            plt.figure()
+            curve_hist = np.array(curve_hist)
+            curve_hist_white = np.array(curve_hist_white)
+            for i in range(0,nb_planet):
+                plt.subplot(nb_planet,1,i+1)
+                plt.plot(np.linspace(-limite,limite,1000),curve_hist[i])
+                plt.plot(np.linspace(-limite,limite,1000)+np.median(kappa[i]),curve_hist_white[i],color='k')
+            plt.ylim(0,None)
+
         
     
-    def lbl_fit_vec(self, dico_name, sub_dico='matching_mad', kw_dico='lbl', col=0, base_vec=['CaII'], 
+    def lbl_fit_vec(self, dico_name, sub_dico='matching_mad', kw_dico='lbl', col=0, base_vec=['CaII'], standardize=True,
                     season=0, time_detrending=2, k_sigma_outliers=5, display_time_stat=True, add_step=0, substract_rv = None, save_database=False):
 
         self.import_table()        
@@ -19854,6 +20580,14 @@ class spec_time_series(object):
         
         if substract_rv is None:
             substract_rv = np.zeros(len(table['jdb']))
+        
+        try:
+            kep_model = self.model_keplerian_fitted[list(self.model_keplerian_fitted.keys())[-1]]
+            if np.sum(abs(kep_model)):
+                print('\n [INFO] A Keplerian model has been found from the mask %s and will be subtracted'%(list(self.model_keplerian_fitted.keys())[-1]))
+                substract_rv = kep_model.copy()
+        except IndexError:
+            print('\n [INFO] Keplerians models not found')
         
         seasons = myf.detect_obs_season(jdb, min_gap=jdb.max()-jdb.min())
         j = 0
@@ -19973,12 +20707,12 @@ class spec_time_series(object):
         
         if type(base_vec)==np.ndarray:
             if np.shape(base_vec)[0] == len(jdb_m):
-                print(Fore.YELLOW + ' [WARNING] Your vectors basis has been transposed' + Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] Your vectors basis has been transposed' + Fore.RESET)
                 myf.make_sound('Warning')
 
                 base_vec = base_vec.T
             if np.shape(base_vec)[1] != len(jdb_m):
-                print(Fore.YELLOW + ' [WARNING] Your vectors basis has not the correct shape' + Fore.WHITE)
+                print(Fore.YELLOW + ' [WARNING] Your vectors basis has not the correct shape' + Fore.RESET)
                 myf.make_sound('Warning')
 
             
@@ -19986,7 +20720,8 @@ class spec_time_series(object):
         names = ['time'+str(j) for j in range(time_detrending+1)] + names
         
         base_vec = np.vstack([time_vec,base_vec])
-        base_vec[1:] = base_vec[1:]/np.std(base_vec[1:],axis=1)[:,np.newaxis] #standardize vec fitted
+        if standardize:
+            base_vec[1:] = base_vec[1:]/np.std(base_vec[1:],axis=1)[:,np.newaxis] #standardize vec fitted
         
         table_to_fit = myc.table(lbl - substract_rv)
         table_to_fit.rms_w(1/lbl_std**2,axis=1)
@@ -20134,10 +20869,10 @@ class spec_time_series(object):
         
         if (kw_dico=='lbl')|(kw_dico=='lbl_iter'):
             self.lbl_to_ccf(all_dico=[dico_name],kw_dico=kw_dico)
-
+            
         plt.show(block=False)        
-
-    
+        
+        
 
     def lbl_fit_base(self, dico_name, sub_dico='matching_diff', kw_dico='lbl', proxies=['CaII','dbd_0'], time_detrending=0, add_step=0, k_sigma_outliers=5, substract_rv = None):
         
@@ -20170,6 +20905,14 @@ class spec_time_series(object):
     
         if substract_rv is None:
             substract_rv = np.zeros(len(jdb))
+    
+        try:
+            kep_model = self.model_keplerian_fitted[list(self.model_keplerian_fitted.keys())[-1]]
+            if np.sum(abs(kep_model)):
+                print('\n [INFO] A Keplerian model has been found from the mask %s and will be subtracted'%(list(self.model_keplerian_fitted.keys())[-1]))
+                substract_rv = kep_model.copy()
+        except AttributeError:
+            print('\n [INFO] Keplerians models not found for sub dico %s'%(sub_dico))
     
         if kw_dico=='lbl':
             imported_lbl = self.lbl[sub_dico]
@@ -20209,9 +20952,7 @@ class spec_time_series(object):
         
         lbl_matrix_std[outliers] = max_std_matrix[outliers]        
         lbl_matrix[outliers] = median_matrix[outliers]        
-        
-        print(np.shape(lbl_matrix))
-        
+                
         base_vec = [(jdb_m**k)*np.ones(len(lbl_matrix))[:,np.newaxis] for k in range(1+time_detrending)]
         
         for prox in proxies:
@@ -20270,7 +21011,7 @@ class spec_time_series(object):
         kitcat.loc[kitcat['rms']>rms_lim,'valid'] = False
         kitcat.loc[(kitcat['quality']>qual_lim_sup)|(kitcat['quality']<qual_lim_inf),'valid']=False            
         
-        lbl_old = myc.table(lbl)
+        lbl_old = myc.table(lbl + substract_rv)
         lbl_old.rms_w(1/lbl_std**2)
         
         plt.figure(figsize=(8,8))
@@ -20449,18 +21190,22 @@ class spec_time_series(object):
         
         return myc.tableXY(p, proj, proj_inf-proj, proj-proj_sup)
         
-    def planet_simu_absorption(self,planet=None,oversampling=1):
+    def planet_simu_absorption(self,planet=None,oversampling=1,sub_dico=None):
         output_file = {}
         
         simus = myf.touch_pickle(self.dir_root+'KEPLERIAN/Simulation_absorption.p')
         
         simu_saved = self.simu
+        
         for i in simu_saved.keys():
             simus[i] = {'period':simu_saved[i].x,'absorption':simu_saved[i].y,'sup':simu_saved[i].yerr,'inf':simu_saved[i].xerr}
         myf.pickle_dump(simus,open(self.dir_root+'KEPLERIAN/Simulation_absorption.p','wb'))
         
         simu = {l:myc.tableXY(simus[l]['period'],simus[l]['absorption'],simus[l]['sup'],simus[l]['inf']) for l in list(simus.keys())}
 
+
+        if sub_dico is not None:
+            simu = {sub_dico:simu[sub_dico]}
         
         plt.figure(figsize=(18,4.5))
 
@@ -20628,16 +21373,18 @@ class spec_time_series(object):
                 plt.ylabel('Normalised flux',fontsize=14)
                 plt.xlim(center-0.75, center+0.75)  
                 plt.ylim(-0.01,1.01)                             
-                plt.subplot(len(sub_dico),2,2)
-                ax = plt.gca()               
-            
+                        
             c = 1
             for dico in sub_dico:
                 line = myc.tableXY(jdb, tab[dico][kw_dico][col,num,:], tab[dico][kw_dico+'_std'][col,num,:])     
                 line.clip(min=[jdb_min,None],max=[jdb_max,None])
                 if plot:
                     if len(sub_dico)!=1:
-                        plt.subplot(len(sub_dico),2,2*c,sharex=ax,sharey=ax)
+                        if c==1:
+                            plt.subplot(len(sub_dico),2,2)
+                            ax = plt.gca()   
+                        else:
+                            plt.subplot(len(sub_dico),2,2*c,sharex=ax,sharey=ax)
                     if kw_dico=='lbl':
                         plt.axhline(y=0,color='k',alpha=0.5)
                         line.rms_w()
@@ -20688,8 +21435,8 @@ class spec_time_series(object):
     
 
     def lbl_pca(self, reduction='pca_scikit', sub_dico='matching_diff', kw_dico='lbl', col=0, m=2, kind='inter', ordering='lbl_var',
-                nb_comp=10, weighted=True, nb_comp_kept='auto', ext='',color_residues='k', recenter=True, standardize=False, 
-                contam_training=True, wave_bins=0, depth_bins=0, kernel_num=0, kernel_file='auto', nb_kernel_split=50, kernel=None, snr_min=0.5,
+                nb_comp=10, weighted=True, nb_comp_kept='auto', ext='',color_residues='k', recenter=True, standardize=False,  
+                contam_training=True, valid_lines=True, wave_bins=0, depth_bins=0, kernel_num=0, kernel_file='auto', kernel_ext='', nb_kernel_split=50, kernel=None, snr_min=0.5,
                 cross_validation=False, cv_sim=100, cv_percent_rm=10, cv_frac_affected=0.01):
         """ordering : lbl_var or rvm_rms"""
         self.import_table()
@@ -20714,7 +21461,9 @@ class spec_time_series(object):
             self.import_bt()        
             imported_table = self.bt           
         
+        plot_snr = True
         if snr_min==0:
+            plot_snr = False
             snr_min=1e-6
         
         matrix_rv = imported_table[sub_dico][kw_dico][col]
@@ -20741,6 +21490,10 @@ class spec_time_series(object):
             free = np.array(np.product(table[keyword_table],axis=1)!=0) #free of all kwoun contamination  
             valid *= free
         
+        if not valid_lines:
+            valid_lines*=0
+            valid_lines+=1
+        
         matrix_rv = matrix_rv[valid]
         matrix_rv_std = matrix_rv_std[valid]
 
@@ -20762,12 +21515,14 @@ class spec_time_series(object):
         matrix = myc.table(matrix_rv)
 
         nb_lines_per_chuck = np.array([np.ones(len(matrix_rv)),np.array(imported_table[sub_dico]['catalog']['wave'])[valid][mask],np.array(imported_table[sub_dico]['catalog']['wave'])[valid][mask]]).T
+        dp_s = 0
         if ((depth_bins!=0)|(wave_bins!=0)):
             new_matrix_rv = []
             new_matrix_rv_std = []
             nb_lines_per_chuck = []
             if not depth_bins:
-                depth_bins=1
+                depth_bins=1    
+            D =  np.arange(0,1.01,depth_bins)
             
             catalog = imported_table[sub_dico]['catalog'][valid]
             catalog = catalog.reset_index()
@@ -20775,12 +21530,16 @@ class spec_time_series(object):
             wave_min = np.min(catalog['wave'])
             wave_max = np.max(catalog['wave'])
                 
-            D =  np.arange(0,1.01,depth_bins)
-            d,w = np.meshgrid(D,np.arange(wave_min,wave_max+wave_bins,wave_bins))
-            d1,d2,w1,w2 = np.ravel(d[0:-1,0:-1]),np.ravel(d[1:,1:]), np.ravel(w[0:-1,0:-1]),np.ravel(w[1:,1:])
+            if not wave_bins:
+                W = np.array([wave_min,wave_max])
+                dp_s = 2
+            else:
+                W = np.arange(wave_min,wave_max+wave_bins,wave_bins)
             
+            d,w = np.meshgrid(D,W)
+            d1,d2,w1,w2 = np.ravel(d[0:-1,0:-1]),np.ravel(d[1:,1:]), np.ravel(w[0:-1,0:-1]),np.ravel(w[1:,1:])
             for j in range(len(d1)):
-                mask = (catalog['wave']>w1[j])&(catalog['wave']<w2[j])&(catalog['depth_rel']>d1[j])&(catalog['depth_rel']<d2[j])
+                mask = (catalog['wave']>=w1[j])&(catalog['wave']<w2[j])&(catalog['depth_rel']>=d1[j])&(catalog['depth_rel']<d2[j])
                 nb_lines_per_chuck.append([sum(mask),w1[j],w2[j],d1[j],d2[j]])
                 if sum(mask):
                     liste = np.array(catalog.loc[mask].index)
@@ -20819,11 +21578,11 @@ class spec_time_series(object):
                 kernels_file = pd.read_pickle(root+'/Python/database/%s/%s_%s_kernels.p'%(self.instrument,self.instrument,kernel_file))
                 kernel_name = list(kernels_file.keys())[kernel_num-1]
                 kernel = kernels_file[kernel_name]
-            variable = list(kernel['var'].keys())
+            variable = list(kernel['var'+kernel_ext].keys())
             catalog = imported_table[sub_dico]['catalog'][valid]
             catalog = catalog.reset_index()
             if len(variable)==1:
-                model = myc.tableXY(np.array(kernel['var'][variable[0]]),kernel['strength'])
+                model = myc.tableXY(np.array(kernel['var'+kernel_ext][variable[0]]),kernel['strength'+kernel_ext])
                 model.interpolate(new_grid=np.array(catalog['wave']),replace=False)
                 strength = model.y_interp
                 plt.figure()
@@ -20846,22 +21605,25 @@ class spec_time_series(object):
             print('Sample size : %.0f'%(len(new_matrix_rv)))
             nb_lines_per_chuck = np.array(nb_lines_per_chuck) 
                         
-        mean_bin = 0.5*(nb_lines_per_chuck[:,1]+nb_lines_per_chuck[:,2])
+        mean_bin = 0.5*(nb_lines_per_chuck[:,1+dp_s]+nb_lines_per_chuck[:,2+dp_s])
         mean_bin = mean_bin[nb_lines_per_chuck[:,0]!=0]
         
         m1 = np.median(myf.mad(matrix_rv,axis=1)[:,np.newaxis]/matrix_rv_std,axis=0)
         m2 = np.median(myf.mad(matrix_rv,axis=0)/matrix_rv_std,axis=1)
                 
         #obs_kept = m1>snr_min
-        obs_kept = np.ones(len(m1)).astype('bool') #cannot apply obs cutoff since other wise basis not of the good size
+        obs_kept = np.ones(len(m1)).astype('bool') #cannot apply obs cutoff since otherwise basis not of the good size
+        if np.sum(m2>snr_min)<10:
+            snr_min = 1e-6
+            plot_snr = False
         wave_kept = m2>snr_min
         
         plt.figure(figsize=(20,5))
         plt.subplot(1,2,1) ; plt.plot(m1,'k.-') ; plt.title('Nb of observations removed : %.1f %%'%(100-100*sum(obs_kept)/len(obs_kept)),fontsize=15) ; plt.ylabel('SNR',fontsize=15) ; plt.xlabel('Time index',fontsize=15) ; plt.yscale('log')
-        if snr_min:
+        if plot_snr:
             plt.axhline(y=snr_min,ls=':',color='k')
         plt.subplot(1,2,2) ; plt.plot(mean_bin,m2,'k.-') ; plt.title('Nb of bins removed : %.1f %%'%(100-100*sum(wave_kept)/len(wave_kept)),fontsize=15) ; plt.ylabel('SNR',fontsize=15) ; plt.xlabel('Mean bins variable',fontsize=15) ; plt.yscale('log')
-        if snr_min:
+        if plot_snr:
             plt.axhline(y=snr_min,ls=':',color='k')
         plt.subplots_adjust(left=0.07,right=0.98)
         plt.savefig(self.dir_root+'PCA/Observations_removed_%s.pdf'%(ext.split('_')[-1]))
@@ -21025,7 +21787,9 @@ class spec_time_series(object):
             plt.figure(2,figsize=(15,10))
             ax1 = None ; ax2 = None ; ax3 = None
             
-            line.recenter(who='Y')    
+            line.recenter(who='Y')
+            line.yerr=np.sqrt(0.7**2+line.yerr**2)
+
             line.fit_base(base_vec[:,0:nb_comp].T)
                         
             for j in range(pca_comp_kept):
@@ -21060,7 +21824,7 @@ class spec_time_series(object):
             plt.legend()
             plt.subplots_adjust(top=0.96,bottom=0.07,hspace=0.3,left=0.09,right=0.97)
 
-
+            
             line.fit_base(base_vec[:,0:pca_comp_kept].T)
     
             plt.subplot(1,2,2)
@@ -21089,6 +21853,7 @@ class spec_time_series(object):
             ax2 = plt.gca()
             line.periodogram(nb_perm=1,legend='before',color='b',Norm=True,p_min=0.7)
             line.vec_residues.periodogram(nb_perm=1,legend='after',color='g',Norm=True,p_min=0.7)
+            line.plot_lowest_perio(line.vec_residues) 
             plt.subplot(4,1,3,sharex=ax1)
             line.vec_fitted.rms_w()
             line.vec_fitted.plot(color=color_residues,label='Vec fitted (rms : %.2f m/s)'%(line.vec_fitted.rms),capsize=0)
@@ -21104,7 +21869,7 @@ class spec_time_series(object):
 
             #line.fit_base(base_vec[:,0:pca_comp_kept].T)
 
-    def lbl_slice(self, reduction='pca', sub_dico='matching_shell', kw_dico='lbl_iter', col=0, nb_comp_kept=5, nb_comp=5, ext='_slice', contam_training=True, kernel_file='manual', nb_slice_split=10, nb_slice=2):
+    def lbl_slice(self, reduction='pca', sub_dico='matching_shell', kw_dico='lbl_iter', col=0, nb_comp_kept=5, nb_comp=5, ext='_slice', contam_training=True, kernel_file='manual', kernel_ext='', nb_slice_split=10, nb_slice=2):
         
         
         kernels_file = pd.read_pickle(root+'/Python/database/%s/%s_%s_kernels.p'%(self.instrument,self.instrument,kernel_file))
@@ -21115,7 +21880,7 @@ class spec_time_series(object):
         for k in np.arange(1,1+nb_slice):
             self.lbl_pca(reduction=reduction, sub_dico=sub_dico, kw_dico=kw_dico, col=col, nb_comp_kept=nb_comp_kept, nb_comp=nb_comp, ordering='var_lbl',
                         ext=ext, color_residues='k', contam_training=contam_training, recenter=True, standardize=True, wave_bins=0, depth_bins=0, 
-                        kernel_num=k, kernel_file = kernel_file, nb_kernel_split=nb_slice_split)
+                        kernel_num=k, kernel_file=kernel_file, nb_kernel_split=nb_slice_split, kernel_ext=kernel_ext, snr_min=0.5)
             
             base_kernel.append(self.base_vec_pca[:,0])
         plt.close('all')
@@ -23390,6 +24155,18 @@ class spec_time_series(object):
         plt.hist(abs(dico_best['rho_spearman']),bins=50,alpha=0.5,cumulative=True,label='spearman')
         plt.hist(abs(dico_best['r_pearson']),bins=50,alpha=0.5,cumulative=True,label='pearson')
         plt.xlabel('Abs(Correlation coefficient)',fontsize=14)
+
+    def light_curve_periodogram(self,name='yarara_v2_lbl',table_keplerian=None, std_p=3, nb_period=1000, std_phase=1/18, pts_transit=15, exclude_out=True):
+        
+        if table_keplerian is None:
+            table_keplerian = self.planet_fitted[name]
+        
+        try:
+            self.photometry.light_curve_periodogram(table_keplerian, std_p=std_p, nb_period=nb_period, std_phase=std_phase, pts_transit=pts_transit, exclude_out=exclude_out)
+            plt.savefig(self.dir_root+'KEPLERIAN/Light_curve_keplerian.pdf')
+            self.transit_model = self.photometry.transit_model
+        except AttributeError:
+            pass
 
     def lbl_kolmo_alfev(self, base, sub_dico='matching_wpca', kw_dico='lbl', species='wave', cut_lim=5250, alpha_kolmo = 1, z_lim=0.25, ext=''):
         
@@ -26019,7 +26796,7 @@ class spec_time_series(object):
 
         if smooth_box<20:
             smooth_box=20
-            print(Fore.YELLOW + ' [WARNING] Smooth_box too small, parameters reduced to 20' + Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] Smooth_box too small, parameters reduced to 20' + Fore.RESET)
             myf.make_sound('Warning')
 
         for j in np.arange(20,201,1):
@@ -27611,7 +28388,7 @@ class spec_time_series(object):
         if crit:
             print(' [INFO] Control check sucessfully performed: telluric')
         else:
-            print(Fore.YELLOW + ' [WARNING] Control check failed. Correction may be poorly performed for: telluric'+Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] Control check failed. Correction may be poorly performed for: telluric'+Fore.RESET)
 
 
         collection = myc.table(ratio_ref.T[telluric_location.astype('bool')]) #do fit only on flag position
@@ -28837,7 +29614,7 @@ class spec_time_series(object):
         fwhm = np.nanpercentile(fwhm,95)
             
         if fwhm>5:
-            print(Fore.YELLOW + '\n [WARNING] FWHM of tellurics larger than 5 km/s (%.1f), reduced to default value of 3 km/s'%(fwhm)+ Fore.WHITE)
+            print(Fore.YELLOW + '\n [WARNING] FWHM of tellurics larger than 5 km/s (%.1f), reduced to default value of 3 km/s'%(fwhm)+ Fore.RESET)
             myf.make_sound('warning')
         
         
@@ -29191,7 +29968,7 @@ class spec_time_series(object):
         if (correction=='ghost_a')|(correction=='ghost_b'):
             for j in range(3):
                 if np.sum(mask>treshold_contam)<200:
-                    print(Fore.YELLOW + ' [WARNING] Not enough wavelength in the mask, treshold contamination reduced down to %.2f'%(treshold_contam) + Fore.WHITE)
+                    print(Fore.YELLOW + ' [WARNING] Not enough wavelength in the mask, treshold contamination reduced down to %.2f'%(treshold_contam) + Fore.RESET)
                     treshold_contam*=0.75
         
         mask_ghost = np.sum((grid>min_t[:,np.newaxis])&(grid<max_t[:,np.newaxis]),axis=0).astype('bool')
@@ -29382,7 +30159,7 @@ class spec_time_series(object):
         if crit:
             print(' [INFO] Control check sucessfully performed: %s'%(name))
         else:
-            print(Fore.YELLOW + ' [WARNING] Control check failed. Correction may be poorly performed for: %s'%(name)+Fore.WHITE)
+            print(Fore.YELLOW + ' [WARNING] Control check failed. Correction may be poorly performed for: %s'%(name)+Fore.RESET)
 
         
         diff_ref[np.isnan(diff_ref)] = 0
@@ -30843,7 +31620,7 @@ class spec_time_series(object):
         
         
     
-    def soap_import(self,sub_dico='matching_mad',path='/Users/cretignier/Downloads/plage_incl_90.0_prot_25.1_size_0.240_lat_0_R115000',col='intensity_tot'):
+    def soap_import(self,sub_dico='matching_mad',path='/Users/cretignier/Downloads/plage_incl_90.0_prot_25.1_size_0.240_lat_0_R115000',col='intensity_tot', time=None,dt=1):
 
         self.yarara_analyse_summary(rm_old=True)
         self.import_table()
@@ -30852,11 +31629,10 @@ class spec_time_series(object):
         load = self.material
         table = self.table
         
-        f = np.sort(glob.glob(path+'/integrated_spectrum_R115000_plage*.csv'))
+        f = np.sort(glob.glob(path+'/integrated_spectrum_R115000*.csv'))
         f = np.hstack([f[0:50][::-1],f[50:]])
-        rv = pd.read_csv(path+'/RV_vs_phase.csv',sep=',')
-        dt = np.mean(np.diff(rv['phase']))*25.1
-        rv['time'] = np.arange(0,len(rv)*dt,dt)
+        if time is None:
+            time = np.arange(len(f),dt)+50000
         for i,fname in enumerate(f):
             file = pd.read_csv(fname,sep='\t')[1:] 
             a = self.import_spectrum(num=i)
@@ -30870,12 +31646,12 @@ class spec_time_series(object):
             a['wave'] =  np.array(wave).astype('float64')
             a[sub_dico]['continuum_linear'] = np.ones(len(spectrum))
             a['matching_diff']['continuum_linear'] = np.ones(len(spectrum))
-            a['parameters']['jdb'] = rv['time'][i]
+            a['parameters']['jdb'] = time[i]
             a['parameters']['dwave'] = 0.005
             a['parameters']['RV_sys'] = 0
             a['parameters']['RV_shift'] = 0
             a['parameters']['RV_sec'] = 0
-            a['parameters']['rv_dace'] = rv['vrad_tot'][i]
+            a['parameters']['rv_dace'] = 0
             a['parameters']['hole_left']=-99.9
             a['parameters']['hole_right']=-99.9
             myf.pickle_dump(a,open(table.filename[i],'wb'))

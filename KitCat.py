@@ -50,6 +50,7 @@ ratio_blend = 0.10       # stellar lines contaminated by blends removed
 oversampling = 5          # oversampling of the s1d spectrum 
 vicinity = 5              # vicinity window for the local maxima algorithm
 line_depth_min = 0.10     # minimum line depth to be considered in the stellar mask 
+line_depth_max = 0.95     # minimum line depth to be considered in the stellar mask 
 fwhm_ccf = 5.0               # FWHM of the CCF for the weighting of Xavier 
 
 min_wave_mask = 3000      # minimum wavelength of the mask (bad RASSINE normalisation)
@@ -102,7 +103,9 @@ kernel_length_second_deri = 15
 
 if fwhm_ccf>15:
     line_depth_min = 0.03     # minimum line depth to be considered in the stellar mask 
-
+    line_depth_max = 0.40     # minimum line depth to be considered in the stellar mask 
+    vicinity = 1000
+    
 if not feedback:  
     
     crit1_depth = -1.40
@@ -148,7 +151,7 @@ if feedback:
     l1, = plt.plot(gridi, myf.smooth(spectreI,int(kernel_smoothing_length),shape = ['savgol','gaussian'][int(fwhm_ccf>15)]), color='k')
     axcolor = 'whitesmoke'
     axsmoothing = plt.axes([0.2, 0.1, 0.40, 0.03], facecolor = axcolor)
-    ssmoothing = Slider(axsmoothing, 'Kernel length', 1, 20, valinit = int(kernel_smoothing_length), valstep=1)
+    ssmoothing = Slider(axsmoothing, 'Kernel length', 1, 50, valinit = int(kernel_smoothing_length), valstep=1)
     
     resetax = plt.axes([0.8, 0.05, 0.1, 0.1])
     button = Button(resetax, 'Reset', color=axcolor, hovercolor='0.975')
@@ -274,7 +277,7 @@ matrix_wave = np.vstack([wave,wave2[0:-1],wave2[1:]]).T
 matrix_flux = np.vstack([flux,flux2[0:-1],flux2[1:]]).T
 matrix_index = np.vstack([index,index2[0:-1],index2[1:]]).T
 
-mask_line = (1-matrix_flux[:,0]) > line_depth_min
+mask_line = ((1-matrix_flux[:,0]) > line_depth_min)&((1-matrix_flux[:,0]) < line_depth_max)
 
 matrix_wave = matrix_wave[mask_line]
 matrix_flux = matrix_flux[mask_line]

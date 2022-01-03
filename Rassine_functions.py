@@ -311,9 +311,13 @@ def intersect_all_continuum_sphinx(names, master_spectrum=None, copies_master=0,
     if nthreads >= multicpu.cpu_count():
         print('Your number of cpu (%s) is smaller than the number your entered (%s), enter a smaller value please'%(multicpu.cpu_count(),nthreads))
     else:
-        chunks = np.array_split(names,nthreads)
-        pool = multicpu.Pool(processes=nthreads)
-        product = pool.map(import_files_mcpu_wrapper, zip(chunks, repeat(kind)))
+        if os.getcwd()=='/Users/cretignier/Documents/Python': #to restablish Rassine on my computer only
+            product = [import_files_mcpu(names,kind)] #multiprocess not work for some reason, go back to classical loop 
+        else:
+            chunks = np.array_split(names,nthreads)
+            pool = multicpu.Pool(processes=nthreads)
+            product = pool.map(import_files_mcpu_wrapper, zip(chunks, repeat(kind)))
+        
         for j in range(len(product)):
             save = save + product[j][0]
             snr = snr + product[j][1]
