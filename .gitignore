@@ -1,2 +1,5 @@
 .history/
 HD110315/
+.venv/
+__pycache__/
+
