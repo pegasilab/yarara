@@ -41,6 +41,7 @@ wpca = "0.1"
 xgboost = "1.4.2"
 
 myst-nb = {version = "^0.13.2", optional = true}
+python-dace-client = "^2.1.1"
 sphinx = {version = "4.3.2", optional = true}
 sphinx-argparse = {version = "^0.3.1", optional = true}
 sphinx-autodoc-typehints = {version = "^1.17.0", optional = true}
@@ -48,7 +49,8 @@ sphinx-book-theme = {version = "^0.2.0", optional = true}
 sphinx-pydantic = {version = "^0.1.1", optional = true}
 sphinxcontrib-bibtex = {version = "^2.4.1", optional = true}
 sphinxnotes-strike = {version = "^1.0", optional = true}
-python-dace-client = "^2.1.1"
+typeguard = "^2.13.3"
+nptyping = "^2.0.0"
 
 [tool.poetry.extras]
 docs = [
@@ -65,6 +67,7 @@ docs = [
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
 commitizen = "^2.21.2"
+coverage = "^6.3.2"
 esbonio = {version = "^0.9.0", optional = true}
 isort = "^5.10.1"
 mypy = "^0.931"
