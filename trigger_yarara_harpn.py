@@ -11,7 +11,6 @@ Created on Sun Jan 19 18:49:52 2020
 import getopt
 import glob as glob
 import os
-import pickle
 import sys
 import time
 
@@ -21,9 +20,9 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 
-import my_classes as myc
-import my_functions as myf
-import my_rassine_tools as myr
+import yarara.my_classes as myc
+import yarara.my_functions as myf
+import yarara.my_rassine_tools as myr
 
 # =============================================================================
 # PARAMETERS

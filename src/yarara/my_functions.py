@@ -3,40 +3,18 @@
 @university University of Geneva
 """
 
-import datetime
-import glob as glob
-import json
-import math
-import multiprocessing as multicpu
 import os
 import pickle
-import sys
-import threading
-import time
-from itertools import combinations, compress, product
+from itertools import combinations
 
-import astropy.coordinates as astrocoord
-import astropy.time as Time
-import astropy.visualization.hist as astrohist
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-import psutil
-import scipy.special as sse
-import scipy.stats as stats
-from astropy import units as u
-from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_moon, get_sun
-from astropy.io import fits
 from astropy.modeling.models import Voigt1D
-from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter, MultipleLocator
-from matplotlib.widgets import Button, RadioButtons, Slider
-from PyAstronomy import pyasl
 from scipy import ndimage, signal
 from scipy.interpolate import interp1d
-from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter
-from scipy.spatial import Delaunay
-from scipy.stats import boxcox, norm
+from scipy.stats import norm
 from tqdm import tqdm
 
 pickle_protocol_version = 3
@@ -106,8 +84,8 @@ def voigt(x, amp, cen, wid, wid2):
 def combination(items):
     output = sum([list(map(list, combinations(items, i))) for i in range(len(items) + 1)], [])
     return output
- 
- 
+
+
 def local_max(spectre, vicinity):
     vec_base = spectre[vicinity:-vicinity]
     maxima = np.ones(len(vec_base))

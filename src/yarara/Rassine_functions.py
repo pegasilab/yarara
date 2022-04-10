@@ -18,26 +18,11 @@ if platform.system() == "Linux":
 else:
     matplotlib.use("Qt5Agg", force=True)
 
-import glob as glob
-import multiprocessing as multicpu
-import os
 import pickle
 import sys
 
-# from tqdm import tqdm
-import time
-from itertools import repeat
-
-import matplotlib.pylab as plt
-import numpy as np
 import pandas as pd
 from astropy.io import fits
-from astropy.time import Time
-from colorama import Fore
-from matplotlib.widgets import Button, RadioButtons, Slider
-from scipy.interpolate import interp1d
-from scipy.signal import savgol_filter
-from scipy.stats import norm
 
 pickle.DEFAULT_PROTOCOL = 3
 

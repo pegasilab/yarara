@@ -9,85 +9,22 @@ import sys
 cwd = os.getcwd()
 root = "/".join(cwd.split("/")[:-1])
 
-sys.path.append(root + "/Python/l1periodogram/l1periodogram_codes")
-sys.path.append(root + "/Python/keplerian")
-sys.path.append(root + "/Python/fit_ccf")
 
-try:
-    import rvmodel as rvm
-
-    rvmodel = rvm.rvModel
-    spleaf_version = "old"
-except:
-    from kepmodel import rv as rvm  # updated 20.07.21
-
-    rvmodel = rvm.RvModel
-    from kepmodel import tools as ktools
-    from spleaf import term
-
-    spleaf_version = "new"
-
-import itertools
-import pickle
-
-import astropy.time as Time
-import astropy.visualization.hist as astrohist
-import corner
-
-# import l1periodogram_v1 TODO: restore
-# import covariance_matrices TODO: restore
-# import fastlinsquare_cholesky as l1_cholesky TODO: restore
-# import functions_py3 as f3 TODO: restore
 import matplotlib
-import matplotlib as mpl
-import matplotlib.cm as cmx
-import matplotlib.colors as colors
 import matplotlib.pylab as plt
-
-# import my_MCMC as mym
 import numpy as np
 import pandas as pd
-import scipy.odr as odr
-import scipy.optimize as opt
-import scipy.stats as stats
-
-# import significance as l1_sig
-import statsmodels.api as sm
-from astropy.modeling.models import Voigt1D
-from descartes import PolygonPatch
 from lmfit import Model, Parameters
-from matplotlib.ticker import FormatStrFormatter
-from matplotlib.widgets import Button, RadioButtons, Slider
-from mpl_toolkits.mplot3d import Axes3D
-from scipy.interpolate import griddata, interp1d
-from scipy.optimize import curve_fit, minimize
-from scipy.signal import argrelextrema
-from scipy.stats import gaussian_kde, kde
-from scipy.stats import norm as norm_gauss
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-from sklearn import linear_model, metrics
-from sklearn.decomposition import PCA, FastICA
-from sklearn.model_selection import StratifiedKFold, train_test_split
-from sklearn.preprocessing import StandardScaler
+from scipy.interpolate import interp1d
 from statsmodels.stats.weightstats import DescrStatsW
-from tqdm import tqdm
 from wpca import EMPCA
 from wpca import PCA as PCA_BACK
 from wpca import WPCA
-from xgboost import XGBClassifier, XGBRegressor, plot_importance
 
-import my_functions as myf
-from my_functions import rm_outliers as rm_out
+from . import my_functions as myf
+from .my_functions import rm_outliers as rm_out
 
 plt_version = float("".join(matplotlib.__version__.split(".")))
-
-# import fit3 as fit3
-
-
-# import statsmodels.formula.api as sm
-
-# exec(open('import_libraries.py').read())
 
 
 class table(object):
@@ -801,7 +738,7 @@ class tableXY(object):
 
                 if scale != "lin":
                     self.inv()
- 
+
             else:
                 self.y_interp = interp1d(
                     self.x,
