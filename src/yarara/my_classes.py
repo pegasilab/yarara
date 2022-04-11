@@ -26,7 +26,7 @@ from .my_functions import rm_outliers as rm_out
 
 plt_version = float("".join(matplotlib.__version__.split(".")))
 
-
+# -> analysis
 class table(object):
     """this classe has been establish with pandas DataFrame"""
 
@@ -190,7 +190,12 @@ class table(object):
         self.phi_base = np.sum(coeff_pos < 0, axis=0) / len(coeff_pos)
 
 
+# -> analysis
 class tableXY(object):
+    """
+    Describes a scatter plot (x, y)
+    """
+
     def __init__(self, x, y, *yerr):
         self.stats = pd.DataFrame({}, index=[0])
         self.y = np.array(y)  # vector of y

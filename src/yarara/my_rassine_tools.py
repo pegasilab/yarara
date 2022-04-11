@@ -13,7 +13,7 @@ Created on Wed Oct  2 15:07:14 2019
 
 import datetime
 import glob as glob
-import itertools as iter
+import logging
 import os
 import time
 import warnings
@@ -29,6 +29,7 @@ from scipy.interpolate import interp1d
 from tqdm import tqdm
 
 from . import Rassine_functions as ras
+from . import io
 from . import my_classes as myc
 from . import my_functions as myf
 
@@ -86,6 +87,7 @@ def print_iter(verbose):
         )
 
 
+# util
 def yarara_artefact_suppressed(old_continuum, new_continuum, larger_than=50, lower_than=-50):
     ratio = (new_continuum / old_continuum - 1) * 100
     mask = (ratio > larger_than) | (ratio < lower_than)
@@ -153,7 +155,7 @@ class spec_time_series(object):
 
         if not os.path.exists(self.directory + "Analyse_ccf.p"):
             ccf_summary = {"star_info": {"name": self.starname}}
-            myf.pickle_dump(ccf_summary, open(self.directory + "Analyse_ccf.p", "wb"))
+            io.pickle_dump(ccf_summary, open(self.directory + "Analyse_ccf.p", "wb"))
 
         if not os.path.exists(self.directory + "Analyse_material.p"):
             file = pd.read_pickle(glob.glob(self.directory + "RASSI*.p")[0])
@@ -167,7 +169,7 @@ class spec_time_series(object):
                 "rejected": np.zeros(len(wave)),
             }
             dico = pd.DataFrame(dico)
-            myf.pickle_dump(dico, open(self.directory + "Analyse_material.p", "wb"))
+            io.pickle_dump(dico, open(self.directory + "Analyse_material.p", "wb"))
 
         if os.path.exists(self.directory + "/RASSINE_Master_spectrum.p"):
             master = pd.read_pickle(self.directory + "/RASSINE_Master_spectrum.p")
@@ -228,7 +230,7 @@ class spec_time_series(object):
                 "stellar_template": {"fixed": "MARCS_T5750_g4.5"},
             }
 
-            myf.pickle_dump(
+            io.pickle_dump(
                 dico,
                 open(
                     self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p",
@@ -271,6 +273,7 @@ class spec_time_series(object):
     # IMPORT ALL RASSINE DICTIONNARY
     # =============================================================================
 
+    # io
     def import_rassine_output(self, return_name=False, kw1=None, kw2=None):
         """
         Import all the RASSINE dictionnaries in a list
@@ -316,47 +319,25 @@ class spec_time_series(object):
     # IMPORT SUMMARY TABLE
     # =============================================================================
 
+    # io
     def import_star_info(self):
         self.star_info = pd.read_pickle(
             self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p"
         )
 
+    # io
     def import_table(self):
         self.table = pd.read_pickle(self.directory + "Analyse_summary.p")
 
+    # io
     def import_material(self):
         self.material = pd.read_pickle(self.directory + "Analyse_material.p")
-
-    # def update_material(self):
-    #     myf.pickle_dump(self.material, open(self.directory + "Analyse_material.p", "wb"))
-
-    # def import_lbl(self, path=None):
-    #     self.lbl = pd.read_pickle(self.directory + "Analyse_line_by_line.p")
-    #     self.nb_lines = len(self.lbl[list(self.lbl.keys())[0]]["catalog"])
-
-    # def import_lbl_iter(self, path=None):
-    #     self.lbl_iter = pd.read_pickle(self.directory + "Analyse_line_by_line_iter.p")
-    #     self.nb_lines = len(self.lbl_iter[list(self.lbl_iter.keys())[0]]["catalog"])
-
-    # def import_dbd(self):
-    #     self.dbd = pd.read_pickle(self.directory + "Analyse_depth_by_depth.p")
-
-    # def import_wbw(self):
-    #     self.wbw = pd.read_pickle(self.directory + "Analyse_width_by_width.p")
-
-    # def import_bt(self):
-    #     self.bt = pd.read_pickle(self.directory + "Analyse_bt_by_bt.p")
-
-    # def import_bbb(self):
-    #     self.bbb = pd.read_pickle(self.directory + "Analyse_bis_by_bis.p")
-
-    # def import_aba(self):
-    #     self.aba = pd.read_pickle(self.directory + "Analyse_asym_by_asym.p")
 
     # =============================================================================
     # IMPORT THE FULL DICO CHAIN
     # =============================================================================
 
+    # io
     def import_dico_tree(self):
         file_test = self.import_spectrum()
         kw = list(file_test.keys())
@@ -393,6 +374,7 @@ class spec_time_series(object):
 
     #     os.system("cp " + files + " " + self.dir_root + "TEMP/")
 
+    # io
     def import_spectrum(self, num=None):
         """
         Import a pickle file of a spectrum to get fast common information shared by all spectra
@@ -427,6 +409,7 @@ class spec_time_series(object):
                 file = files[0]
         return pd.read_pickle(file)
 
+    # io
     def yarara_star_info(
         self,
         Rv_sys=None,
@@ -516,50 +499,16 @@ class spec_time_series(object):
                 else:
                     self.star_info[i] = {j[0]: j[1]}
 
-        try:
-            self.star_info["Teff"]["Gray"] = file_test["parameters"]["Teff_gray"]
-            M, R, logg = find_stellar_mass_radius(
-                file_test["parameters"]["Teff_gray"],
-                sp_type=self.star_info["Sp_type"]["fixed"],
-            )
-            self.star_info["Mstar"]["Gray"] = np.round(M, 2)
-            self.star_info["Rstar"]["Gray"] = np.round(R, 2)
-            self.star_info["Log_g"]["Gray"] = np.round(logg, 2)
+        # TODO:
+        # Here, we removed the Gray temperature and the MARCS atlas atmospheric model
+        # initialization
 
-        except:
-            pass
-
-        try:
-            m = self.model_atmos["MARCS"]
-            a = self.model_atmos["ATLAS"]
-
-            self.star_info["Teff"]["MARCS"] = int(m[0].split("_")[0][1:])
-            self.star_info["Log_g"]["MARCS"] = np.round(float(m[0].split("_")[1][1:]), 2)
-
-            M, R, logg = find_stellar_mass_radius(
-                int(m[0].split("_")[0][1:]), sp_type=self.star_info["Sp_type"]["fixed"]
-            )
-            if abs(logg - np.round(m[0].split("_")[1][1:], 2)) / logg < 0.2:
-                self.star_info["Mstar"]["MARCS"] = np.round(M, 2)
-                self.star_info["Rstar"]["MARCS"] = np.round(R, 2)
-
-            self.star_info["Teff"]["ATLAS"] = int(a[0].split("_")[0][1:])
-            self.star_info["Log_g"]["ATLAS"] = np.round(float(a[0].split("_")[1][1:]), 2)
-
-            M, R, logg = find_stellar_mass_radius(
-                int(a[0].split("_")[0][1:]), sp_type=self.star_info["Sp_type"]["fixed"]
-            )
-            if abs(logg - np.round(m[0].split("_")[1][1:], 2)) / logg < 0.2:
-                self.star_info["Mstar"]["ATLAS"] = np.round(M, 2)
-                self.star_info["Rstar"]["ATLAS"] = np.round(R, 2)
-        except:
-            pass
-
-        myf.pickle_dump(
+        io.pickle_dump(
             self.star_info,
             open(self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p", "wb"),
         )
 
+    # limbo
     def yarara_master_ccf(self, sub_dico="matching_diff", name_ext="", rvs=None):
         self.import_table()
 
@@ -608,7 +557,7 @@ class spec_time_series(object):
 
         if extension == "YARARA":
             self.fwhm = np.round((v2 - v1) / 1000, 2)
-            myf.pickle_dump(
+            io.pickle_dump(
                 {"vrad": new_vrad, "ccf_power": stack},
                 open(self.dir_root + "MASTER/MASTER_CCF_KITCAT.p", "wb"),
             )
@@ -618,7 +567,7 @@ class spec_time_series(object):
             except:
                 pass
         elif extension == "HARPS":
-            myf.pickle_dump(
+            io.pickle_dump(
                 {"vrad": new_vrad, "ccf_power": stack},
                 open(self.dir_root + "MASTER/MASTER_CCF_HARPS.p", "wb"),
             )
@@ -628,7 +577,7 @@ class spec_time_series(object):
                 plt.plot(old["vrad"], old["ccf_power"], alpha=0.5, color="k", ls="--")
             except:
                 pass
-            myf.pickle_dump(
+            io.pickle_dump(
                 {"vrad": new_vrad, "ccf_power": stack},
                 open(self.dir_root + "MASTER/MASTER_CCF" + name_ext + ".p", "wb"),
             )
@@ -655,6 +604,7 @@ class spec_time_series(object):
 
         plt.savefig(self.dir_root + "IMAGES/MASTER_CCF" + name_ext + ".pdf")
 
+    # util
     def yarara_poissonian_noise(self, noise_wanted=1 / 100, wave_ref=None, flat_snr=True, seed=9):
         self.import_table()
         self.import_material()
@@ -694,6 +644,7 @@ class spec_time_series(object):
 
         return matrix_noise, noise_values
 
+    # io
     def yarara_obs_info(
         self,
         kw=[None, None],
@@ -762,10 +713,11 @@ class spec_time_series(object):
                 file["parameters"]["seeing"] = seeing[i]
             if humidity is not None:
                 file["parameters"]["humidity"] = humidity[i]
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
         self.yarara_analyse_summary()
 
+    # extract
     def yarara_get_orders(self):
         self.import_material()
         mat = self.material
@@ -775,6 +727,7 @@ class spec_time_series(object):
         self.orders = orders
         return orders
 
+    # extract
     def yarara_get_pixels(self):
         self.import_material()
         mat = self.material
@@ -784,6 +737,7 @@ class spec_time_series(object):
         self.pixels = pixels
         return pixels
 
+    # io
     def supress_time_spectra(
         self,
         liste=None,
@@ -846,7 +800,7 @@ class spec_time_series(object):
                     correction_map["correction_map"] = np.delete(
                         correction_map["correction_map"], idx, axis=0
                     )
-                    myf.pickle_dump(correction_map, open(names, "wb"))
+                    io.pickle_dump(correction_map, open(names, "wb"))
                     print("%s modified" % (names.split("/")[-1]))
 
             name = name[mask]
@@ -871,6 +825,7 @@ class spec_time_series(object):
     # MAKE SUMMARY
     # =============================================================================
 
+    # io
     def yarara_analyse_summary(self, rm_old=False):
         """
         Produce a summary table with the RASSINE files of the specified directory
@@ -883,6 +838,8 @@ class spec_time_series(object):
             os.system("rm " + directory + "Analyse_summary.csv")
 
         test, names = self.import_rassine_output(return_name=True)
+
+        # try_field -> get
 
         # info obs
 
@@ -1417,7 +1374,7 @@ class spec_time_series(object):
 
         dico = dico.sort_values(by="jdb").reset_index(drop=True)
 
-        ras.save_pickle(directory + "/Analyse_summary.p", dico)
+        io.save_pickle(directory + "/Analyse_summary.p", dico)
         dico.to_csv(directory + "/Analyse_summary.csv")
 
         print("\n [INFO] Summary table updated")
@@ -1426,6 +1383,7 @@ class spec_time_series(object):
     # EXTRACT BERV AT A SPECIFIC TIME
     # =============================================================================
 
+    # extract
     def yarara_get_berv_value(
         self, time_value, Draw=False, new=True, light_graphic=False, save_fig=True
     ):
@@ -1473,6 +1431,7 @@ class spec_time_series(object):
     # YARARA NONE ZERO FLUX
     # =============================================================================
 
+    # util
     def yarara_non_zero_flux(self, spectrum=None, min_value=None):
         file_test = self.import_spectrum()
         hole_left = file_test["parameters"]["hole_left"]
@@ -1493,7 +1452,7 @@ class spec_time_series(object):
                 if min_value is None:
                     min_value = np.min(flux[flux != 0])
                 flux[mask & zero] = min_value
-                myf.pickle_dump(file, open(j, "wb"))
+                io.pickle_dump(file, open(j, "wb"))
         else:
             print("[INFO] Removing null values of the spectrum")
             zero = spectrum <= 0
@@ -1506,6 +1465,7 @@ class spec_time_series(object):
     #     CREATE MEDIAN SPECTRUM TELLURIC SUPRESSED
     # =============================================================================
 
+    # util
     def yarara_median_master_backup(
         self,
         sub_dico="matching_diff",
@@ -1565,13 +1525,10 @@ class spec_time_series(object):
         fwhm_min = [2, 3][self.instrument[:-2] == "CORALIE"]
         fwhm_default = [3, 5][self.instrument[:-2] == "CORALIE"]
         if np.percentile(fwhm, 95) > fwhm_max:
-            print(
-                Fore.YELLOW
-                + "\n [WARNING] FWHM of tellurics larger than %.0f km/s (%.1f), reduced to default value of %.0f km/s"
+            logging.warn(
+                "[WARNING] FWHM of tellurics larger than %.0f km/s (%.1f), reduced to default value of %.0f km/s"
                 % (fwhm_max, np.percentile(fwhm, 95), fwhm_default)
-                + Fore.RESET
             )
-            myf.make_sound("warning")
             fwhm = np.array([fwhm_default] * len(self.table.jdb))
         if np.percentile(fwhm, 95) < fwhm_min:
             print(
@@ -1866,10 +1823,11 @@ class spec_time_series(object):
         load.loc[load["reference_spectrum"] < 0, "reference_spectrum"] = 0
 
         if save:
-            myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+            io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
         else:
             return np.array(load["reference_spectrum"])
 
+    # util
     def yarara_median_master(
         self,
         sub_dico="matching_diff",
@@ -2085,12 +2043,13 @@ class spec_time_series(object):
 
             load["wave"] = wavelength
             load["reference_spectrum"] = mean1
-            myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+            io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
     # =============================================================================
     # CUT SPECTRUM
     # =============================================================================
 
+    # util
     def yarara_cut_spectrum(self, wave_min=None, wave_max=None):
         """Cut the spectrum time-series borders to reach the specified wavelength limits (included)
         There is no way to cancel this step ! Use it wisely."""
@@ -2146,7 +2105,7 @@ class spec_time_series(object):
                 correction_map["correction_map"] = correction_map["correction_map"][
                     :, idx_min:idx_max
                 ]
-                myf.pickle_dump(correction_map, open(name, "wb"))
+                io.pickle_dump(correction_map, open(name, "wb"))
                 print("%s modified" % (name.split("/")[-1]))
 
         time.sleep(1)
@@ -2166,7 +2125,7 @@ class spec_time_series(object):
 
         load = load[idx_min:idx_max]
         load = load.reset_index(drop=True)
-        myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
         try:
             file_kitcat = pd.read_pickle(self.dir_root + "KITCAT/kitcat_spectrum.p")
@@ -2186,7 +2145,7 @@ class spec_time_series(object):
                 "continuum",
             ]:
                 file_kitcat[kw] = np.array(file_kitcat[kw])[idx_min:idx_max]
-            myf.pickle_dump(file_kitcat, open(self.dir_root + "KITCAT/kitcat_spectrum.p", "wb"))
+            io.pickle_dump(file_kitcat, open(self.dir_root + "KITCAT/kitcat_spectrum.p", "wb"))
         except:
             pass
 
@@ -2237,379 +2196,13 @@ class spec_time_series(object):
                 elif type(file[field]) == np.ndarray:
                     if len(file[field]) == length:
                         file[field] = file[field][idx_min:idx_max]
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
     # =============================================================================
     # COMPUTE ALLTHE TEMPERATURE SENSITIVE RATIO
     # =============================================================================
 
-    def yarara_temperature_variation(
-        self,
-        sub_dico="matching_diff",
-        continuum="linear",
-        Teff=0,
-        plot=False,
-        debug=False,
-    ):
-        """
-        Produce the temperature time-series based on ratio lines Gray 1989. Need to cancel the RV systemic of the star
-
-        Parameters
-        ----------
-        sub_dico : The sub_dictionnary used to  select the continuum
-        continuum : The continuum to select (either linear or cubic)
-        rv : The RV of the star system
-        Teff : Effective  temperature of the star (if not specified a value is derived based on Gray calibration)
-        plot : True/False, Plot the proxies time-series
-        debug : True/False, Plot the intermediate graphicwith the spectrum and area extraction for the proxies
-        """
-
-        myf.print_box("\n---- RECIPE : TEFF DETERMINATION ----\n")
-
-        self.import_table()
-        self.import_star_info()
-
-        directory = self.directory
-        rv_sys = self.rv_sys
-        kw = "_planet" * self.planet
-        if kw != "":
-            print("\n---- PLANET ACTIVATED ----")
-
-        files = glob.glob(directory + "RASSI*.p")
-        files = np.sort(files)
-        file_ref = pd.read_pickle(files[0])
-        wave_ref = file_ref["wave"]
-        grid = wave_ref
-        flux_ref = file_ref["flux" + kw]
-        conti_ref = file_ref[sub_dico]["continuum_" + continuum]
-
-        line_gray_temp = np.array(
-            [
-                6150.15,
-                6220.48,
-                6151.62,
-                6221.34,
-                6223.99,
-                6224.51,
-                6226.74,
-                6229.23,
-                6233.20,
-                6242.84,
-                6243.83,
-                6244.48,
-                6247.56,
-                6251.83,
-                6252.57,
-                6253.83,
-                6256.89,
-                5379.58,
-                5380.32,
-                5381.03,
-                6125.03,
-                6126.22,
-            ]
-        )
-
-        calib_curve = np.array(
-            [
-                [2.4, 4.7, 13, 35],
-                [2.8, 5.5, 15, 36],
-                [1.3, 2.6, 7.4, 20],
-                [2.2, 4.2, 11, 26],
-                [4.2, 7.7, 19, 46],
-                [0.8, 1.6, 5.3, 20],
-                [0.3, 1.0, 6.8, 19],
-                [0.3, 0.9, 5.1, 12],
-                [1.8, 2.5, 4.3, 6.9],
-                [12, 14, 29],
-            ]
-        )
-
-        calib_teff = [[4500, 5000, 5500, 5800]] * 9 + [[5000, 5500, 5800]]
-        calib_std = 5.28e-4
-
-        snr = np.argmax(np.array(self.table["snr"]))
-        file_random = self.import_spectrum(num=snr)
-
-        if rv_sys is None:
-            if file_random["parameters"]["RV_sys"] is not None:
-                rv_sys = 1000 * file_random["parameters"]["RV_sys"]
-            else:
-                rv_sys = 0
-        else:
-            rv_sys *= 1000
-
-        lines = myf.find_nearest(wave_ref, myf.doppler_r(line_gray_temp, rv_sys)[0])[0]
-
-        dl1, dl2, std_dl1, std_dl2, r1, std_r1, std2_r1 = myf.ratio_line(
-            lines[13], lines[14], wave_ref, flux_ref, conti_ref
-        )
-        t = (
-            6660.5
-            - 9941.7 * r1
-            + 35297.7 * r1**2
-            - 67336.1 * r1**3
-            + 61565 * r1**4
-            - 21767 * r1**5
-        )
-        t_std = (
-            abs(
-                -9941.7
-                + 2 * 35297.7 * r1
-                - 3 * 67336.1 * r1**2
-                + 4 * 61565 * r1**3
-                - 5 * 21767 * r1**4
-            )
-            * std_r1
-        )
-
-        if t < 0:
-            t = self.star_info["Teff"]["fixed"]
-            t_std = 200
-
-        print("\n Teff based on Gray 1981 calibration : %.0f +/- %.0f \n " % (t, t_std))
-        time.sleep(0.5)
-
-        self.teff = t
-        t_gray = int(t)
-        t_gray_std = int(t_std)
-
-        if (t_gray < 2500) | (t_gray > 10000):
-            database = pd.read_pickle(root + "/Python/Material/logT_logM_logR_Gray.p")["V"]
-            database["class"] = database["Spec"].str[0]
-            database["num"] = database["Spec"].str[1]
-
-            sp = self.star_info["Sp_type"]["fixed"]
-            if sp == "Unfound":
-                sp = "G2V"
-
-            database = database.loc[database["class"] == sp[0]]
-            database = database.reset_index(drop=True)
-            match = database.loc[
-                myf.find_nearest(np.array(database["num"]).astype("int"), int(sp[1]))[0][0]
-            ]
-            t_gray2 = int(np.round(10 ** match["log(T)"], -2))
-
-            print(
-                Fore.YELLOW
-                + " [WARNING] Effective temperature not reliable (%.0f K), matching with spectral type %s provide Teff = %.0f K"
-                % (t_gray, sp, t_gray2)
-                + Fore.RESET
-            )
-            t_gray = t_gray2
-            time.sleep(1)
-
-        b = self.star_info["magB"]["fixed"]
-        v = self.star_info["magV"]["fixed"]
-        if np.isnan(self.star_info["BV"]["fixed"]):
-            bv = (
-                -3.684 * np.log10(t_gray) + 14.551
-            )  # http://www.isthe.com/chongo/tech/astro/HR-temp-mass-table-byhrclass.html
-            print(
-                Fore.YELLOW
-                + " [WARNING] BV extracted from the effective temperature since not found on Simbad : BV = %.2f"
-                % (bv)
-                + Fore.RESET
-            )
-            self.yarara_star_info(BV=["fixed", np.round(bv, 2)])
-
-        if np.isnan(v) & (not np.isnan(b)):
-            v = np.round(b - bv, 2)
-            print(
-                Fore.YELLOW
-                + " [WARNING] magV extracted from the effective temperature since not found on Simbad : mV = %.2f"
-                % (v)
-                + Fore.RESET
-            )
-            self.yarara_star_info(magV=["fixed", np.round(v, 2)])
-        if np.isnan(b) & (not np.isnan(v)):
-            b = np.round(bv + v, 2)
-            print(
-                Fore.YELLOW
-                + " [WARNING] magB extracted from the effective temperature since not found on Simbad : mB = %.2f"
-                % (b)
-                + Fore.RESET
-            )
-            self.yarara_star_info(magB=["fixed", np.round(b, 2)])
-
-        if debug:
-            plt.plot(
-                file_ref["wave"],
-                file_ref["flux" + kw] / file_ref[sub_dico]["continuum_" + continuum],
-            )
-            for j in line_gray_temp:
-                plt.axvline(x=myf.doppler_r(j, rv_sys)[0], color="k")
-
-        teff = []
-        std_teff = []
-        all_teff = []
-        all_teff_std = []
-        jdb = []
-
-        count = -1
-        for k in tqdm(files):
-            count += 1
-            file = pd.read_pickle(k)
-            spectre = file["flux" + kw]
-            conti = file[sub_dico]["continuum_" + continuum]
-
-            try:
-                jdb.append(file["parameters"]["jdb"])
-            except:
-                jdb.append(count)
-
-            lines = myf.find_nearest(grid, myf.doppler_r(line_gray_temp, rv_sys)[0])[0]
-
-            dl1, dl2, std_dl1, std_dl2, r1, std_r1, std2_r1 = myf.ratio_line(
-                lines[13], lines[14], grid, spectre, conti
-            )
-            t = (
-                6660.5
-                - 9941.7 * r1
-                + 35297.7 * r1**2
-                - 67336.1 * r1**3
-                + 61565 * r1**4
-                - 21767 * r1**5
-            )
-            t_std = (
-                abs(
-                    -9941.7
-                    + 2 * 35297.7 * r1
-                    - 3 * 67336.1 * r1**2
-                    + 4 * 61565 * r1**3
-                    - 5 * 21767 * r1**4
-                )
-                * std_r1
-            )
-
-            if not Teff:
-                Teff = t
-
-            teff.append(t)
-            std_teff.append(t_std)
-
-            file["parameters"]["Teff"] = t
-            file["parameters"]["Teff_std"] = t_std
-
-            file["parameters"]["Teff_gray"] = t_gray
-            file["parameters"]["Teff_gray_std"] = t_gray_std
-
-            line_depth = []
-
-            for num in [
-                [1, 4],
-                [3, 4],
-                [5, 4],
-                [5, 6],
-                [8, 7],
-                [9, 10],
-                [9, 12],
-                [13, 12],
-                [13, 15],
-                [13, 14],
-                [0, 2],
-                [20, 21],
-            ]:
-                sub = myf.ratio_line(lines[num[0]], lines[num[1]], grid, spectre, conti)
-                sub = [sub[element] for element in range(7)] + [
-                    line_gray_temp[num[0]],
-                    line_gray_temp[num[1]],
-                ]
-                line_depth.append(sub)
-
-            ratio_lines = pd.DataFrame(
-                line_depth,
-                columns=[
-                    "d1",
-                    "d2",
-                    "std_d1",
-                    "std_d2",
-                    "ratio",
-                    "std_ratio",
-                    "std_ratio2",
-                    "wave1",
-                    "wave2",
-                ],
-            )
-            ratio_lines = np.array(ratio_lines)
-            if count == 0:
-                save = ratio_lines.copy()
-
-            save_teff = []
-            save_teff_std = []
-            for j, num1, num2 in zip(
-                range(10),
-                [1, 3, 5, 5, 8, 9, 9, 13, 13, 13, 0, 20],
-                [4, 4, 4, 6, 7, 10, 12, 12, 15, 14, 2, 21],
-            ):
-                coeff = np.polyfit(calib_teff[j], -0.01 / np.array(calib_curve[j]), 2)
-                coeff_int = np.hstack(
-                    [[coeff[j] / (len(coeff) - j) for j in range(len(coeff))], [0]]
-                )
-                fit = myc.tableXY(
-                    np.linspace(Teff - 50, Teff + 50, 100),
-                    np.polyval(coeff_int, np.linspace(Teff - 50, Teff + 50, 100))
-                    - np.polyval(coeff_int, Teff)
-                    + save[j, 4],
-                )
-                fit.switch()
-                polynome = np.polyfit(fit.x, fit.y, 2)
-                poly_deri = np.array(
-                    [polynome[j] * (len(polynome) - j - 1) for j in range(len(polynome) - 1)]
-                )
-
-                dt = np.polyval(polynome, ratio_lines[j, 4]) - Teff
-                dt_std = np.sqrt(ratio_lines[j, 6] ** 2 + calib_std**2) * np.polyval(
-                    poly_deri, ratio_lines[j, 4]
-                )
-
-                save_teff.append(dt)
-                save_teff_std.append(dt_std)
-
-                file["parameters"]["Teff_" + str(num1) + "/" + str(num2)] = dt
-                file["parameters"]["Teff_" + str(num1) + "/" + str(num2) + "_std"] = dt_std
-
-            file["parameters"]["Teff"] = np.sum(
-                np.array(save_teff) / np.array(save_teff_std) ** 2
-            ) / np.sum(1 / np.array(save_teff_std) ** 2)
-            file["parameters"]["Teff_std"] = np.sqrt(1 / np.sum(1 / np.array(save_teff_std) ** 2))
-
-            all_teff.append(save_teff)
-            all_teff_std.append(save_teff_std)
-
-            myf.pickle_dump(file, open(k, "wb"))
-
-        all_teff = np.array(all_teff)
-        all_teff_std = np.array(all_teff_std)
-
-        if plot:
-            plt.figure(figsize=(12, 16))
-            mean = np.zeros(len(jdb))
-            for j in range(10):
-                a = myc.tableXY(jdb, all_teff[:, j], all_teff_std[:, j])
-                a.y -= np.median(a.y)
-                if not j:
-                    plt.subplot(5, 2, j + 1)
-                    ax = plt.gca()
-                else:
-                    plt.subplot(5, 2, j + 1, sharex=ax, sharey=ax)
-                a.plot()
-                plt.xlabel("Jdb - 2,400,000 [days]", fontsize=13)
-                plt.ylabel(r"$\Delta$ T [K]", fontsize=13)
-                plt.ylim(-15, 15)
-                mean += a.y / a.yerr**2
-            mean /= np.sum(1 / all_teff_std**2, axis=1)
-            plt.figure(figsize=(12, 6))
-            plt.xlabel("Jdb - 2,400,000 [days]", fontsize=13)
-            plt.ylabel(r"$\Delta$ T [K]", fontsize=13)
-            b = myc.tableXY(jdb, mean, np.sqrt(1 / np.sum(1 / all_teff_std**2, axis=1)))
-            b.plot()
-            self.teff_mean = b
-
-        self.yarara_analyse_summary()
-        self.all_teff = all_teff
-        self.all_teff_std = all_teff_std
-
+    # processing
     def yarara_activity_index(
         self,
         sub_dico="matching_diff",
@@ -2940,7 +2533,7 @@ class spec_time_series(object):
                 plt.axvline(x=center, color="r")
 
         load["activity_proxies"] = mask_activity.astype("int")
-        myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
         if not np.sum(abs(save["CaIIK"])):
             save["CaIIK"] = save["Ha"] + 0.01
@@ -3007,7 +2600,7 @@ class spec_time_series(object):
                     for p in all_proxies:
                         file["parameters"][p[4]] = save[p[4]][i]
                         file["parameters"][p[4] + "_std"] = save[p[4] + "_std"][i]
-                    myf.pickle_dump(file, open(j, "wb"))
+                    io.pickle_dump(file, open(j, "wb"))
 
                 self.yarara_analyse_summary()
             else:
@@ -3102,6 +2695,7 @@ class spec_time_series(object):
     # COMPUTE THE TELLURIC CCF
     # =============================================================================
 
+    # telluric
     def yarara_telluric(
         self,
         sub_dico="matching_anchors",
@@ -3284,7 +2878,7 @@ class spec_time_series(object):
             file["parameters"][telluric_tag + "_fwhm"] = output[5][i]
             file["parameters"][telluric_tag + "_center"] = output[6][i]
             file["parameters"][telluric_tag + "_depth"] = output[7][i]
-            myf.pickle_dump(file, open(j, "wb"))
+            io.pickle_dump(file, open(j, "wb"))
 
         self.yarara_analyse_summary()
 
@@ -3292,6 +2886,7 @@ class spec_time_series(object):
     # COMPUTE THE CCF OF THE RASSINE SPECTRUM
     # =============================================================================
 
+    # processing
     def yarara_ccf(
         self,
         sub_dico="matching_diff",
@@ -4001,7 +3596,7 @@ class spec_time_series(object):
                 #                    save_bis = {'bis_flux':bis.x,'bis_rv':bis.y,'bis_rv_std':bis.yerr}
                 #                    file['ccf_bis'] = save_bis
 
-                myf.pickle_dump(file, open(i, "wb"))
+                io.pickle_dump(file, open(i, "wb"))
 
         # try:
         #     rvs_std = np.array(self.table['rv_dace_std'])/1000
@@ -4081,7 +3676,7 @@ class spec_time_series(object):
 
         if not os.path.exists(self.directory + "Analyse_ccf.p"):
             ccf_summary = {"star_info": {"name": self.starname}}
-            myf.pickle_dump(ccf_summary, open(self.directory + "/Analyse_ccf.p", "wb"))
+            io.pickle_dump(ccf_summary, open(self.directory + "/Analyse_ccf.p", "wb"))
 
         if ccf_name is None:
             ccf_name = sub_dico
@@ -4094,7 +3689,7 @@ class spec_time_series(object):
                 except KeyError:
                     file_summary_ccf["CCF_" + mask_name.split(".")[0]] = {ccf_name: ccf_infos}
 
-                myf.pickle_dump(file_summary_ccf, open(self.directory + "/Analyse_ccf.p", "wb"))
+                io.pickle_dump(file_summary_ccf, open(self.directory + "/Analyse_ccf.p", "wb"))
 
         self.infos["latest_dico_ccf"] = ccf_name
 
@@ -4195,6 +3790,7 @@ class spec_time_series(object):
     # VISUALISE THE RASSINE TIMESERIES AND ITS CORRELATION WITH A PROXY
     # =============================================================================
 
+    # processing
     def yarara_map(
         self,
         sub_dico="matching_diff",
@@ -4460,6 +4056,7 @@ class spec_time_series(object):
     # INTERFERENCE CORRECTION
     # =============================================================================
 
+    # instrument
     def yarara_correct_pattern(
         self,
         sub_dico="matching_diff",
@@ -4474,7 +4071,7 @@ class spec_time_series(object):
     ):
 
         """
-        Supress interferency pattern produced by a material of a certain width by making a Fourier filtering.
+        Suppress interferency pattern produced by a material of a certain width by making a Fourier filtering.
         Width_min is the minimum width possible for the material in mm.
 
         Parameters
@@ -5124,7 +4721,7 @@ class spec_time_series(object):
 
             correction_pattern = old_diff - diff2_backup
             to_be_saved = {"wave": wave, "correction_map": correction_pattern + pre_map}
-            myf.pickle_dump(
+            io.pickle_dump(
                 to_be_saved,
                 open(self.dir_root + "CORRECTION_MAP/map_matching_fourier.p", "wb"),
             )
@@ -5149,7 +4746,7 @@ class spec_time_series(object):
                     "sub_dico_used": sub_dico,
                     "step": step + 1,
                 }
-                ras.save_pickle(j, file)
+                io.save_pickle(j, file)
 
             self.dico_actif = "matching_fourier"
 
@@ -5157,6 +4754,7 @@ class spec_time_series(object):
 
             self.fft_output = np.array([diff, new_diff, conti, new_continuum])
 
+    # outliers
     def yarara_correct_smooth(
         self,
         sub_dico="matching_diff",
@@ -5366,7 +4964,7 @@ class spec_time_series(object):
         else:
             plt.savefig(self.dir_root + "IMAGES/Correction_smooth.png")
             to_be_saved = {"wave": wave, "correction_map": correction_smooth}
-            myf.pickle_dump(
+            io.pickle_dump(
                 to_be_saved,
                 open(self.dir_root + "CORRECTION_MAP/map_matching_smooth.p", "wb"),
             )
@@ -5405,8 +5003,9 @@ class spec_time_series(object):
                 "step": step + 1,
                 "recenter": recenter,
             }
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
+    # processing
     def yarara_retropropagation_correction(
         self,
         correction_map="matching_smooth",
@@ -5462,7 +5061,7 @@ class spec_time_series(object):
             self.dir_root + "CORRECTION_MAP/map_" + sub_dico + ".p"
         )  # allow the iterative process to be run
         m["correction_map"] += correction_retro
-        myf.pickle_dump(m, open(self.dir_root + "CORRECTION_MAP/map_" + sub_dico + ".p", "wb"))
+        io.pickle_dump(m, open(self.dir_root + "CORRECTION_MAP/map_" + sub_dico + ".p", "wb"))
 
         print("\nComputation of the new continua, wait ... \n")
         time.sleep(0.5)
@@ -5487,12 +5086,13 @@ class spec_time_series(object):
                 new_continuum[i1:i2] = conti[i1:i2]
 
             file[sub_dico]["continuum_" + continuum] = new_continuum
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
     # =============================================================================
     #  TELLURIC CORRECTION
     # =============================================================================
 
+    # telluric
     def yarara_correct_telluric_proxy(
         self,
         sub_dico="matching_fourier",
@@ -5876,7 +5476,7 @@ class spec_time_series(object):
 
         correction_water = diff_backup - diff2_backup
         to_be_saved = {"wave": wave, "correction_map": correction_water}
-        myf.pickle_dump(
+        io.pickle_dump(
             to_be_saved,
             open(
                 self.dir_root + "CORRECTION_MAP/map_matching_" + sub_dico_output + ".p",
@@ -5905,7 +5505,7 @@ class spec_time_series(object):
                 "minimum_r_corr": min_r_corr,
                 "step": step + 1,
             }
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
         self.dico_actif = "matching_" + sub_dico_output
 
@@ -5913,6 +5513,7 @@ class spec_time_series(object):
     # OXYGENE CORRECTION
     # =============================================================================
 
+    # telluric
     def yarara_correct_oxygen(
         self,
         sub_dico="matching_telluric",
@@ -6203,7 +5804,7 @@ class spec_time_series(object):
 
         correction_oxygen = diff_backup - diff2_backup
         to_be_saved = {"wave": wave, "correction_map": correction_oxygen + pre_map}
-        myf.pickle_dump(
+        io.pickle_dump(
             to_be_saved,
             open(self.dir_root + "CORRECTION_MAP/map_matching_oxygen.p", "wb"),
         )
@@ -6222,7 +5823,7 @@ class spec_time_series(object):
                 "sub_dico_used": sub_dico,
                 "step": step + 1,
             }
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
         self.dico_actif = "matching_oxygen"
 
@@ -6230,6 +5831,7 @@ class spec_time_series(object):
     # TELLRUCI CORRECTION V2
     # =============================================================================
 
+    # telluric
     def yarara_correct_telluric_gradient(
         self,
         sub_dico_detection="matching_fourier",
@@ -6766,7 +6368,7 @@ class spec_time_series(object):
         ).T
 
         # self.debug = (X_train, X_train_std)
-        # myf.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
+        # io.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
 
         test2 = myc.table(X_train)
 
@@ -7008,7 +6610,7 @@ class spec_time_series(object):
 
         correction_pca = diff_ref_to_correct - diff2_backup
         to_be_saved = {"wave": wave, "correction_map": correction_pca}
-        myf.pickle_dump(
+        io.pickle_dump(
             to_be_saved, open(self.dir_root + "CORRECTION_MAP/map_matching_pca.p", "wb")
         )
 
@@ -7027,7 +6629,7 @@ class spec_time_series(object):
                 "nb_pca_component": pca_comp_kept,
                 "step": step + 1,
             }
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
         self.dico_actif = "matching_pca"
 
@@ -7037,6 +6639,7 @@ class spec_time_series(object):
     #  ACTIVITY CORRECTION
     # =============================================================================
 
+    # activity
     def yarara_correct_activity(
         self,
         sub_dico="matching_telluric",
@@ -7282,7 +6885,7 @@ class spec_time_series(object):
 
         correction_activity = correction_backup
         to_be_saved = {"wave": wave, "correction_map": correction_activity}
-        myf.pickle_dump(
+        io.pickle_dump(
             to_be_saved,
             open(self.dir_root + "CORRECTION_MAP/map_matching_activity.p", "wb"),
         )
@@ -7302,7 +6905,7 @@ class spec_time_series(object):
                 "proxy_used": proxy_corr,
                 "step": step + 1,
             }
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
         self.dico_actif = "matching_activity"
 
@@ -7310,6 +6913,7 @@ class spec_time_series(object):
     # SUPRESS VARIATION RELATIF TO MEDIAN-MAD SPECTRUM (COSMIC PEAK WITH VALUE > 1)
     # =============================================================================
 
+    # outliers
     def yarara_correct_cosmics(
         self,
         sub_dico="matching_diff",
@@ -7423,7 +7027,7 @@ class spec_time_series(object):
 
             correction_cosmics = all_flux_norm - all_flux_corrected
             to_be_saved = {"wave": grid, "correction_map": correction_cosmics}
-            myf.pickle_dump(
+            io.pickle_dump(
                 to_be_saved,
                 open(self.dir_root + "CORRECTION_MAP/map_matching_cosmics.p", "wb"),
             )
@@ -7447,7 +7051,7 @@ class spec_time_series(object):
                     "k_sigma": k_sigma,
                     "step": step + 1,
                 }
-                ras.save_pickle(j, file)
+                io.save_pickle(j, file)
 
             self.dico_actif = "matching_cosmics"
 
@@ -7455,6 +7059,7 @@ class spec_time_series(object):
     # SUPRESS VARIATION RELATIF TO MEDIAN-MAD SPECTRUM (OUTLIERS CORRECTION + ECCENTRIC PLANET)
     # =============================================================================
 
+    # outliers
     def yarara_correct_mad(
         self,
         sub_dico="matching_diff",
@@ -7707,7 +7312,7 @@ class spec_time_series(object):
 
             correction_mad = all_flux - all_flux2
             to_be_saved = {"wave": grid, "correction_map": correction_mad}
-            myf.pickle_dump(
+            io.pickle_dump(
                 to_be_saved,
                 open(self.dir_root + "CORRECTION_MAP/map_matching_mad.p", "wb"),
             )
@@ -7740,7 +7345,7 @@ class spec_time_series(object):
                     "k_mad": k_mad,
                     "step": step + 1,
                 }
-                ras.save_pickle(j, file)
+                io.save_pickle(j, file)
 
             self.dico_actif = "matching_mad"
 
@@ -7748,6 +7353,7 @@ class spec_time_series(object):
     # CORRECTION OF FROG (GHOST AND STITCHING)
     # =============================================================================
 
+    # instrument
     def yarara_produce_mask_contam(self, frog_file=root + "/Python/Material/Contam_HARPN.p"):
 
         """
@@ -7786,8 +7392,9 @@ class spec_time_series(object):
         vec.interpolate(new_grid=np.array(load["wave"]), method="linear")
 
         load["contam"] = vec.y.astype("int")
-        myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
+    # instrument
     def yarara_produce_mask_frog(self, frog_file=root + "/Python/Material/Ghost_HARPS03.p"):
 
         """
@@ -7913,8 +7520,9 @@ class spec_time_series(object):
             else:
                 load[correction] = np.zeros(len(grid))
 
-        myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
+    # instrument
     def yarara_correct_frog(
         self,
         sub_dico="matching_diff",
@@ -8169,7 +7777,7 @@ class spec_time_series(object):
         X_train = (subflux / ((1 - c) + epsilon + c * np.std(subflux, axis=0))).T
         X_train_std = (subflux_std / ((1 - c) + epsilon + c * np.std(subflux, axis=0))).T
 
-        # myf.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
+        # io.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
 
         test2 = myc.table(X_train)
         test2.WPCA(algo_pca, weight=1 / X_train_std**2, comp_max=nb_pca_comp)
@@ -8540,7 +8148,7 @@ class spec_time_series(object):
                 plt.savefig(self.dir_root + "IMAGES/Correction_ghost.png")
 
             to_be_saved = {"wave": grid, "correction_map": correction}
-            myf.pickle_dump(
+            io.pickle_dump(
                 to_be_saved,
                 open(self.dir_root + "CORRECTION_MAP/map_matching_" + name + ".p", "wb"),
             )
@@ -8560,7 +8168,7 @@ class spec_time_series(object):
                     "pca_comp_kept": pca_comp_kept,
                     "step": step + 1,
                 }
-                ras.save_pickle(j, file)
+                io.save_pickle(j, file)
 
             self.yarara_analyse_summary()
 
@@ -8568,6 +8176,7 @@ class spec_time_series(object):
 
             plt.show(block=False)
 
+    # instrument
     def yarara_correct_borders_pxl(self, pixels_to_reject=[2, 4095], min_shift=-30, max_shift=30):
         """Produce a brute mask to flag lines crossing pixels according to min-max shift
 
@@ -8632,8 +8241,9 @@ class spec_time_series(object):
             flag_region[l : r + 1] = 1
 
         load["borders_pxl"] = flag_region.astype("int")
-        myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
+    # outliers
     def yarara_correct_brute(
         self,
         sub_dico="matching_mad",
@@ -8808,13 +8418,13 @@ class spec_time_series(object):
         else:
             ghost_brute_mask = np.zeros(len(final_mask)).astype("bool")
         load["ghost2"] = ghost_brute_mask.astype("int")
-        myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
         final_mask = final_mask | ghost_brute_mask | borders_pxl_mask
         self.brute_mask = final_mask
 
         load["mask_brute"] = final_mask
-        myf.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
         all_flux2 = all_flux.copy()
         all_flux2[:, final_mask] = 0
@@ -8851,7 +8461,7 @@ class spec_time_series(object):
                 "percentage_removed": percent_removed,
                 "step": step + 1,
             }
-            ras.save_pickle(j, file)
+            io.save_pickle(j, file)
 
         self.dico_actif = "matching_brute"
 
@@ -8859,6 +8469,7 @@ class spec_time_series(object):
     # AIRMASS
     # =============================================================================
 
+    # processing
     def uncorrect_hole(self, conti, conti_ref, values_forbidden=[0, np.inf]):
         file_test = self.import_spectrum()
         wave = np.array(file_test["wave"])

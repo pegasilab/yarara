@@ -17,39 +17,25 @@ from scipy.signal import savgol_filter
 from scipy.stats import norm
 from tqdm import tqdm
 
-pickle_protocol_version = 3
+from . import pickle_protocol_version
+from .io import pickle_dump
 
 # astronomical constant
-
-Mass_sun = 1.99e30
-Mass_earth = 5.97e24
-Mass_jupiter = 1.89e27
-
-radius_sun = 696343 * 1000
-radius_earth = 6352 * 100
-G_cst = 6.67e-11
-au_m = 149597871 * 1000
 
 cwd = os.getcwd()
 root = "/".join(cwd.split("/")[:-1])
 
-prop_cycle = plt.rcParams["axes.prop_cycle"]
-colors_cycle_mpl = prop_cycle.by_key()["color"]
 
 # statistical
 
 
-def pickle_dump(obj, obj_file, protocol=None):
-    if protocol is None:
-        protocol = pickle_protocol_version
-    pickle.dump(obj, obj_file, protocol=protocol)
-
-
+# mathfun
 def parabole(x, a, b, c):
     return a + b * x + c * x**2
 
 
-def mad(array, axis=0, sigma_conv=True):
+# stats
+def mad(array, axis: int = 0, sigma_conv=True):
     """"""
     if axis == 0:
         step = abs(array - np.nanmedian(array, axis=axis))
@@ -58,34 +44,19 @@ def mad(array, axis=0, sigma_conv=True):
     return np.nanmedian(step, axis=axis) * [1, 1.48][int(sigma_conv)]
 
 
-all_alias = np.array(
-    [
-        -2 - 1 / 365.25,
-        2 + 1 / 365.25,
-        -2,
-        2,
-        -1 - 1 / 365.25,
-        1 + 1 / 365.25,
-        -1,
-        1,
-        -1 / 365.25,
-        1 / 365.25,
-        -1 / (2 * 365.25),
-        1 / (2 * 365.25),
-    ]
-)
-
-
+# mathfun
 def voigt(x, amp, cen, wid, wid2):
     func = Voigt1D(x_0=cen, amplitude_L=2, fwhm_L=wid2, fwhm_G=wid)(x)
     return 1 + amp * func / func.max()
 
 
+# stats
 def combination(items):
     output = sum([list(map(list, combinations(items, i))) for i in range(len(items) + 1)], [])
     return output
 
 
+# stats
 def local_max(spectre, vicinity):
     vec_base = spectre[vicinity:-vicinity]
     maxima = np.ones(len(vec_base))
@@ -104,6 +75,7 @@ def local_max(spectre, vicinity):
     return np.array([index, flux])
 
 
+# stats
 def smooth2d(y, box_pts, borders=True, mode="same"):
     if box_pts > 1:
         box = 1 / (box_pts**2) * np.ones(box_pts) * np.ones(box_pts)[:, np.newaxis]
@@ -127,6 +99,7 @@ def smooth2d(y, box_pts, borders=True, mode="same"):
     return y_smooth
 
 
+# stats
 def smooth(y, box_pts, shape="rectangular"):  # rectangular kernel for the smoothing
     box2_pts = int(2 * box_pts - 1)
     if type(shape) == int:
@@ -153,6 +126,7 @@ def smooth(y, box_pts, shape="rectangular"):  # rectangular kernel for the smoot
     return y_smooth
 
 
+# stats
 def find_nearest(array, value, dist_abs=True):
     if type(array) != np.ndarray:
         array = np.array(array)
@@ -168,14 +142,17 @@ def find_nearest(array, value, dist_abs=True):
     return idx, array[idx], distance
 
 
+# stats
 def IQ(array, axis=None):
     return np.nanpercentile(array, 75, axis=axis) - np.nanpercentile(array, 25, axis=axis)
 
 
+# mathfun
 def sinus(x, amp, period, phase, a, b, c):
     return amp * np.sin(x * 2 * np.pi / period + phase) + a * x**2 + b * x + c
 
 
+# util
 def get_phase(array, period):
     new_array = np.sort((array % period))
     j0 = np.min(new_array) + (period - np.max(new_array))
@@ -186,6 +163,7 @@ def get_phase(array, period):
         return 0
 
 
+# remove -> passer les warnings en question sur logging.warn
 def make_sound(sentence, voice="Victoria"):
     if True:
         try:
@@ -196,6 +174,7 @@ def make_sound(sentence, voice="Victoria"):
         print("\7")
 
 
+# plots
 def my_colormesh(
     x,
     y,
@@ -235,6 +214,7 @@ def my_colormesh(
         plt.pcolormesh(X, Y, Z, shading=shading, cmap=cmap, vmin=vmin, vmax=vmax)
 
 
+# stats
 def clustering(array, tresh, num):
     difference = abs(np.diff(array))
     cluster = difference < tresh
@@ -264,6 +244,7 @@ def clustering(array, tresh, num):
         print("no cluster found with such treshhold")
 
 
+# stats
 def merge_borders(cluster_output):
     matrix1 = cluster_output.copy()
     for j in range(10):  # to converge
@@ -282,6 +263,7 @@ def merge_borders(cluster_output):
     return matrix1
 
 
+# stats
 def flat_clustering(length, cluster_output, extended=0, elevation=1):
     vec = np.arange(length)
     if type(elevation) == int:
@@ -297,6 +279,7 @@ def flat_clustering(length, cluster_output, extended=0, elevation=1):
     return flat
 
 
+# stats
 def identify_nearest(array1, array2):
     """identify the closest elements in array2 of array1"""
     array1 = np.sort(array1)
@@ -312,6 +295,7 @@ def identify_nearest(array1, array2):
     return np.ravel(identification)
 
 
+# util
 def my_ruler(mini, maxi, dmini, dmaxi):
     """make a list from mini to maxi with initial step dmini linearly growing to dmaxi"""
     m = (dmaxi - dmini) / (maxi - mini)
@@ -327,6 +311,7 @@ def my_ruler(mini, maxi, dmini, dmaxi):
     return a
 
 
+# stats
 def match_nearest(array1, array2, fast=True, max_dist=None):
     """return a table [idx1,idx2,num1,num2,distance] matching the closest element from two arrays. Remark : algorithm very slow by conception if the arrays are too large."""
     if type(array1) != np.ndarray:
@@ -426,6 +411,7 @@ def match_nearest(array1, array2, fast=True, max_dist=None):
         return mat
 
 
+# util
 def map_rnr(array, val_max=None, n=2):
     """val_max must be strictly larger than all number in the array, n smaller than 10"""
     if type(array) != np.ndarray:
@@ -470,9 +456,7 @@ def map_rnr(array, val_max=None, n=2):
         return decoded
 
 
-#
-
-
+# util
 def flux_norm_std(flux, flux_std, continuum, continuum_std):
     flux_norm = flux / continuum
     flux_norm_std = np.sqrt(
@@ -485,6 +469,7 @@ def flux_norm_std(flux, flux_std, continuum, continuum_std):
     return flux_norm, flux_norm_std
 
 
+# util
 def ccf(wave, spec1, spec2, extended=1500, rv_range=45, oversampling=10, spec1_std=None):
     "CCF for a equidistant grid in log wavelength spec1 = spectrum, spec2 =  binary mask"
     dwave = np.median(np.diff(wave))
@@ -541,14 +526,17 @@ def ccf(wave, spec1, spec2, extended=1500, rv_range=45, oversampling=10, spec1_s
     )
 
 
+# mathfun
 def gaussian(x, cen, amp, offset, wid):
     return amp * np.exp(-((x - cen) ** 2) / (2 * wid**2)) + offset
 
 
+# mathfun
 def lorentzian(x, amp, cen, offset, wid):
     return amp * wid**2 / ((x - cen) ** 2 + wid**2) + offset
 
 
+# stats
 def rm_outliers(array, m=1.5, kind="sigma", axis=0, return_borders=False):
     if type(array) != np.ndarray:
         array = np.array(array)
@@ -583,6 +571,7 @@ def rm_outliers(array, m=1.5, kind="sigma", axis=0, return_borders=False):
         return mask, array[mask]
 
 
+# util
 def ratio_line(l1, l2, grid, spectrei, continuum, window=3):
     """index  of the  grid element ofline  1,2 plus the  grid the spectrumand the continuum"""
 
@@ -624,9 +613,7 @@ def ratio_line(l1, l2, grid, spectrei, continuum, window=3):
     )
 
 
-## Useful tools ##
-
-
+# plots
 def auto_axis(vec, axis="y", m=3):
     iq = IQ(vec)
     q1 = np.nanpercentile(vec, 25)
@@ -642,9 +629,7 @@ def auto_axis(vec, axis="y", m=3):
         plt.xlim(val1, val2)
 
 
-## console interactions ##
-
-
+# util
 def print_box(sentence):
     print("\n")
     print("L" * len(sentence))
@@ -653,8 +638,9 @@ def print_box(sentence):
     print("\n")
 
 
+# util
 def doppler_r(lamb, v):
-    """Relativistic Doppler. Take (wavelenght, velocity in [m/s]) and return lambda observed and lambda source"""
+    """Relativistic Doppler. Take (wavelength, velocity in [m/s]) and return lambda observed and lambda source"""
     c = 299.792e6
     button = False
     factor = np.sqrt((1 + v / c) / (1 - v / c))
@@ -669,6 +655,7 @@ def doppler_r(lamb, v):
         return lambo, lambs
 
 
+# plots
 def plot_color_box(color="r", font="bold", lw=2, ax=None, side="all", ls="-"):
     if ls == "-":
         ls = "solid"
