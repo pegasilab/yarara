@@ -943,8 +943,6 @@ if stage == 12:
 if stage == 13:
     # TEMPERATURE + MODEL FIT
 
-    sts.yarara_temperature_variation(sub_dico="matching_pca", plot=True)
-
     sts.yarara_median_master(
         sub_dico="matching_mad",
         continuum="linear",
