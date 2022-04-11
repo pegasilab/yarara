@@ -5,6 +5,11 @@ This modules does XXX
 import platform
 
 import matplotlib
+import matplotlib.pylab as plt
+import numpy as np
+from scipy import ndimage
+
+from .stats import IQ, smooth2d
 
 
 def init_matplotlib() -> None:
