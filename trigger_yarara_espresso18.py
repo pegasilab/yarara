@@ -7,19 +7,20 @@ Created on Sun Jan 19 18:49:52 2020
 @university University of Geneva
 """
 
-import sys
-import os
-import matplotlib.pylab as plt
-import numpy as np
-import my_functions as myf
-import my_classes as myc
-import my_rassine_tools as myr
 import getopt
 import glob as glob
-import time
-import pandas as pd
-import astropy.coordinates as astrocoord
+import os
 import pickle
+import sys
+import time
+
+import astropy.coordinates as astrocoord
+import matplotlib.pylab as plt
+import my_classes as myc
+import my_functions as myf
+import my_rassine_tools as myr
+import numpy as np
+import pandas as pd
 from astropy import units as u
 
 # =============================================================================
@@ -133,9 +134,7 @@ if len(sys.argv) > 1:
 cwd = os.getcwd()
 root = "/".join(cwd.split("/")[:-1])
 directory_yarara = root + "/Yarara/"
-directory_to_dace = (
-    directory_yarara + star + "/data/" + input_product + "/spectroDownload"
-)
+directory_to_dace = directory_yarara + star + "/data/" + input_product + "/spectroDownload"
 directory_rassine = "/".join(directory_to_dace.split("/")[0:-1]) + "/" + ins
 directory_reduced_rassine = directory_rassine + "/STACKED/"
 directory_workspace = directory_rassine + "/WORKSPACE/"
@@ -207,9 +206,7 @@ if stage == -2:
                 + "/DACE_TABLE/Dace_extracted_table.csv"
             )["fileroot"][0]
         ):
-            error = sys.exit(
-                "[ERROR] No file found according to the dace table fileroot"
-            )
+            error = sys.exit("[ERROR] No file found according to the dace table fileroot")
     else:
         error = sys.exit()
 
@@ -273,8 +270,7 @@ try:
     sts.light_dicos = list(np.insert(np.array(sts.light_dicos), 2, "matching_fourier"))
 
     print(
-        "------------------------\n STAR LOADED : %s \n------------------------"
-        % (sts.starname)
+        "------------------------\n STAR LOADED : %s \n------------------------" % (sts.starname)
     )
 
     if fast:
@@ -357,9 +353,7 @@ if stage == 0:
     sts.yarara_check_fwhm()
     plt.close("all")
 
-    sts.yarara_ccf(
-        mask=sts.mask_harps, ccf_oversampling=1, plot=True, save=True, rv_range=None
-    )
+    sts.yarara_ccf(mask=sts.mask_harps, ccf_oversampling=1, plot=True, save=True, rv_range=None)
 
     sts.yarara_correct_secular_acc(update_rv=True)
 
@@ -411,9 +405,7 @@ if stage == 1:
     sts.continuum_error()
 
     # BERV SUMMARY
-    sts.yarara_berv_summary(
-        sub_dico="matching_diff", continuum="linear", dbin_berv=3, nb_plot=2
-    )
+    sts.yarara_berv_summary(sub_dico="matching_diff", continuum="linear", dbin_berv=3, nb_plot=2)
 
     # ACTIVITY
     print("\n Compute activity proxy")
@@ -432,13 +424,9 @@ if stage == 1:
 
     # CROPING
     if False:
-        sts.yarara_time_variations(
-            sub_dico="matching_diff", wave_min=3700, wave_max=4000
-        )
+        sts.yarara_time_variations(sub_dico="matching_diff", wave_min=3700, wave_max=4000)
 
-        sts.yarara_time_variations(
-            sub_dico="matching_diff", wave_min=6800, wave_max=7000
-        )
+        sts.yarara_time_variations(sub_dico="matching_diff", wave_min=6800, wave_max=7000)
 
     print("\n Crop spectra")
     # sts.yarara_cut_spectrum(wave_min=3805.00,wave_max=6865.00)
@@ -455,9 +443,7 @@ if stage == 1:
 
     sts.import_drift_night(ins, bin_length=bin_length, drs_version=drs_version)
 
-    sts.import_rv_dace(
-        ins, calib_std=0.7, bin_length=bin_length, drs_version=drs_version
-    )
+    sts.import_rv_dace(ins, calib_std=0.7, bin_length=bin_length, drs_version=drs_version)
 
     sts.yarara_plot_rcorr_dace(bin_length=bin_length, detrend=2)
 
@@ -799,9 +785,7 @@ if stage == 9:
         rv_range=None,
     )
 
-    proxy = ["Kernel_CaII", "CaII"][
-        reference is None
-    ]  # sts.yarara_determine_optimal_Sindex()
+    proxy = ["Kernel_CaII", "CaII"][reference is None]  # sts.yarara_determine_optimal_Sindex()
     print("\n Optimal proxy of activity : %s" % (proxy))
 
     sts.yarara_correct_activity(
@@ -881,9 +865,7 @@ if stage == 11:
         ext=["0", "1"][int(reference == "master")],
     )
 
-    spectrum_removed = (
-        sts.counter_mad_removed > [0.15, 0.15][int(reference == "master")]
-    )
+    spectrum_removed = sts.counter_mad_removed > [0.15, 0.15][int(reference == "master")]
     if (sum(spectrum_removed) * 100 / len(spectrum_removed)) < 20:
         sts.supress_time_spectra(liste=spectrum_removed)
 
@@ -1000,21 +982,11 @@ if stage == 14:
     else:
         sub_dico = "matching_diff"
 
-    if os.path.exists(
-        sts.dir_root + "CCF_MASK/CCF_kitcat_mask_" + sts.starname + ".fits"
-    ):
+    if os.path.exists(sts.dir_root + "CCF_MASK/CCF_kitcat_mask_" + sts.starname + ".fits"):
+        os.system("rm " + sts.dir_root + "CCF_MASK/CCF_kitcat_mask_" + sts.starname + ".fits")
+    if os.path.exists(sts.dir_root + "CCF_MASK/CCF_kitcat_cleaned_mask_" + sts.starname + ".fits"):
         os.system(
-            "rm " + sts.dir_root + "CCF_MASK/CCF_kitcat_mask_" + sts.starname + ".fits"
-        )
-    if os.path.exists(
-        sts.dir_root + "CCF_MASK/CCF_kitcat_cleaned_mask_" + sts.starname + ".fits"
-    ):
-        os.system(
-            "rm "
-            + sts.dir_root
-            + "CCF_MASK/CCF_kitcat_cleaned_mask_"
-            + sts.starname
-            + ".fits"
+            "rm " + sts.dir_root + "CCF_MASK/CCF_kitcat_cleaned_mask_" + sts.starname + ".fits"
         )
 
     sts.yarara_ccf(
@@ -1043,8 +1015,7 @@ if stage == 14:
 
     sts.import_kitcat()
     cut = np.min(sts.kitcat["catalogue"]["wave"]) + 0.5 * (
-        np.max(sts.kitcat["catalogue"]["wave"])
-        - np.min(sts.kitcat["catalogue"]["wave"])
+        np.max(sts.kitcat["catalogue"]["wave"]) - np.min(sts.kitcat["catalogue"]["wave"])
     )
     sts.yarara_detector(wave_cut=[cut])
 
@@ -1065,9 +1036,7 @@ if stage == 14:
         rv_range=None,
     )
 
-    sts.yarara_kitcat_plot(
-        wave_min=4435, wave_max=4445, nb_bins=30, sub_dico="matching_mad"
-    )
+    sts.yarara_kitcat_plot(wave_min=4435, wave_max=4445, nb_bins=30, sub_dico="matching_mad")
 
     sts.kitcat_statistic_telluric(clean=False, telluric_ext="")
 
@@ -1163,9 +1132,7 @@ if stage == 16:
     ccf_output["rv"].yerr += 0.7
 
     sts.yarara_kde_mask()
-    sts.yarara_cb(
-        sub_dico_rv="matching_mad", vec_corr=ccf_output["rv"], sig1=1.5, sig2=2.5
-    )
+    sts.yarara_cb(sub_dico_rv="matching_mad", vec_corr=ccf_output["rv"], sig1=1.5, sig2=2.5)
 
     sts.yarara_kernel_caii(
         contam=True,
@@ -1386,9 +1353,7 @@ if stage == 24:
         add_step=0,
     )
 
-    sts.lbl_supress_1year(
-        sub_dico="matching_morpho", kw_dico="lbl", fap=1, p_min=0, add_step=0
-    )
+    sts.lbl_supress_1year(sub_dico="matching_morpho", kw_dico="lbl", fap=1, p_min=0, add_step=0)
     sts.lbl_supress_1year(
         sub_dico="matching_morpho", kw_dico="lbl_iter", fap=1, p_min=0, add_step=0
     )
@@ -1659,9 +1624,7 @@ if stage == 27:
 
         base_tot = file_base_vec[sub_dico1] + base_shell
         file_base_vec["matching_shell"] = base_tot
-        pickle.dump(
-            file_base_vec, open(sts.dir_root + "KEPLERIAN/Vectors_fitted.p", "wb")
-        )
+        pickle.dump(file_base_vec, open(sts.dir_root + "KEPLERIAN/Vectors_fitted.p", "wb"))
 
         sts.lbl_fit_vec(
             "matching_shell",
@@ -1802,9 +1765,7 @@ if stage == 28:
             )
             plt.close("all")
 
-        sts.yarara_ccf_fit(
-            "matching_color", sub_dico=sub_dico1, proxies=base, time_detrending=0
-        )
+        sts.yarara_ccf_fit("matching_color", sub_dico=sub_dico1, proxies=base, time_detrending=0)
         sts.lbl_fit_vec(
             "matching_color",
             sub_dico=sub_dico1,
@@ -1848,9 +1809,7 @@ if stage == 28:
         # base = base + ['CaII',sub_dico.split('_')[1].upper()]
         base_tot = file_base_vec[sub_dico1] + base
         file_base_vec["matching_color"] = base_tot
-        pickle.dump(
-            file_base_vec, open(sts.dir_root + "KEPLERIAN/Vectors_fitted.p", "wb")
-        )
+        pickle.dump(file_base_vec, open(sts.dir_root + "KEPLERIAN/Vectors_fitted.p", "wb"))
 
         sts.lbl_fit_vec(
             "matching_color",
@@ -1989,9 +1948,7 @@ if stage == 29:
             )
             plt.close("all")
 
-        sts.yarara_ccf_fit(
-            "matching_empca", sub_dico=sub_dico1, proxies=base2, time_detrending=0
-        )
+        sts.yarara_ccf_fit("matching_empca", sub_dico=sub_dico1, proxies=base2, time_detrending=0)
         sts.lbl_fit_vec(
             "matching_empca",
             sub_dico=sub_dico1,
@@ -2034,9 +1991,7 @@ if stage == 29:
 
         base_tot = file_base_vec[sub_dico1] + base2
         file_base_vec["matching_empca"] = base_tot
-        pickle.dump(
-            file_base_vec, open(sts.dir_root + "KEPLERIAN/Vectors_fitted.p", "wb")
-        )
+        pickle.dump(file_base_vec, open(sts.dir_root + "KEPLERIAN/Vectors_fitted.p", "wb"))
 
         sts.lbl_fit_vec(
             "matching_empca",
@@ -2095,9 +2050,7 @@ if stage == 30:
     file_base_vec["matching_bis"] = base_tot
     pickle.dump(file_base_vec, open(sts.dir_root + "KEPLERIAN/Vectors_fitted.p", "wb"))
 
-    sts.yarara_ccf_fit(
-        "matching_bis", sub_dico=sub_dico1, proxies=base_tot, time_detrending=0
-    )
+    sts.yarara_ccf_fit("matching_bis", sub_dico=sub_dico1, proxies=base_tot, time_detrending=0)
     sts.lbl_fit_vec(
         "matching_bis",
         sub_dico="matching_mad",
@@ -2168,9 +2121,7 @@ if stage == 32:
     v2_dico = "matching_bis"
 
     mask2 = sts.yarara_get_best_mask(sub_dico=v2_dico, poly_deg=2)
-    mask1 = sts.yarara_get_best_mask(
-        sub_dico=["matching_mad", "matching_morpho"], poly_deg=2
-    )
+    mask1 = sts.yarara_get_best_mask(sub_dico=["matching_mad", "matching_morpho"], poly_deg=2)
 
     sb_dico = ["matching_mad", "matching_morpho"][int(mask1[0] == "L")]
 
@@ -2292,9 +2243,7 @@ if stage == 33:
     sts.import_table()
 
     mask2 = sts.yarara_get_best_mask(sub_dico="matching_empca", poly_deg=2)
-    mask1 = sts.yarara_get_best_mask(
-        sub_dico=["matching_mad", "matching_morpho"], poly_deg=2
-    )
+    mask1 = sts.yarara_get_best_mask(sub_dico=["matching_mad", "matching_morpho"], poly_deg=2)
 
     sb_dico = ["matching_mad", "matching_morpho"][int(mask1[0] == "L")]
 
@@ -2395,13 +2344,9 @@ if stage == 33:
             plot_1day=False,
         )
 
-        sts.yarara_keplerian_chain(
-            mask2, time_detrending=0
-        )  # auto detection of p in the function
+        sts.yarara_keplerian_chain(mask2, time_detrending=0)  # auto detection of p in the function
 
-    sts.yarara_plot_rcorr(
-        vec=vec_lbl2, vec_name="RV_YARARA_V2", bin_length=1, detrend=2, vmin=0.3
-    )
+    sts.yarara_plot_rcorr(vec=vec_lbl2, vec_name="RV_YARARA_V2", bin_length=1, detrend=2, vmin=0.3)
 
     sts.yarara_plot_all_rv(
         "LBL_kitcat_mask_" + sts.starname,
@@ -2498,9 +2443,7 @@ if stage == 52:
 
 if stage == 53:
     # activity_indicators
-    sts.yarara_stellar_atmos(
-        sub_dico="matching_diff", reference="master", continuum="linear"
-    )
+    sts.yarara_stellar_atmos(sub_dico="matching_diff", reference="master", continuum="linear")
     sts.yarara_correct_continuum_absorption(model=None, T=None, g=None)
     sts.yarara_activity_index(
         sub_dico="matching_pca", continuum="linear", substract_map=["mad", "smooth"]
@@ -2511,9 +2454,7 @@ if stage == 54:
         "kitcat_mask_" + sts.starname + ".p", sub_dico="matching_diff", color=0
     )
     sts.ccf_order_per_order(sts.mask_harps, sub_dico="matching_diff", color=1)
-    sts.ccf_order_per_order(
-        "kitcat_mask_" + sts.starname + ".p", sub_dico="matching_mad", color=2
-    )
+    sts.ccf_order_per_order("kitcat_mask_" + sts.starname + ".p", sub_dico="matching_mad", color=2)
     plt.show()
     plt.savefig(sts.dir_root + "IMAGES/CCF_order_by_order.png")
 
@@ -2545,12 +2486,8 @@ if stage == 42:
     )
 
 if stage == 43:
-    vec_lbl = sts.import_ccf_timeseries(
-        "LBL_kitcat_mask_" + sts.starname, "matching_morpho", "rv"
-    )
-    vec_lbl2 = sts.import_ccf_timeseries(
-        "LBL_kitcat_mask_" + sts.starname, "matching_empca", "rv"
-    )
+    vec_lbl = sts.import_ccf_timeseries("LBL_kitcat_mask_" + sts.starname, "matching_morpho", "rv")
+    vec_lbl2 = sts.import_ccf_timeseries("LBL_kitcat_mask_" + sts.starname, "matching_empca", "rv")
     sts.export_to_dace(vec_lbl, ext="_v1")
     sts.export_to_dace(vec_lbl2, ext="_v2")
 
@@ -2601,9 +2538,7 @@ if stage == 44:
 
 
 if stage == 69:
-    vec_lbl2 = sts.import_ccf_timeseries(
-        "LBL_kitcat_mask_" + sts.starname, "matching_empca", "rv"
-    )
+    vec_lbl2 = sts.import_ccf_timeseries("LBL_kitcat_mask_" + sts.starname, "matching_empca", "rv")
     vec_ref = sts.import_dace_sts()
 
     sts.simu_detection_limit2(
@@ -2661,17 +2596,11 @@ if stage == 999:
 myr.print_iter(time.time() - begin)
 
 if button:
-    table_time = pd.DataFrame(
-        time_step.values(), index=time_step.keys(), columns=["time_step"]
-    )
-    table_time["frac_time"] = (
-        100 * table_time["time_step"] / np.sum(table_time["time_step"])
-    )
+    table_time = pd.DataFrame(time_step.values(), index=time_step.keys(), columns=["time_step"])
+    table_time["frac_time"] = 100 * table_time["time_step"] / np.sum(table_time["time_step"])
     table_time["time_step"] /= 60  # convert in minutes
-    filename_time = (
-        sts.dir_root
-        + "REDUCTION_INFO/Time_informations_reduction_%s.csv"
-        % (time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()))
+    filename_time = sts.dir_root + "REDUCTION_INFO/Time_informations_reduction_%s.csv" % (
+        time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
     )
     table_time.to_csv(filename_time)
 
@@ -2684,9 +2613,7 @@ if False:
     # =============================================================================
 
     # detection limit
-    vec = sts.import_ccf_timeseries(
-        "LBL_kitcat_mask_" + sts.starname, "matching_CaWCaY", "rv"
-    )
+    vec = sts.import_ccf_timeseries("LBL_kitcat_mask_" + sts.starname, "matching_CaWCaY", "rv")
     vec_ref = sts.import_dace_sts()
 
     sts.simu_detection_limit(

@@ -1,4 +1,11 @@
+"""
+This modules does XXX
+"""
+
 import pickle
+
+import pandas as pd
+from astropy.io import fits
 
 from . import pickle_protocol_version
 

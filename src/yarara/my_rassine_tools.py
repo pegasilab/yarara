@@ -32,6 +32,7 @@ from . import Rassine_functions as ras
 from . import io
 from . import my_classes as myc
 from . import my_functions as myf
+from .util import print_iter, yarara_artefact_suppressed
 
 warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 
@@ -44,54 +45,6 @@ cwd = os.getcwd()
 root = "/".join(cwd.split("/")[:-1])
 
 
-def print_iter(verbose):
-    if verbose == -1:
-        print(
-            Fore.BLUE
-            + " ==============================================================================\n [INFO] Extracting data with RASSINE...\n ==============================================================================\n"
-            + Fore.RESET
-        )
-    elif verbose == 0:
-        print(
-            Fore.BLUE
-            + " ==============================================================================\n [INFO] Preprocessing data with RASSINE...\n ==============================================================================\n"
-            + Fore.RESET
-        )
-    elif verbose == 1:
-        print(
-            Fore.GREEN
-            + " ==============================================================================\n [INFO] First iteration is beginning...\n ==============================================================================\n"
-            + Fore.RESET
-        )
-    elif verbose == 2:
-        print(
-            Fore.YELLOW
-            + " ==============================================================================\n [INFO] Second iteration is beginning...\n ==============================================================================\n"
-            + Fore.RESET
-        )
-    elif verbose == 42:
-        print(
-            Fore.YELLOW
-            + " ==============================================================================\n [INFO] Merging is beginning...\n ==============================================================================\n"
-            + Fore.RESET
-        )
-    else:
-        hours = verbose // 3600 % 24
-        minutes = verbose // 60 % 60
-        seconds = verbose % 60
-        print(
-            Fore.RED
-            + " ==============================================================================\n [INFO] Intermediate time : %.0fh %.0fm %.0fs \n ==============================================================================\n"
-            % (hours, minutes, seconds)
-            + Fore.RESET
-        )
-
-
-# util
-def yarara_artefact_suppressed(old_continuum, new_continuum, larger_than=50, lower_than=-50):
-    ratio = (new_continuum / old_continuum - 1) * 100
-    mask = (ratio > larger_than) | (ratio < lower_than)
-    return mask
 
 
 class spec_time_series(object):
@@ -839,316 +792,192 @@ class spec_time_series(object):
 
         test, names = self.import_rassine_output(return_name=True)
 
-        # try_field -> get
-
         # info obs
 
-        ins = np.array(
-            [ras.try_field(test[j]["parameters"], "instrument") for j in range(len(test))]
-        )
-        snr = np.array(
-            [ras.try_field(test[j]["parameters"], "SNR_5500") for j in range(len(test))]
-        )
-        snr2 = np.array(
-            [ras.try_field(test[j]["parameters"], "SNR_computed") for j in range(len(test))]
-        )
-        jdb = np.array([ras.try_field(test[j]["parameters"], "jdb") for j in range(len(test))])
-        mjd = np.array([ras.try_field(test[j]["parameters"], "mjd") for j in range(len(test))])
-        berv = np.array([ras.try_field(test[j]["parameters"], "berv") for j in range(len(test))])
+        ins = np.array([test[j]["parameters"].get("instrument") for j in range(len(test))])
+        snr = np.array([test[j]["parameters"].get("SNR_5500") for j in range(len(test))])
+        snr2 = np.array([test[j]["parameters"].get("SNR_computed") for j in range(len(test))])
+        jdb = np.array([test[j]["parameters"].get("jdb") for j in range(len(test))])
+        mjd = np.array([test[j]["parameters"].get("mjd") for j in range(len(test))])
+        berv = np.array([test[j]["parameters"].get("berv") for j in range(len(test))])
         berv_planet = np.array(
-            [ras.try_field(test[j]["parameters"], "berv_planet") for j in range(len(test))]
+            [test[j]["parameters"].get("berv_planet") for j in range(len(test))]
         )
         lamp_offset = np.array(
-            [ras.try_field(test[j]["parameters"], "lamp_offset") for j in range(len(test))]
+            [test[j]["parameters"].get("lamp_offset") for j in range(len(test))]
         )
-        rv = np.array([ras.try_field(test[j]["parameters"], "rv") for j in range(len(test))])
-        rv_shift = np.array(
-            [ras.try_field(test[j]["parameters"], "RV_shift") for j in range(len(test))]
-        )
-        rv_sec = np.array(
-            [ras.try_field(test[j]["parameters"], "RV_sec") for j in range(len(test))]
-        )
-        rv_moon = np.array(
-            [ras.try_field(test[j]["parameters"], "RV_moon") for j in range(len(test))]
-        )
-        airmass = np.array(
-            [ras.try_field(test[j]["parameters"], "airmass") for j in range(len(test))]
-        )
-        texp = np.array([ras.try_field(test[j]["parameters"], "texp") for j in range(len(test))])
-        seeing = np.array(
-            [ras.try_field(test[j]["parameters"], "seeing") for j in range(len(test))]
-        )
-        humidity = np.array(
-            [ras.try_field(test[j]["parameters"], "humidity") for j in range(len(test))]
-        )
-        rv_planet = np.array(
-            [ras.try_field(test[j]["parameters"], "rv_planet") for j in range(len(test))]
-        )
-        rv_dace = np.array(
-            [ras.try_field(test[j]["parameters"], "rv_dace") for j in range(len(test))]
-        )
+        rv = np.array([test[j]["parameters"].get("rv") for j in range(len(test))])
+        rv_shift = np.array([test[j]["parameters"].get("RV_shift") for j in range(len(test))])
+        rv_sec = np.array([test[j]["parameters"].get("RV_sec") for j in range(len(test))])
+        rv_moon = np.array([test[j]["parameters"].get("RV_moon") for j in range(len(test))])
+        airmass = np.array([test[j]["parameters"].get("airmass") for j in range(len(test))])
+        texp = np.array([test[j]["parameters"].get("texp") for j in range(len(test))])
+        seeing = np.array([test[j]["parameters"].get("seeing") for j in range(len(test))])
+        humidity = np.array([test[j]["parameters"].get("humidity") for j in range(len(test))])
+        rv_planet = np.array([test[j]["parameters"].get("rv_planet") for j in range(len(test))])
+        rv_dace = np.array([test[j]["parameters"].get("rv_dace") for j in range(len(test))])
         rv_dace_std = np.array(
-            [ras.try_field(test[j]["parameters"], "rv_dace_std") for j in range(len(test))]
+            [test[j]["parameters"].get("rv_dace_std") for j in range(len(test))]
         )
         flux_balance = np.array(
-            [ras.try_field(test[j]["parameters"], "flux_balance") for j in range(len(test))]
+            [test[j]["parameters"].get("flux_balance") for j in range(len(test))]
         )
-        transit = np.array(
-            [ras.try_field(test[j]["parameters"], "transit_in") for j in range(len(test))]
-        )
-        night_drift = np.array(
-            [ras.try_field(test[j]["parameters"], "drift_used") for j in range(len(test))]
-        )
+        transit = np.array([test[j]["parameters"].get("transit_in") for j in range(len(test))])
+        night_drift = np.array([test[j]["parameters"].get("drift_used") for j in range(len(test))])
         night_drift_std = np.array(
-            [ras.try_field(test[j]["parameters"], "drift_used_std") for j in range(len(test))]
+            [test[j]["parameters"].get("drift_used_std") for j in range(len(test))]
         )
 
         # info activity
 
-        rhk = np.array([ras.try_field(test[j]["parameters"], "RHK") for j in range(len(test))])
-        rhk_std = np.array(
-            [ras.try_field(test[j]["parameters"], "RHK_std") for j in range(len(test))]
-        )
-        kernel_rhk = np.array(
-            [ras.try_field(test[j]["parameters"], "Kernel_CaII") for j in range(len(test))]
-        )
+        rhk = np.array([test[j]["parameters"].get("RHK") for j in range(len(test))])
+        rhk_std = np.array([test[j]["parameters"].get("RHK_std") for j in range(len(test))])
+        kernel_rhk = np.array([test[j]["parameters"].get("Kernel_CaII") for j in range(len(test))])
         kernel_rhk_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Kernel_CaII_std") for j in range(len(test))]
+            [test[j]["parameters"].get("Kernel_CaII_std") for j in range(len(test))]
         )
-        ca2k = np.array([ras.try_field(test[j]["parameters"], "CaIIK") for j in range(len(test))])
-        ca2k_std = np.array(
-            [ras.try_field(test[j]["parameters"], "CaIIK_std") for j in range(len(test))]
-        )
-        ca2h = np.array([ras.try_field(test[j]["parameters"], "CaIIH") for j in range(len(test))])
-        ca2h_std = np.array(
-            [ras.try_field(test[j]["parameters"], "CaIIH_std") for j in range(len(test))]
-        )
-        ca2 = np.array([ras.try_field(test[j]["parameters"], "CaII") for j in range(len(test))])
-        ca2_std = np.array(
-            [ras.try_field(test[j]["parameters"], "CaII_std") for j in range(len(test))]
-        )
-        ca1 = np.array([ras.try_field(test[j]["parameters"], "CaI") for j in range(len(test))])
-        ca1_std = np.array(
-            [ras.try_field(test[j]["parameters"], "CaI_std") for j in range(len(test))]
-        )
-        mg1 = np.array([ras.try_field(test[j]["parameters"], "MgI") for j in range(len(test))])
-        mg1_std = np.array(
-            [ras.try_field(test[j]["parameters"], "MgI_std") for j in range(len(test))]
-        )
-        mg1a = np.array([ras.try_field(test[j]["parameters"], "MgIa") for j in range(len(test))])
-        mg1a_std = np.array(
-            [ras.try_field(test[j]["parameters"], "MgIa_std") for j in range(len(test))]
-        )
-        mg1b = np.array([ras.try_field(test[j]["parameters"], "MgIb") for j in range(len(test))])
-        mg1b_std = np.array(
-            [ras.try_field(test[j]["parameters"], "MgIb_std") for j in range(len(test))]
-        )
-        mg1c = np.array([ras.try_field(test[j]["parameters"], "MgIc") for j in range(len(test))])
-        mg1c_std = np.array(
-            [ras.try_field(test[j]["parameters"], "MgIc_std") for j in range(len(test))]
-        )
-        d3 = np.array([ras.try_field(test[j]["parameters"], "HeID3") for j in range(len(test))])
-        d3_std = np.array(
-            [ras.try_field(test[j]["parameters"], "HeID3_std") for j in range(len(test))]
-        )
-        nad = np.array([ras.try_field(test[j]["parameters"], "NaD") for j in range(len(test))])
-        nad_std = np.array(
-            [ras.try_field(test[j]["parameters"], "NaD_std") for j in range(len(test))]
-        )
-        nad1 = np.array([ras.try_field(test[j]["parameters"], "NaD1") for j in range(len(test))])
-        nad1_std = np.array(
-            [ras.try_field(test[j]["parameters"], "NaD1_std") for j in range(len(test))]
-        )
-        nad2 = np.array([ras.try_field(test[j]["parameters"], "NaD2") for j in range(len(test))])
-        nad2_std = np.array(
-            [ras.try_field(test[j]["parameters"], "NaD2_std") for j in range(len(test))]
-        )
-        ha = np.array([ras.try_field(test[j]["parameters"], "Ha") for j in range(len(test))])
-        ha_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Ha_std") for j in range(len(test))]
-        )
-        hb = np.array([ras.try_field(test[j]["parameters"], "Hb") for j in range(len(test))])
-        hb_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Hb_std") for j in range(len(test))]
-        )
-        hc = np.array([ras.try_field(test[j]["parameters"], "Hc") for j in range(len(test))])
-        hc_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Hc_std") for j in range(len(test))]
-        )
-        hd = np.array([ras.try_field(test[j]["parameters"], "Hd") for j in range(len(test))])
-        hd_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Hd_std") for j in range(len(test))]
-        )
-        heps = np.array([ras.try_field(test[j]["parameters"], "Heps") for j in range(len(test))])
-        heps_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Heps_std") for j in range(len(test))]
-        )
+        ca2k = np.array([test[j]["parameters"].get("CaIIK") for j in range(len(test))])
+        ca2k_std = np.array([test[j]["parameters"].get("CaIIK_std") for j in range(len(test))])
+        ca2h = np.array([test[j]["parameters"].get("CaIIH") for j in range(len(test))])
+        ca2h_std = np.array([test[j]["parameters"].get("CaIIH_std") for j in range(len(test))])
+        ca2 = np.array([test[j]["parameters"].get("CaII") for j in range(len(test))])
+        ca2_std = np.array([test[j]["parameters"].get("CaII_std") for j in range(len(test))])
+        ca1 = np.array([test[j]["parameters"].get("CaI") for j in range(len(test))])
+        ca1_std = np.array([test[j]["parameters"].get("CaI_std") for j in range(len(test))])
+        mg1 = np.array([test[j]["parameters"].get("MgI") for j in range(len(test))])
+        mg1_std = np.array([test[j]["parameters"].get("MgI_std") for j in range(len(test))])
+        mg1a = np.array([test[j]["parameters"].get("MgIa") for j in range(len(test))])
+        mg1a_std = np.array([test[j]["parameters"].get("MgIa_std") for j in range(len(test))])
+        mg1b = np.array([test[j]["parameters"].get("MgIb") for j in range(len(test))])
+        mg1b_std = np.array([test[j]["parameters"].get("MgIb_std") for j in range(len(test))])
+        mg1c = np.array([test[j]["parameters"].get("MgIc") for j in range(len(test))])
+        mg1c_std = np.array([test[j]["parameters"].get("MgIc_std") for j in range(len(test))])
+        d3 = np.array([test[j]["parameters"].get("HeID3") for j in range(len(test))])
+        d3_std = np.array([test[j]["parameters"].get("HeID3_std") for j in range(len(test))])
+        nad = np.array([test[j]["parameters"].get("NaD") for j in range(len(test))])
+        nad_std = np.array([test[j]["parameters"].get("NaD_std") for j in range(len(test))])
+        nad1 = np.array([test[j]["parameters"].get("NaD1") for j in range(len(test))])
+        nad1_std = np.array([test[j]["parameters"].get("NaD1_std") for j in range(len(test))])
+        nad2 = np.array([test[j]["parameters"].get("NaD2") for j in range(len(test))])
+        nad2_std = np.array([test[j]["parameters"].get("NaD2_std") for j in range(len(test))])
+        ha = np.array([test[j]["parameters"].get("Ha") for j in range(len(test))])
+        ha_std = np.array([test[j]["parameters"].get("Ha_std") for j in range(len(test))])
+        hb = np.array([test[j]["parameters"].get("Hb") for j in range(len(test))])
+        hb_std = np.array([test[j]["parameters"].get("Hb_std") for j in range(len(test))])
+        hc = np.array([test[j]["parameters"].get("Hc") for j in range(len(test))])
+        hc_std = np.array([test[j]["parameters"].get("Hc_std") for j in range(len(test))])
+        hd = np.array([test[j]["parameters"].get("Hd") for j in range(len(test))])
+        hd_std = np.array([test[j]["parameters"].get("Hd_std") for j in range(len(test))])
+        heps = np.array([test[j]["parameters"].get("Heps") for j in range(len(test))])
+        heps_std = np.array([test[j]["parameters"].get("Heps_std") for j in range(len(test))])
 
-        wbk = np.array([ras.try_field(test[j]["parameters"], "WB_K") for j in range(len(test))])
-        wbk_std = np.array(
-            [ras.try_field(test[j]["parameters"], "WB_K_std") for j in range(len(test))]
-        )
-        wbh = np.array([ras.try_field(test[j]["parameters"], "WB_H") for j in range(len(test))])
-        wbh_std = np.array(
-            [ras.try_field(test[j]["parameters"], "WB_H_std") for j in range(len(test))]
-        )
-        wb = np.array([ras.try_field(test[j]["parameters"], "WB") for j in range(len(test))])
-        wb_std = np.array(
-            [ras.try_field(test[j]["parameters"], "WB_std") for j in range(len(test))]
-        )
-        wb_h1 = np.array([ras.try_field(test[j]["parameters"], "WB_H1") for j in range(len(test))])
-        wb_h1_std = np.array(
-            [ras.try_field(test[j]["parameters"], "WB_H1_std") for j in range(len(test))]
-        )
-        kernel_wb = np.array(
-            [ras.try_field(test[j]["parameters"], "Kernel_WB") for j in range(len(test))]
-        )
+        wbk = np.array([test[j]["parameters"].get("WB_K") for j in range(len(test))])
+        wbk_std = np.array([test[j]["parameters"].get("WB_K_std") for j in range(len(test))])
+        wbh = np.array([test[j]["parameters"].get("WB_H") for j in range(len(test))])
+        wbh_std = np.array([test[j]["parameters"].get("WB_H_std") for j in range(len(test))])
+        wb = np.array([test[j]["parameters"].get("WB") for j in range(len(test))])
+        wb_std = np.array([test[j]["parameters"].get("WB_std") for j in range(len(test))])
+        wb_h1 = np.array([test[j]["parameters"].get("WB_H1") for j in range(len(test))])
+        wb_h1_std = np.array([test[j]["parameters"].get("WB_H1_std") for j in range(len(test))])
+        kernel_wb = np.array([test[j]["parameters"].get("Kernel_WB") for j in range(len(test))])
         kernel_wb_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Kernel_WB_std") for j in range(len(test))]
+            [test[j]["parameters"].get("Kernel_WB_std") for j in range(len(test))]
         )
 
-        cb = np.array([ras.try_field(test[j]["parameters"], "CB") for j in range(len(test))])
-        cb_std = np.array(
-            [ras.try_field(test[j]["parameters"], "CB_std") for j in range(len(test))]
-        )
-        cb2 = np.array([ras.try_field(test[j]["parameters"], "CB2") for j in range(len(test))])
-        cb2_std = np.array(
-            [ras.try_field(test[j]["parameters"], "CB2_std") for j in range(len(test))]
-        )
+        cb = np.array([test[j]["parameters"].get("CB") for j in range(len(test))])
+        cb_std = np.array([test[j]["parameters"].get("CB_std") for j in range(len(test))])
+        cb2 = np.array([test[j]["parameters"].get("CB2") for j in range(len(test))])
+        cb2_std = np.array([test[j]["parameters"].get("CB2_std") for j in range(len(test))])
 
         # pca shells coefficient
 
         shell_compo = np.array(
-            [ras.try_field(test[j]["parameters"], "shell_fitted") for j in range(len(test))]
+            [test[j]["parameters"].get("shell_fitted") for j in range(len(test))]
         )
-        shell1 = np.array(
-            [ras.try_field(test[j]["parameters"], "shell_v1") for j in range(len(test))]
-        )
-        shell2 = np.array(
-            [ras.try_field(test[j]["parameters"], "shell_v2") for j in range(len(test))]
-        )
-        shell3 = np.array(
-            [ras.try_field(test[j]["parameters"], "shell_v3") for j in range(len(test))]
-        )
-        shell4 = np.array(
-            [ras.try_field(test[j]["parameters"], "shell_v4") for j in range(len(test))]
-        )
-        shell5 = np.array(
-            [ras.try_field(test[j]["parameters"], "shell_v5") for j in range(len(test))]
-        )
+        shell1 = np.array([test[j]["parameters"].get("shell_v1") for j in range(len(test))])
+        shell2 = np.array([test[j]["parameters"].get("shell_v2") for j in range(len(test))])
+        shell3 = np.array([test[j]["parameters"].get("shell_v3") for j in range(len(test))])
+        shell4 = np.array([test[j]["parameters"].get("shell_v4") for j in range(len(test))])
+        shell5 = np.array([test[j]["parameters"].get("shell_v5") for j in range(len(test))])
 
         # pca rv vectors
-        pca_compo = np.array(
-            [ras.try_field(test[j]["parameters"], "pca_fitted") for j in range(len(test))]
-        )
-        pca1 = np.array([ras.try_field(test[j]["parameters"], "pca_v1") for j in range(len(test))])
-        pca2 = np.array([ras.try_field(test[j]["parameters"], "pca_v2") for j in range(len(test))])
-        pca3 = np.array([ras.try_field(test[j]["parameters"], "pca_v3") for j in range(len(test))])
-        pca4 = np.array([ras.try_field(test[j]["parameters"], "pca_v4") for j in range(len(test))])
-        pca5 = np.array([ras.try_field(test[j]["parameters"], "pca_v5") for j in range(len(test))])
+        pca_compo = np.array([test[j]["parameters"].get("pca_fitted") for j in range(len(test))])
+        pca1 = np.array([test[j]["parameters"].get("pca_v1") for j in range(len(test))])
+        pca2 = np.array([test[j]["parameters"].get("pca_v2") for j in range(len(test))])
+        pca3 = np.array([test[j]["parameters"].get("pca_v3") for j in range(len(test))])
+        pca4 = np.array([test[j]["parameters"].get("pca_v4") for j in range(len(test))])
+        pca5 = np.array([test[j]["parameters"].get("pca_v5") for j in range(len(test))])
 
         # telluric ccf
 
         vec_background = np.array(
-            [ras.try_field(test[j]["parameters"], "proxy_background") for j in range(len(test))]
+            [test[j]["parameters"].get("proxy_background") for j in range(len(test))]
         )
 
         # telluric ccf
 
-        tell_ew = np.array(
-            [ras.try_field(test[j]["parameters"], "telluric_ew") for j in range(len(test))]
-        )
+        tell_ew = np.array([test[j]["parameters"].get("telluric_ew") for j in range(len(test))])
         tell_contrast = np.array(
-            [ras.try_field(test[j]["parameters"], "telluric_contrast") for j in range(len(test))]
+            [test[j]["parameters"].get("telluric_contrast") for j in range(len(test))]
         )
-        tell_rv = np.array(
-            [ras.try_field(test[j]["parameters"], "telluric_rv") for j in range(len(test))]
-        )
+        tell_rv = np.array([test[j]["parameters"].get("telluric_rv") for j in range(len(test))])
         tell_fwhm = np.array(
-            [ras.try_field(test[j]["parameters"], "telluric_fwhm") for j in range(len(test))]
+            [test[j]["parameters"].get("telluric_fwhm") for j in range(len(test))]
         )
         tell_center = np.array(
-            [ras.try_field(test[j]["parameters"], "telluric_center") for j in range(len(test))]
+            [test[j]["parameters"].get("telluric_center") for j in range(len(test))]
         )
         tell_depth = np.array(
-            [ras.try_field(test[j]["parameters"], "telluric_depth") for j in range(len(test))]
+            [test[j]["parameters"].get("telluric_depth") for j in range(len(test))]
         )
 
         # telluric ccf h2o
 
-        h2o_ew = np.array(
-            [ras.try_field(test[j]["parameters"], "h2o_ew") for j in range(len(test))]
-        )
+        h2o_ew = np.array([test[j]["parameters"].get("h2o_ew") for j in range(len(test))])
         h2o_contrast = np.array(
-            [ras.try_field(test[j]["parameters"], "h2o_contrast") for j in range(len(test))]
+            [test[j]["parameters"].get("h2o_contrast") for j in range(len(test))]
         )
-        h2o_rv = np.array(
-            [ras.try_field(test[j]["parameters"], "h2o_rv") for j in range(len(test))]
-        )
-        h2o_fwhm = np.array(
-            [ras.try_field(test[j]["parameters"], "h2o_fwhm") for j in range(len(test))]
-        )
-        h2o_center = np.array(
-            [ras.try_field(test[j]["parameters"], "h2o_center") for j in range(len(test))]
-        )
-        h2o_depth = np.array(
-            [ras.try_field(test[j]["parameters"], "h2o_depth") for j in range(len(test))]
-        )
+        h2o_rv = np.array([test[j]["parameters"].get("h2o_rv") for j in range(len(test))])
+        h2o_fwhm = np.array([test[j]["parameters"].get("h2o_fwhm") for j in range(len(test))])
+        h2o_center = np.array([test[j]["parameters"].get("h2o_center") for j in range(len(test))])
+        h2o_depth = np.array([test[j]["parameters"].get("h2o_depth") for j in range(len(test))])
 
         # telluric ccf o2
 
-        o2_ew = np.array([ras.try_field(test[j]["parameters"], "o2_ew") for j in range(len(test))])
+        o2_ew = np.array([test[j]["parameters"].get("o2_ew") for j in range(len(test))])
         o2_contrast = np.array(
-            [ras.try_field(test[j]["parameters"], "o2_contrast") for j in range(len(test))]
+            [test[j]["parameters"].get("o2_contrast") for j in range(len(test))]
         )
-        o2_rv = np.array([ras.try_field(test[j]["parameters"], "o2_rv") for j in range(len(test))])
-        o2_fwhm = np.array(
-            [ras.try_field(test[j]["parameters"], "o2_fwhm") for j in range(len(test))]
-        )
-        o2_center = np.array(
-            [ras.try_field(test[j]["parameters"], "o2_center") for j in range(len(test))]
-        )
-        o2_depth = np.array(
-            [ras.try_field(test[j]["parameters"], "o2_depth") for j in range(len(test))]
-        )
+        o2_rv = np.array([test[j]["parameters"].get("o2_rv") for j in range(len(test))])
+        o2_fwhm = np.array([test[j]["parameters"].get("o2_fwhm") for j in range(len(test))])
+        o2_center = np.array([test[j]["parameters"].get("o2_center") for j in range(len(test))])
+        o2_depth = np.array([test[j]["parameters"].get("o2_depth") for j in range(len(test))])
 
         # teff
 
-        t_eff = np.array([ras.try_field(test[j]["parameters"], "Teff") for j in range(len(test))])
-        t_eff_std = np.array(
-            [ras.try_field(test[j]["parameters"], "Teff_std") for j in range(len(test))]
-        )
+        t_eff = np.array([test[j]["parameters"].get("Teff") for j in range(len(test))])
+        t_eff_std = np.array([test[j]["parameters"].get("Teff_std") for j in range(len(test))])
 
         # ghost
 
-        ghost = np.array([ras.try_field(test[j]["parameters"], "ghost") for j in range(len(test))])
+        ghost = np.array([test[j]["parameters"].get("ghost") for j in range(len(test))])
 
         # sas
-        sas = np.array([ras.try_field(test[j]["parameters"], "SAS") for j in range(len(test))])
-        sas_std = np.array(
-            [ras.try_field(test[j]["parameters"], "SAS_std") for j in range(len(test))]
-        )
-        sas1y = np.array([ras.try_field(test[j]["parameters"], "SAS1Y") for j in range(len(test))])
-        sas1y_std = np.array(
-            [ras.try_field(test[j]["parameters"], "SAS1Y_std") for j in range(len(test))]
-        )
-        bis = np.array([ras.try_field(test[j]["parameters"], "BIS") for j in range(len(test))])
-        bis_std = np.array(
-            [ras.try_field(test[j]["parameters"], "BIS_std") for j in range(len(test))]
-        )
-        bis2 = np.array([ras.try_field(test[j]["parameters"], "BIS2") for j in range(len(test))])
-        bis2_std = np.array(
-            [ras.try_field(test[j]["parameters"], "BIS2_std") for j in range(len(test))]
-        )
+        sas = np.array([test[j]["parameters"].get("SAS") for j in range(len(test))])
+        sas_std = np.array([test[j]["parameters"].get("SAS_std") for j in range(len(test))])
+        sas1y = np.array([test[j]["parameters"].get("SAS1Y") for j in range(len(test))])
+        sas1y_std = np.array([test[j]["parameters"].get("SAS1Y_std") for j in range(len(test))])
+        bis = np.array([test[j]["parameters"].get("BIS") for j in range(len(test))])
+        bis_std = np.array([test[j]["parameters"].get("BIS_std") for j in range(len(test))])
+        bis2 = np.array([test[j]["parameters"].get("BIS2") for j in range(len(test))])
+        bis2_std = np.array([test[j]["parameters"].get("BIS2_std") for j in range(len(test))])
 
         # parabola ccf
 
         try:
-            para_rv = np.array(
-                [ras.try_field(test[j]["ccf_parabola"], "para_rv") for j in range(len(test))]
-            )
+            para_rv = np.array([test[j]["ccf_parabola"].get("para_rv") for j in range(len(test))])
             para_depth = np.array(
-                [ras.try_field(test[j]["ccf_parabola"], "para_depth") for j in range(len(test))]
+                [test[j]["ccf_parabola"].get("para_depth") for j in range(len(test))]
             )
         except KeyError:
             para_rv = np.zeros(len(snr))
@@ -1156,45 +985,36 @@ class spec_time_series(object):
 
         # gaussian ccf
         try:
-            ccf_ew = np.array([ras.try_field(test[j]["ccf"], "ew") for j in range(len(test))])
+            ccf_ew = np.array([test[j]["ccf"].get("ew") for j in range(len(test))])
             ccf_contrast = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "contrast") for j in range(len(test))]
+                [test[j]["ccf_gaussian"].get("contrast") for j in range(len(test))]
             )
             ccf_contrast_std = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "contrast_std") for j in range(len(test))]
+                [test[j]["ccf_gaussian"].get("contrast_std") for j in range(len(test))]
             )
-            ccf_rv = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "rv") for j in range(len(test))]
-            )
+            ccf_rv = np.array([test[j]["ccf_gaussian"].get("rv") for j in range(len(test))])
             ccf_rv_std = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "rv_std") for j in range(len(test))]
+                [test[j]["ccf_gaussian"].get("rv_std") for j in range(len(test))]
             )
             ccf_fwhm = (
-                np.array(
-                    [ras.try_field(test[j]["ccf_gaussian"], "fwhm") for j in range(len(test))]
-                )
-                * 2.355
+                np.array([test[j]["ccf_gaussian"].get("fwhm") for j in range(len(test))]) * 2.355
             )
             ccf_fwhm_std = (
-                np.array(
-                    [ras.try_field(test[j]["ccf_gaussian"], "fwhm_std") for j in range(len(test))]
-                )
+                np.array([test[j]["ccf_gaussian"].get("fwhm_std") for j in range(len(test))])
                 * 2.355
             )
             ccf_offset = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "offset") for j in range(len(test))]
+                [test[j]["ccf_gaussian"].get("offset") for j in range(len(test))]
             )
             ccf_offset_std = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "offset_std") for j in range(len(test))]
+                [test[j]["ccf_gaussian"].get("offset_std") for j in range(len(test))]
             )
-            ccf_vspan = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "vspan") for j in range(len(test))]
-            )
+            ccf_vspan = np.array([test[j]["ccf_gaussian"].get("vspan") for j in range(len(test))])
             ccf_vspan_std = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "rv_std") for j in range(len(test))]
+                [test[j]["ccf_gaussian"].get("rv_std") for j in range(len(test))]
             )
             ccf_svrad_phot = np.array(
-                [ras.try_field(test[j]["ccf_gaussian"], "rv_std_phot") for j in range(len(test))]
+                [test[j]["ccf_gaussian"].get("rv_std_phot") for j in range(len(test))]
             )
 
         except KeyError:
@@ -1531,13 +1351,10 @@ class spec_time_series(object):
             )
             fwhm = np.array([fwhm_default] * len(self.table.jdb))
         if np.percentile(fwhm, 95) < fwhm_min:
-            print(
-                Fore.YELLOW
-                + "\n [WARNING] FWHM of tellurics smaller than %.0f km/s (%.1f), increased to default value of %.0f km/s"
+            logging.warn(
+                "FWHM of tellurics smaller than %.0f km/s (%.1f), increased to default value of %.0f km/s"
                 % (fwhm_min, np.percentile(fwhm, 95), fwhm_default)
-                + Fore.RESET
             )
-            myf.make_sound("warning")
             fwhm = np.array([fwhm_default] * len(self.table.jdb))
 
         print("\n [INFO] FWHM of tellurics : %.1f km/s" % (np.percentile(fwhm, 95)))
@@ -2739,11 +2556,8 @@ class spec_time_series(object):
         if np.nanmax(self.table.berv) - np.nanmin(self.table.berv) < 5:
             reference = False
             ratio = False
-            myf.make_sound("warning")
-            print(
-                Fore.YELLOW
-                + "\n [WARNING] BERV SPAN too low to consider ratio spectra as reliable. Diff spectra will be used.\n"
-                + Fore.RESET
+            logging.warn(
+                "BERV SPAN too low to consider ratio spectra as reliable. Diff spectra will be used."
             )
 
         berv_max = np.max(abs(self.table["berv" + kw]))
@@ -2860,12 +2674,8 @@ class spec_time_series(object):
         )  # rv derive to different fromn the berv -> CCF not ttrustworthly
         mask_fail = mask_fail | np.isnan(self.ccf_rv.y)
         if sum(mask_fail):
-            myf.make_sound("warning")
-            print(
-                Fore.YELLOW
-                + " \n[WARNING] There are %.0f datapoints incompatible with the BERV values"
-                % (sum(mask_fail))
-                + Fore.RESET
+            logging.warn(
+                "There are %.0f datapoints incompatible with the BERV values" % (sum(mask_fail))
             )
             for k in range(len(output)):
                 output[k][mask_fail] = np.nanmedian(output[k][~mask_fail])
@@ -6943,11 +6753,10 @@ class spec_time_series(object):
 
         if not bypass_warning:
             if "matching_smooth" in list(self.dico_tree["dico"]):
-                myf.make_sound("Warning")
-                answer = myf.sphinx(
-                    " [WARNING] Launch that recipes will remove the smooth correction of the previous loop iteration. Do you want to purchase (y/n) ?",
-                    rep=["y", "n"],
+                logging.warn(
+                    "Launch that recipes will remove the smooth correction of the previous loop iteration."
                 )
+                answer = myf.sphinx("Do you want to purchase (y/n) ?", rep=["y", "n"])
                 if answer == "n":
                     reduction_accepted = False
 
