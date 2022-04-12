@@ -394,7 +394,7 @@ if stage == 0:
 
 if stage == 1:
     # STATISTICS
-    sts.yarara_analysis_summary(rm_old=True)
+    sts.yarara_analyse_summary(rm_old=True)
 
 # =============================================================================
 # COSMICS
