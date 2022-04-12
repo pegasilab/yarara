@@ -506,8 +506,6 @@ def yarara_correct_telluric_proxy(
 
     ratio2_backup = ratio_backup - correction_backup + 1
 
-    # print(psutil.virtual_memory().percent)
-
     del correction_backup
     del correction
     del err_flux
