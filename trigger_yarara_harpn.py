@@ -394,74 +394,7 @@ if stage == 0:
 
 if stage == 1:
     # STATISTICS
-    sts.yarara_simbad_query()
-    # sts.yarara_star_info(sp_type='K1V', Mstar=1.0, Rstar=1.0)
-
-    sts.yarara_add_step_dico(
-        "matching_diff", 0
-    )  # sts.yarara_add_step_dico('matching_brute',0,chain=True)
-
-    # COLOR TEMPLATE
-    print("\n Compute bolometric constant")
-    sts.yarara_flux_constant()
-    sts.yarara_color_template()
-
-    sts.yarara_map_1d_to_2d(instrument=ins)
-
-    # ERROR BARS ON FLUX AND CONTINUUM
-    print("\n Add flux errors")
-    sts.yarara_non_zero_flux()
-    sts.flux_error(ron=11)
-    sts.continuum_error()
-
-    # BERV SUMMARY
-    sts.yarara_berv_summary(sub_dico="matching_diff", continuum="linear", dbin_berv=3, nb_plot=2)
-
-    # ACTIVITY
-    print("\n Compute activity proxy")
-    sts.yarara_activity_index(sub_dico="matching_diff", continuum="linear")
-
-    # table
-    sts.yarara_obs_info(kw=["instrument", [ins]])
-    sts.import_table()
-
-    print("\n Make SNR statistics figure")
-    sts.snr_statistic()
-    print("\n Make DRS RV summary figure")
-    sts.dace_statistic()
-
-    sts.yarara_transit_def(period=100000, T0=0, duration=0.0001)
-
-    # CROPING
-    if False:
-        sts.yarara_time_variations(sub_dico="matching_diff", wave_min=3700, wave_max=4000)
-
-        sts.yarara_time_variations(sub_dico="matching_diff", wave_min=6800, wave_max=7000)
-
-    print("\n Crop spectra")
-    sts.yarara_cut_spectrum(wave_min=3910.00, wave_max=6865.00)
-
-    if close_figure:
-        plt.close("all")
-
-    bin_length = sts.yarara_get_bin_length()
-
-    sts.import_drift_night(ins, bin_length=bin_length, drs_version=drs_version)
-
-    sts.import_rv_dace(ins, calib_std=0.7, bin_length=bin_length, drs_version=drs_version)
-
-    sts.yarara_plot_rcorr_dace(bin_length=bin_length, detrend=2)
-
-    get_time_step("statistics")
-    stage = break_func(stage)
-
-    if sts.starname == "Sun":
-        sts.yarara_correct_smooth(
-            sub_dico="matching_diff",
-            continuum="linear",
-            reference="median",
-            window_ang=1,
-        )
+    sts.yarara_analysis_summary(rm_old=True)
 
 # =============================================================================
 # COSMICS
@@ -1020,6 +953,12 @@ if stage == 14:
     get_time_step("matching_brute")
     stage = break_func(stage)
 
+# =============================================================================
+# UPDATE PATH
+# =============================================================================
+  
+ 
+    
 # =============================================================================
 # KITCAT
 # =============================================================================
