@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -42,8 +44,8 @@ warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 # PRODUCE THE DACE TABLE SUMMARIZING RV TIMESERIES
 # =============================================================================
 
-cwd = os.getcwd()
-root = "/".join(cwd.split("/")[:-1])
+cwd = sts.cwd
+root = sts.root
 
 
 class spec_time_series(object):
@@ -221,97 +223,26 @@ class spec_time_series(object):
         if not os.path.exists(self.dir_root + "CORRECTION_MAP/"):
             os.system("mkdir " + self.dir_root + "CORRECTION_MAP/")
 
-    def import_rassine_output(self, return_name=False, kw1=None, kw2=None):
+    def import_rassine_output(self: spec_time_series, return_name=False, kw1=None, kw2=None):
         return sts.io.import_rassine_output(return_name, kw1, kw2)
 
-    def import_star_info(self):
-        sts.io.import_star_info(self)
+    def import_star_info(self: spec_time_series):
+        return sts.io.import_star_info(self)
 
-    def import_table(self):
-        sts.io.import_table(self)
+    def import_table(self: spec_time_series):
+        return sts.io.import_table(self)
 
-    def import_material(self):
-        sts.io.import_material(self)
+    def import_material(self: spec_time_series):
+        return sts.io.import_material(self)
 
-    # =============================================================================
-    # IMPORT THE FULL DICO CHAIN
-    # =============================================================================
+    def import_dico_tree(self: spec_time_series):
+        return sts.io.import_dico_tree(self)
 
-    # io
-    def import_dico_tree(self):
-        file_test = self.import_spectrum()
-        kw = list(file_test.keys())
-        kw_kept = []
-        kw_chain = []
-        for k in kw:
-            if len(k.split("matching_")) == 2:
-                kw_kept.append(k)
-        kw_kept = np.array(kw_kept)
+    def import_spectrum(self: spec_time_series, num=None):
+        return sts.io.import_spectrum(self, num)
 
-        info = []
-        for n in kw_kept:
-
-            try:
-                s = file_test[n]["parameters"]["step"]
-                dico = file_test[n]["parameters"]["sub_dico_used"]
-                info.append([n, s, dico])
-            except:
-                pass
-        info = pd.DataFrame(info, columns=["dico", "step", "dico_used"])
-        self.dico_tree = info.sort_values(by="step")
-
-    # =============================================================================
-    # IMPORT a RANDOM SPECTRUM
-    # =============================================================================
-
-    # def copy_spectrum(self):
-    #     directory = self.directory
-    #     files = glob.glob(directory + "RASSI*.p")
-    #     files = np.sort(files)[0]
-
-    #     if not os.path.exists(self.dir_root + "TEMP/"):
-    #         os.system("mkdir " + self.dir_root + "TEMP/")
-
-    #     os.system("cp " + files + " " + self.dir_root + "TEMP/")
-
-    # io
-    def import_spectrum(self, num=None):
-        """
-        Import a pickle file of a spectrum to get fast common information shared by all spectra
-
-        Parameters
-        ----------
-        num : index of the spectrum to extract (if None random selection)
-
-        Returns
-        -------
-        Return the open pickle file
-
-        """
-
-        directory = self.directory
-        files = glob.glob(directory + "RASSI*.p")
-        files = np.sort(files)
-        if not len(files):
-            files = glob.glob(directory.replace("WORKSPACE", "TEMP") + "RASSI*.p")
-
-        if num is None:
-            try:
-                num = np.random.choice(np.arange(len(files)), 1)
-                file = files[num][0]
-            except:
-                file = files[0]
-
-        else:
-            try:
-                file = files[num]
-            except:
-                file = files[0]
-        return pd.read_pickle(file)
-
-    # io
     def yarara_star_info(
-        self,
+        self: spec_time_series,
         Rv_sys=None,
         simbad_name=None,
         magB=None,
@@ -334,39 +265,16 @@ class spec_time_series(object):
         Pmag=None,
         stellar_template=None,
     ):
-
-        kw = [
-            "Rv_sys",
-            "Simbad_name",
-            "Sp_type",
-            "magB",
-            "magV",
-            "magR",
-            "BV",
-            "VR",
-            "Mstar",
-            "Rstar",
-            "Vsini",
-            "Vmicro",
-            "Teff",
-            "Log_g",
-            "FeH",
-            "Prot",
-            "FWHM",
-            "Contrast",
-            "Pmag",
-            "stellar_template",
-            "CCF_delta",
-        ]
-        val = [
+        return sts.io.yarara_star_info(
+            self,
             Rv_sys,
             simbad_name,
-            sp_type,
             magB,
             magV,
             magR,
             BV,
             VR,
+            sp_type,
             Mstar,
             Rstar,
             Vsini,
@@ -377,176 +285,21 @@ class spec_time_series(object):
             Prot,
             Fwhm,
             Contrast,
+            CCF_delta,
             Pmag,
             stellar_template,
-            CCF_delta,
-        ]
-
-        self.import_star_info()
-        self.import_table()
-        self.import_material()
-
-        table = self.table
-        snr = np.array(table["snr"]).argmax()
-        file_test = self.import_spectrum(num=snr)
-
-        for i, j in zip(kw, val):
-            if j is not None:
-                if type(j) != list:
-                    j = ["fixed", j]
-                if i in self.star_info.keys():
-                    self.star_info[i][j[0]] = j[1]
-                else:
-                    self.star_info[i] = {j[0]: j[1]}
-
-        # TODO:
-        # Here, we removed the Gray temperature and the MARCS atlas atmospheric model
-        # initialization
-
-        io.pickle_dump(
-            self.star_info,
-            open(self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p", "wb"),
         )
 
-    # limbo
-    def yarara_master_ccf(self, sub_dico="matching_diff", name_ext="", rvs=None):
-        self.import_table()
+    def yarara_master_ccf(self: spec_time_series, sub_dico="matching_diff", name_ext="", rvs=None):
+        return sts.limbo.yarara_master_ccf(self, sub_dico, name_ext, rvs)
 
-        vrad, ccfs = (self.all_ccf_saved[sub_dico][0], self.all_ccf_saved[sub_dico][1])
+    def yarara_poissonian_noise(
+        self: spec_time_series, noise_wanted=1 / 100, wave_ref=None, flat_snr=True, seed=9
+    ):
+        return sts.util.yarara_poissonian_noise(self, noise_wanted, wave_ref, flat_snr, seed)
 
-        if rvs is None:
-            rvs = self.ccf_rv.y.copy()
-
-        med_rv = np.nanmedian(rvs)
-        rvs -= med_rv
-
-        new_ccf = []
-        for j in range(len(ccfs.T)):
-            ccf = myc.tableXY(vrad - rvs[j], ccfs[:, j])
-            ccf.interpolate(new_grid=vrad, method="linear", fill_value=np.nan)
-            new_ccf.append(ccf.y)
-        new_ccf = np.array(new_ccf)
-        new_vrad = vrad - med_rv
-        stack = np.sum(new_ccf, axis=0)
-        stack /= np.nanpercentile(stack, 95)
-        half = 0.5 * (1 + np.nanmin(stack))
-
-        master_ccf = myc.tableXY(new_vrad, stack)
-        master_ccf.supress_nan()
-        master_ccf.interpolate(replace=True, method="cubic")
-
-        new_vrad = master_ccf.x
-        stack = master_ccf.y
-
-        v1 = new_vrad[new_vrad < 0][myf.find_nearest(stack[new_vrad < 0], half)[0][0]]
-        v2 = new_vrad[new_vrad > 0][myf.find_nearest(stack[new_vrad > 0], half)[0][0]]
-
-        vmin = np.nanmin(new_vrad[~np.isnan(stack)])
-        vmax = np.nanmax(new_vrad[~np.isnan(stack)])
-
-        vlim = np.min([abs(vmin), abs(vmax)])
-        vmin = -vlim
-        vmax = vlim
-
-        contrast = 1 - np.nanmin(stack)
-
-        plt.figure()
-        plt.plot(new_vrad, stack, color="k", label="Contrast = %.1f %%" % (100 * contrast))
-
-        extension = ["YARARA", "HARPS", ""][int(name_ext != "") + int(name_ext == "_telluric")]
-
-        if extension == "YARARA":
-            self.fwhm = np.round((v2 - v1) / 1000, 2)
-            io.pickle_dump(
-                {"vrad": new_vrad, "ccf_power": stack},
-                open(self.dir_root + "MASTER/MASTER_CCF_KITCAT.p", "wb"),
-            )
-            try:
-                old = pd.read_pickle(self.dir_root + "MASTER/MASTER_CCF_HARPS.p")
-                plt.plot(old["vrad"], old["ccf_power"], alpha=0.5, color="k", ls="--")
-            except:
-                pass
-        elif extension == "HARPS":
-            io.pickle_dump(
-                {"vrad": new_vrad, "ccf_power": stack},
-                open(self.dir_root + "MASTER/MASTER_CCF_HARPS.p", "wb"),
-            )
-        else:
-            try:
-                old = pd.read_pickle(self.dir_root + "MASTER/MASTER_CCF" + name_ext + ".p")
-                plt.plot(old["vrad"], old["ccf_power"], alpha=0.5, color="k", ls="--")
-            except:
-                pass
-            io.pickle_dump(
-                {"vrad": new_vrad, "ccf_power": stack},
-                open(self.dir_root + "MASTER/MASTER_CCF" + name_ext + ".p", "wb"),
-            )
-
-        plt.xlim(vmin, vmax)
-
-        plt.plot(
-            [v1, v2],
-            [half, half],
-            color="r",
-            label="FHWM = %.2f kms" % ((v2 - v1) / 1000),
-        )
-        plt.scatter([v1, v2], [half, half], color="r", edgecolor="k", zorder=10)
-        plt.scatter([0], [np.nanmin(stack)], color="k", edgecolor="k", zorder=10)
-        plt.axvline(x=0, ls=":", color="k", alpha=0.5)
-        plt.legend()
-        plt.grid()
-        plt.xlabel("RV [m/s]", fontsize=13)
-        plt.ylabel("Flux normalised", fontsize=13)
-        plt.title("%s" % (self.starname), fontsize=14)
-
-        self.yarara_star_info(Contrast=[extension, np.round(contrast, 3)])
-        self.yarara_star_info(Fwhm=[extension, np.round((v2 - v1) / 1000, 2)])
-
-        plt.savefig(self.dir_root + "IMAGES/MASTER_CCF" + name_ext + ".pdf")
-
-    # util
-    def yarara_poissonian_noise(self, noise_wanted=1 / 100, wave_ref=None, flat_snr=True, seed=9):
-        self.import_table()
-        self.import_material()
-
-        if noise_wanted:
-            master = np.sqrt(
-                np.array(self.material.reference_spectrum * self.material.correction_factor)
-            )  # used to scale the snr continuum into errors bars
-            snrs = pd.read_pickle(self.dir_root + "WORKSPACE/Analyse_snr.p")
-
-            if not flat_snr:
-                if wave_ref is None:
-                    current_snr = np.array(self.table.snr_computed)
-                else:
-                    i = myf.find_nearest(snrs["wave"], wave_ref)[0]
-                    current_snr = snrs["snr_curve"][:, i]
-
-                curves = current_snr * np.ones(len(master))[:, np.newaxis]
-            else:
-                curves = snrs["snr_curve"]  # snr curves representing the continuum snr
-
-            snr_wanted = 1 / noise_wanted
-            diff = 1 / snr_wanted**2 - 1 / curves**2
-            diff[diff < 0] = 0
-            # snr_to_degrate = 1/np.sqrt(diff)
-
-            noise = np.sqrt(diff)
-            noise[np.isnan(noise)] = 0
-
-            noise_values = noise * master[:, np.newaxis].T
-            np.random.seed(seed=seed)
-            matrix_noise = np.random.randn(len(self.table.jdb), len(self.material.wave))
-            matrix_noise *= noise_values
-        else:
-            matrix_noise = np.zeros((len(self.table.jdb), len(self.material.wave)))
-            noise_values = np.zeros((len(self.table.jdb), len(self.material.wave)))
-
-        return matrix_noise, noise_values
-
-    # io
     def yarara_obs_info(
-        self,
+        self: spec_time_series,
         kw=[None, None],
         jdb=None,
         berv=None,
@@ -556,90 +309,19 @@ class spec_time_series(object):
         seeing=None,
         humidity=None,
     ):
-        """
-        Add some observationnal information in the RASSINE files and produce a summary table
-
-        Parameters
-        ----------
-        kw: list-like with format [keyword,array]
-        jdb : array-like with same size than the number of files in the directory
-        berv : array-like with same size than the number of files in the directory
-        rv : array-like with same size than the number of files in the directory
-        airmass : array-like with same size than the number of files in the directory
-        texp : array-like with same size than the number of files in the directory
-        seeing : array-like with same size than the number of files in the directory
-        humidity : array-like with same size than the number of files in the directory
-
-        """
-
-        directory = self.directory
-
-        files = glob.glob(directory + "RASSI*.p")
-        files = np.sort(files)
-
-        nb = len(files)
-
-        if type(kw) == pd.core.frame.DataFrame:  # in case of a pandas dataframe
-            kw = [list(kw.keys()), [i for i in np.array(kw).T]]
-        else:
-            try:
-                if len(kw[1]) == 1:
-                    kw[1] = [kw[1][0]] * nb
-            except TypeError:
-                kw[1] = [kw[1]] * nb
-
-            kw[0] = [kw[0]]
-            kw[1] = [kw[1]]
-
-        for i, j in enumerate(files):
-            file = pd.read_pickle(j)
-            for kw1, kw2 in zip(kw[0], kw[1]):
-                if kw1 is not None:
-                    if len(kw1.split("ccf_")) - 1:
-                        file["ccf_gaussian"][kw1.split("ccf_")[1]] = kw2[i]
-                    else:
-                        file["parameters"][kw1] = kw2[i]
-            if jdb is not None:
-                file["parameters"]["jdb"] = jdb[i]
-            if berv is not None:
-                file["parameters"]["berv"] = berv[i]
-            if rv is not None:
-                file["parameters"]["rv"] = rv[i]
-            if airmass is not None:
-                file["parameters"]["airmass"] = airmass[i]
-            if texp is not None:
-                file["parameters"]["texp"] = texp[i]
-            if seeing is not None:
-                file["parameters"]["seeing"] = seeing[i]
-            if humidity is not None:
-                file["parameters"]["humidity"] = humidity[i]
-            io.save_pickle(j, file)
-
-        self.yarara_analyse_summary()
+        return sts.io.yarara_obs_info(self, kw, jdb, berv, rv, airmass, texp, seeing, humidity)
 
     # extract
-    def yarara_get_orders(self):
-        self.import_material()
-        mat = self.material
-        orders = np.array(mat["orders_rnr"])
-        orders = myf.map_rnr(orders)
-        orders = np.round(orders, 0)
-        self.orders = orders
-        return orders
+    def yarara_get_orders(self: spec_time_series):
+        return sts.extract.yarara_get_orders(self)
 
     # extract
-    def yarara_get_pixels(self):
-        self.import_material()
-        mat = self.material
-        pixels = np.array(mat["pixels_rnr"])
-        pixels = myf.map_rnr(pixels)
-        pixels = np.round(pixels, 0)
-        self.pixels = pixels
-        return pixels
+    def yarara_get_pixels(self: spec_time_series):
+        return sts.extract.yarara_get_pixels(self)
 
     # io
     def supress_time_spectra(
-        self,
+        self: spec_time_series,
         liste=None,
         jdb_min=None,
         jdb_max=None,
@@ -726,7 +408,7 @@ class spec_time_series(object):
     # =============================================================================
 
     # io
-    def yarara_analyse_summary(self, rm_old=False):
+    def yarara_analyse_summary(self: spec_time_series, rm_old=False):
         """
         Produce a summary table with the RASSINE files of the specified directory
 
@@ -1152,7 +834,12 @@ class spec_time_series(object):
 
     # extract
     def yarara_get_berv_value(
-        self, time_value, Draw=False, new=True, light_graphic=False, save_fig=True
+        self: spec_time_series,
+        time_value,
+        Draw=False,
+        new=True,
+        light_graphic=False,
+        save_fig=True,
     ):
         """Return the berv value for a given jdb date"""
 
@@ -1199,7 +886,7 @@ class spec_time_series(object):
     # =============================================================================
 
     # util
-    def yarara_non_zero_flux(self, spectrum=None, min_value=None):
+    def yarara_non_zero_flux(self: spec_time_series, spectrum=None, min_value=None):
         file_test = self.import_spectrum()
         hole_left = file_test["parameters"]["hole_left"]
         hole_right = file_test["parameters"]["hole_right"]
@@ -1593,7 +1280,7 @@ class spec_time_series(object):
 
     # util
     def yarara_median_master(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         method="max",
@@ -1814,7 +1501,7 @@ class spec_time_series(object):
     # =============================================================================
 
     # util
-    def yarara_cut_spectrum(self, wave_min=None, wave_max=None):
+    def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
         """Cut the spectrum time-series borders to reach the specified wavelength limits (included)
         There is no way to cancel this step ! Use it wisely."""
 
@@ -1968,7 +1655,7 @@ class spec_time_series(object):
 
     # processing
     def yarara_activity_index(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         plot=True,
@@ -2461,7 +2148,7 @@ class spec_time_series(object):
 
     # telluric
     def yarara_telluric(
-        self,
+        self: spec_time_series,
         sub_dico="matching_anchors",
         continuum="linear",
         suppress_broad=True,
@@ -2645,7 +2332,7 @@ class spec_time_series(object):
 
     # processing
     def yarara_ccf(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         mask=None,
@@ -3549,7 +3236,7 @@ class spec_time_series(object):
 
     # processing
     def yarara_map(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         planet=False,
@@ -3815,7 +3502,7 @@ class spec_time_series(object):
 
     # instrument
     def yarara_correct_pattern(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         wave_min=6000,
@@ -4513,7 +4200,7 @@ class spec_time_series(object):
 
     # outliers
     def yarara_correct_smooth(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         reference="median",
@@ -4764,7 +4451,7 @@ class spec_time_series(object):
 
     # processing
     def yarara_retropropagation_correction(
-        self,
+        self: spec_time_series,
         correction_map="matching_smooth",
         sub_dico="matching_cosmics",
         continuum="linear",
@@ -4851,7 +4538,7 @@ class spec_time_series(object):
 
     # telluric
     def yarara_correct_telluric_proxy(
-        self,
+        self: spec_time_series,
         sub_dico="matching_fourier",
         sub_dico_output="telluric",
         continuum="linear",
@@ -5272,7 +4959,7 @@ class spec_time_series(object):
 
     # telluric
     def yarara_correct_oxygen(
-        self,
+        self: spec_time_series,
         sub_dico="matching_telluric",
         continuum="linear",
         berv_shift="berv",
@@ -5590,7 +5277,7 @@ class spec_time_series(object):
 
     # telluric
     def yarara_correct_telluric_gradient(
-        self,
+        self: spec_time_series,
         sub_dico_detection="matching_fourier",
         sub_dico_correction="matching_oxygen",
         continuum="linear",
@@ -6018,7 +5705,7 @@ class spec_time_series(object):
             ax4 = plt.gca()
 
             class Index:
-                def update_data(self, newx, newy):
+                def update_data(self: spec_time_series, newx, newy):
                     idx = myf.find_nearest(wave, newx)[0].astype("int")
                     l.set_xdata(newx * np.ones(len(l.get_xdata())))
                     l2.set_xdata(newx * np.ones(len(l.get_xdata())))
@@ -6398,7 +6085,7 @@ class spec_time_series(object):
 
     # activity
     def yarara_correct_activity(
-        self,
+        self: spec_time_series,
         sub_dico="matching_telluric",
         continuum="linear",
         wave_min=3900,
@@ -6672,7 +6359,7 @@ class spec_time_series(object):
 
     # outliers
     def yarara_correct_cosmics(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         k_sigma=3,
@@ -6817,7 +6504,7 @@ class spec_time_series(object):
 
     # outliers
     def yarara_correct_mad(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         k_sigma=2,
@@ -7110,7 +6797,9 @@ class spec_time_series(object):
     # =============================================================================
 
     # instrument
-    def yarara_produce_mask_contam(self, frog_file=root + "/Python/Material/Contam_HARPN.p"):
+    def yarara_produce_mask_contam(
+        self: spec_time_series, frog_file=root + "/Python/Material/Contam_HARPN.p"
+    ):
 
         """
         Creation of the stitching mask on the spectrum
@@ -7151,7 +6840,9 @@ class spec_time_series(object):
         io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
     # instrument
-    def yarara_produce_mask_frog(self, frog_file=root + "/Python/Material/Ghost_HARPS03.p"):
+    def yarara_produce_mask_frog(
+        self: spec_time_series, frog_file=root + "/Python/Material/Ghost_HARPS03.p"
+    ):
 
         """
         Correction of the stitching/ghost on the spectrum by PCA fitting
@@ -7280,7 +6971,7 @@ class spec_time_series(object):
 
     # instrument
     def yarara_correct_frog(
-        self,
+        self: spec_time_series,
         sub_dico="matching_diff",
         continuum="linear",
         correction="stitching",
@@ -7297,711 +6988,28 @@ class spec_time_series(object):
         rcorr_min=0,
         treshold_contam=0.5,
         algo_pca="empca",
+    ) -> None:
+        return sts.instrument.yarara_correct_frog(
+            self,
+            sub_dico,
+            continuum,
+            correction,
+            berv_shift,
+            wave_min,
+            wave_max,
+            wave_min_train,
+            wave_max_train,
+        )
+
+    def yarara_correct_borders_pxl(
+        self: spec_time_series, pixels_to_reject=[2, 4095], min_shift=-30, max_shift=30
     ):
-
-        """
-        Correction of the stitching/ghost on the spectrum by PCA fitting
-
-        Parameters
-        ----------
-        sub_dico : The sub_dictionnary used to  select the continuum
-        continuum : The continuum to select (either linear or cubic)
-        reference : 'median', 'snr' or 'master' to select the reference normalised spectrum used in the difference
-        extended : extension of the cluster size
-        """
-
-        myf.print_box("\n---- RECIPE : CORRECTION %s WITH FROG ----\n" % (correction.upper()))
-
-        directory = self.directory
-        self.import_table()
-        self.import_material()
-        load = self.material
-
-        cmap = self.cmap
-        planet = self.planet
-        low_cmap = self.low_cmap * 100
-        high_cmap = self.high_cmap * 100
-
-        kw = "_planet" * planet
-        if kw != "":
-            print("\n---- PLANET ACTIVATED ----")
-
-        epsilon = 1e-12
-
-        if sub_dico is None:
-            sub_dico = self.dico_actif
-        print("\n---- DICO %s used ----\n" % (sub_dico))
-
-        files = glob.glob(directory + "RASSI*.p")
-        files = np.sort(files)
-
-        all_flux = []
-        all_flux_std = []
-        snr = []
-        jdb = []
-        conti = []
-        berv = []
-
-        for i, j in enumerate(files):
-            file = pd.read_pickle(j)
-            if not i:
-                grid = file["wave"]
-                hole_left = file["parameters"]["hole_left"]
-                hole_right = file["parameters"]["hole_right"]
-            f = file["flux" + kw]
-            f_std = file["flux_err"]
-            c = file[sub_dico]["continuum_" + continuum]
-            c_std = file["continuum_err"]
-            f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
-            all_flux.append(f_norm)
-            all_flux_std.append(f_norm_std)
-            conti.append(c)
-            jdb.append(file["parameters"]["jdb"])
-            snr.append(file["parameters"]["SNR_5500"])
-            if type(berv_shift) != np.ndarray:
-                try:
-                    berv.append(file["parameters"][berv_shift])
-                except:
-                    berv.append(0)
-            else:
-                berv = berv_shift
-
-        step = file[sub_dico]["parameters"]["step"]
-
-        all_flux = np.array(all_flux)
-        all_flux_std = np.array(all_flux_std)
-        conti = np.array(conti)
-        jdb = np.array(jdb)
-        snr = np.array(snr)
-        berv = np.array(berv)
-
-        if reference == "snr":
-            ref = all_flux[snr.argmax()]
-        elif reference == "median":
-            print(" [INFO] Reference spectrum : median")
-            ref = np.median(all_flux, axis=0)
-        elif reference == "master":
-            print(" [INFO] Reference spectrum : master")
-            ref = np.array(load["reference_spectrum"])
-        elif type(reference) == int:
-            print(" [INFO] Reference spectrum : spectrum %.0f" % (reference))
-            ref = all_flux[reference]
-        else:
-            ref = 0 * np.median(all_flux, axis=0)
-
-        berv_max = self.table["berv" + kw].max()
-        berv_min = self.table["berv" + kw].min()
-
-        diff = all_flux - ref
-
-        diff_backup = diff.copy()
-
-        if np.sum(abs(berv)) != 0:
-            for j in tqdm(np.arange(len(all_flux))):
-                test = myc.tableXY(grid, diff[j], all_flux_std[j])
-                test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
-                test.interpolate(new_grid=grid, method="cubic", replace=True, interpolate_x=False)
-                diff[j] = test.y
-                all_flux_std[j] = test.yerr
-
-        # extract frog table
-        # frog_table = pd.read_pickle(frog_file)
-        berv_file = 0  # self.yarara_get_berv_value(frog_table['jdb'])
-
-        mask = np.array(load[correction])
-
-        loc_ghost = mask != 0
-
-        # mask[mask<treshold_contam] = 0
-        val, borders = myf.clustering(loc_ghost, 0.5, 1)
-        val = np.array([np.product(v) for v in val])
-        borders = borders[val == 1]
-
-        min_t = grid[borders[:, 0]] * (
-            (1 + 1.55e-8) * (1 + (berv_min - 0 * berv_file) / 299792.458)
-        )
-        max_t = grid[borders[:, 1]] * (
-            (1 + 1.55e-8) * (1 + (berv_max - 0 * berv_file) / 299792.458)
+        return sts.instrument.yarara_correct_borders_pxl(
+            self, pixels_to_reject, min_shift, max_shift
         )
 
-        if (correction == "ghost_a") | (correction == "ghost_b"):
-            for j in range(3):
-                if np.sum(mask > treshold_contam) < 200:
-                    print(
-                        Fore.YELLOW
-                        + " [WARNING] Not enough wavelength in the mask, treshold contamination reduced down to %.2f"
-                        % (treshold_contam)
-                        + Fore.RESET
-                    )
-                    treshold_contam *= 0.75
-
-        mask_ghost = np.sum(
-            (grid > min_t[:, np.newaxis]) & (grid < max_t[:, np.newaxis]), axis=0
-        ).astype("bool")
-        mask_ghost_extraction = (
-            mask_ghost
-            & (mask > treshold_contam)
-            & (ref < 1)
-            & (np.array(1 - load["activity_proxies"]).astype("bool"))
-            & (grid < wave_max_train)
-            & (grid > wave_min_train)
-        )  # extract everywhere
-
-        if correction == "stitching":
-            self.stitching = mask_ghost
-            self.stitching_extracted = mask_ghost_extraction
-        elif correction == "ghost_a":
-            self.ghost_a = mask_ghost
-            self.ghost_a_extracted = mask_ghost_extraction
-        elif correction == "ghost_b":
-            self.ghost_b = mask_ghost
-            self.ghost_b_extracted = mask_ghost_extraction
-        elif correction == "thar":
-            self.thar = mask_ghost
-            self.thar_extracted = mask_ghost_extraction
-        elif correction == "contam":
-            self.contam = mask_ghost
-            self.contam_extracted = mask_ghost_extraction
-
-        # compute pca
-
-        if correction == "stitching":
-            print(" [INFO] Computation of PCA vectors for stitching correction...")
-            diff_ref = diff[:, mask_ghost]
-            subflux = diff[:, (mask_ghost) & (np.array(load["ghost_a"]) == 0)]
-            subflux_std = all_flux_std[:, (mask_ghost) & (np.array(load["ghost_a"]) == 0)]
-            lab = "Stitching"
-            name = "stitching"
-        elif correction == "ghost_a":
-            print(" [INFO] Computation of PCA vectors for ghost correction...")
-            diff_ref = diff[:, mask_ghost]
-            subflux = diff[:, (np.array(load["stitching"]) == 0) & (mask_ghost_extraction)]
-            subflux_std = all_flux_std[
-                :, (np.array(load["stitching"]) == 0) & (mask_ghost_extraction)
-            ]
-            lab = "Ghost_a"
-            name = "ghost_a"
-        elif correction == "ghost_b":
-            print(" [INFO] Computation of PCA vectors for ghost correction...")
-            diff_ref = diff[:, mask_ghost]
-            subflux = diff[:, (load["thar"] == 0) & (mask_ghost_extraction)]
-            subflux_std = all_flux_std[:, (load["thar"] == 0) & (mask_ghost_extraction)]
-            lab = "Ghost_b"
-            name = "ghost_b"
-        elif correction == "thar":
-            print(" [INFO] Computation of PCA vectors for thar correction...")
-            diff_ref = diff.copy()
-            subflux = diff[:, mask_ghost_extraction]
-            subflux_std = all_flux_std[:, mask_ghost_extraction]
-            lab = "Thar"
-            name = "thar"
-        elif correction == "contam":
-            print(" [INFO] Computation of PCA vectors for contam correction...")
-            diff_ref = diff[:, mask_ghost]
-            subflux = diff[:, mask_ghost_extraction]
-            subflux_std = all_flux_std[:, mask_ghost_extraction]
-            lab = "Contam"
-            name = "contam"
-
-        subflux_std = subflux_std[:, np.std(subflux, axis=0) != 0]
-        subflux = subflux[:, np.std(subflux, axis=0) != 0]
-
-        if not len(subflux[0]):
-            subflux = diff[:, 0:10]
-            subflux_std = all_flux_std[:, 0:10]
-
-        plt.figure(2, figsize=(12, 6))
-        plt.subplot(1, 2, 1)
-        plt.imshow(subflux, aspect="auto", vmin=-0.005, vmax=0.005)
-        plt.title(lab + " lines")
-        plt.xlabel("Pixels extracted", fontsize=14)
-        plt.ylabel("Time", fontsize=14)
-        ax = plt.gca()
-        plt.subplot(1, 2, 2, sharex=ax, sharey=ax)
-        plt.imshow(
-            subflux / (epsilon + np.std(subflux, axis=0)),
-            aspect="auto",
-            vmin=-0.005,
-            vmax=0.005,
-        )
-        plt.title(lab + " lines equalized")
-        plt.xlabel("Pixels extracted", fontsize=14)
-        plt.ylabel("Time", fontsize=14)
-
-        c = int(equal_weight)
-
-        X_train = (subflux / ((1 - c) + epsilon + c * np.std(subflux, axis=0))).T
-        X_train_std = (subflux_std / ((1 - c) + epsilon + c * np.std(subflux, axis=0))).T
-
-        # io.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
-
-        test2 = myc.table(X_train)
-        test2.WPCA(algo_pca, weight=1 / X_train_std**2, comp_max=nb_pca_comp)
-
-        phase_mod = np.arange(365)[
-            np.argmin(
-                np.array(
-                    [np.max((jdb - k) % 365.25) - np.min((jdb - k) % 365.25) for k in range(365)]
-                )
-            )
-        ]
-
-        plt.figure(4, figsize=(10, 14))
-        plt.subplot(3, 1, 1)
-        plt.xlabel("# PCA components", fontsize=13)
-        plt.ylabel("Variance explained", fontsize=13)
-        plt.plot(np.arange(1, len(test2.phi_components) + 1), test2.var_ratio)
-        plt.scatter(np.arange(1, len(test2.phi_components) + 1), test2.var_ratio)
-        plt.subplot(3, 1, 2)
-        plt.xlabel("# PCA components", fontsize=13)
-        plt.ylabel("Z score", fontsize=13)
-        plt.plot(np.arange(1, len(test2.phi_components) + 1), test2.zscore_components)
-        plt.scatter(np.arange(1, len(test2.phi_components) + 1), test2.zscore_components)
-        z_max = test2.zscore_components[-5:].max()
-        z_min = test2.zscore_components[-5:].min()
-        vec_relevant = np.arange(len(test2.zscore_components)) * (
-            (test2.zscore_components > z_max) | (test2.zscore_components < z_min)
-        )
-        plt.axhspan(ymin=z_min, ymax=z_max, alpha=0.2, color="k")
-        pca_comp_kept2 = int(np.where(vec_relevant != np.arange(len(vec_relevant)))[0][0])
-        plt.subplot(3, 1, 3)
-        plt.xlabel("# PCA components", fontsize=13)
-        plt.ylabel(r"$\Phi(0)$", fontsize=13)
-        plt.plot(np.arange(1, len(test2.phi_components) + 1), test2.phi_components)
-        plt.scatter(np.arange(1, len(test2.phi_components) + 1), test2.phi_components)
-        plt.axhline(y=0.5, color="k")
-        phi_max = test2.phi_components[-5:].max()
-        phi_min = test2.phi_components[-5:].min()
-        plt.axhspan(ymin=phi_min, ymax=phi_max, alpha=0.2, color="k")
-        vec_relevant = np.arange(len(test2.phi_components)) * (
-            (test2.phi_components > phi_max) | (test2.phi_components < phi_min)
-        )
-        if pca_comp_kept is None:
-            pca_comp_kept = int(np.where(vec_relevant != np.arange(len(vec_relevant)))[0][0])
-            pca_comp_kept = np.max([pca_comp_kept, pca_comp_kept2])
-
-        plt.savefig(self.dir_root + "IMAGES/" + name + "_PCA_variances.pdf")
-
-        plt.figure(figsize=(15, 10))
-        for j in range(pca_comp_kept):
-            if j == 0:
-                plt.subplot(pca_comp_kept, 2, 2 * j + 1)
-                ax = plt.gca()
-            else:
-                plt.subplot(pca_comp_kept, 2, 2 * j + 1, sharex=ax)
-            plt.scatter(jdb, test2.vec[:, j])
-            plt.subplot(pca_comp_kept, 2, 2 * j + 2)
-            plt.scatter((jdb - phase_mod) % 365.25, test2.vec[:, j])
-        plt.subplots_adjust(top=0.95, bottom=0.07, left=0.07, right=0.95, hspace=0)
-        plt.savefig(self.dir_root + "IMAGES/" + name + "_PCA_vectors.pdf")
-
-        if correction == "stitching":
-            self.vec_pca_stitching = test2.vec[:, 0:pca_comp_kept]
-        elif correction == "ghost_a":
-            self.vec_pca_ghost_a = test2.vec[:, 0:pca_comp_kept]
-        elif correction == "ghost_b":
-            self.vec_pca_ghost_b = test2.vec[:, 0:pca_comp_kept]
-        elif correction == "thar":
-            self.vec_pca_thar = test2.vec[:, 0:pca_comp_kept]
-        elif correction == "contam":
-            self.vec_pca_contam = test2.vec[:, 0:pca_comp_kept]
-
-        to_be_fit = diff / (np.std(diff, axis=0) + epsilon)
-
-        rcorr = np.zeros(len(grid))
-        for j in range(pca_comp_kept):
-            proxy1 = test2.vec[:, j]
-            rslope1 = np.median(
-                (to_be_fit - np.mean(to_be_fit, axis=0))
-                / ((proxy1 - np.mean(proxy1))[:, np.newaxis]),
-                axis=0,
-            )
-            rcorr1 = abs(rslope1 * np.std(proxy1) / (np.std(to_be_fit, axis=0) + epsilon))
-            rcorr = np.nanmax([rcorr1, rcorr], axis=0)
-        rcorr[np.isnan(rcorr)] = 0
-
-        val, borders = myf.clustering(mask_ghost, 0.5, 1)
-        val = np.array([np.product(j) for j in val])
-        borders = borders[val.astype("bool")]
-        borders = myf.merge_borders(borders)
-        flat_mask = myf.flat_clustering(len(grid), borders, extended=50).astype("bool")
-        rcorr_free = rcorr[~flat_mask]
-        rcorr_contaminated = rcorr[flat_mask]
-
-        if correction == "thar":
-            mask_ghost = np.ones(len(grid)).astype("bool")
-
-        plt.figure(figsize=(8, 6))
-        bins_contam, bins, dust = plt.hist(
-            rcorr_contaminated,
-            label="contaminated region",
-            bins=np.linspace(0, 1, 100),
-            alpha=0.5,
-            density=True,
-        )
-        bins_control, bins, dust = plt.hist(
-            rcorr_free,
-            bins=np.linspace(0, 1, 100),
-            label="free region",
-            alpha=0.5,
-            density=True,
-        )
-        plt.yscale("log")
-        plt.legend()
-        bins = bins[0:-1] + np.diff(bins) * 0.5
-        sum_a = np.sum(bins_contam[bins > 0.40])
-        sum_b = np.sum(bins_control[bins > 0.40])
-        crit = int(sum_a > (2 * sum_b))
-        check = ["r", "g"][crit]  # three times more correlation than in the control group
-        plt.xlabel(r"|$\mathcal{R}_{pearson}$|", fontsize=14, fontweight="bold", color=check)
-        plt.title("Density", color=check)
-        myf.plot_color_box(color=check)
-
-        plt.savefig(self.dir_root + "IMAGES/" + name + "_control_check.pdf")
-        print(" [INFO] %.0f versus %.0f" % (sum_a, sum_b))
-
-        if crit:
-            print(" [INFO] Control check sucessfully performed: %s" % (name))
-        else:
-            print(
-                Fore.YELLOW
-                + " [WARNING] Control check failed. Correction may be poorly performed for: %s"
-                % (name)
-                + Fore.RESET
-            )
-
-        diff_ref[np.isnan(diff_ref)] = 0
-
-        idx_min = myf.find_nearest(grid, wave_min)[0]
-        idx_max = myf.find_nearest(grid, wave_max)[0] + 1
-
-        new_wave = grid[int(idx_min) : int(idx_max)]
-
-        if complete_analysis:
-            plt.figure(figsize=(18, 12))
-            plt.subplot(pca_comp_kept // 2 + 1, 2, 1)
-            myf.my_colormesh(
-                new_wave,
-                np.arange(len(diff)),
-                diff[:, int(idx_min) : int(idx_max)],
-                vmin=low_cmap / 100,
-                vmax=high_cmap / 100,
-                cmap=cmap,
-            )
-            ax = plt.gca()
-            for nb_vec in tqdm(range(1, pca_comp_kept)):
-                correction2 = np.zeros((len(grid), len(jdb)))
-                collection = myc.table(diff_ref.T)
-                base_vec = np.vstack([np.ones(len(diff)), test2.vec[:, 0:nb_vec].T])
-                collection.fit_base(base_vec, num_sim=1)
-                correction2[mask_ghost] = collection.coeff_fitted.dot(base_vec)
-                correction2 = np.transpose(correction2)
-                diff_ref2 = diff - correction2
-                plt.subplot(pca_comp_kept // 2 + 1, 2, nb_vec + 1, sharex=ax, sharey=ax)
-                plt.title("Vec PCA fitted = %0.f" % (nb_vec))
-                myf.my_colormesh(
-                    new_wave,
-                    np.arange(len(diff)),
-                    diff_ref2[:, int(idx_min) : int(idx_max)],
-                    vmin=low_cmap / 100,
-                    vmax=high_cmap / 100,
-                    cmap=cmap,
-                )
-            plt.subplots_adjust(top=0.95, bottom=0.07, left=0.07, right=0.95, hspace=0.3)
-            plt.subplot(pca_comp_kept // 2 + 1, 2, pca_comp_kept + 1, sharex=ax)
-            plt.plot(new_wave, mask[int(idx_min) : int(idx_max)])
-            plt.plot(new_wave, mask_ghost_extraction[int(idx_min) : int(idx_max)], color="k")
-            if correction == "stitching":
-                plt.plot(new_wave, ref[int(idx_min) : int(idx_max)], color="gray")
-        else:
-            correction = np.zeros((len(grid), len(jdb)))
-            collection = myc.table(diff_ref.T)
-            base_vec = np.vstack([np.ones(len(diff)), test2.vec[:, 0:pca_comp_kept].T])
-            collection.fit_base(base_vec, num_sim=1)
-            correction[mask_ghost] = collection.coeff_fitted.dot(base_vec)
-            correction = np.transpose(correction)
-            correction[:, rcorr < rcorr_min] = 0
-
-            if np.sum(abs(berv)) != 0:
-                for j in tqdm(np.arange(len(all_flux))):
-                    test = myc.tableXY(grid, correction[j], 0 * grid)
-                    test.x = myf.doppler_r(test.x, berv[j] * 1000)[0]
-                    test.interpolate(
-                        new_grid=grid, method="cubic", replace=True, interpolate_x=False
-                    )
-                    correction[j] = test.y
-
-                index_min_backup = int(myf.find_nearest(grid, myf.doppler_r(grid[0], 30000)[0])[0])
-                index_max_backup = int(
-                    myf.find_nearest(grid, myf.doppler_r(grid[-1], -30000)[0])[0]
-                )
-                correction[:, 0 : index_min_backup * 2] = 0
-                correction[:, index_max_backup * 2 :] = 0
-                index_hole_right = int(
-                    myf.find_nearest(grid, hole_right + 1)[0]
-                )  # correct 1 angstrom band due to stange artefact at the border of the gap
-                index_hole_left = int(
-                    myf.find_nearest(grid, hole_left - 1)[0]
-                )  # correct 1 angstrom band due to stange artefact at the border of the gap
-                correction[:, index_hole_left : index_hole_right + 1] = 0
-
-            diff_ref2 = diff_backup - correction
-
-            new_conti = conti * (diff_backup + ref) / (diff_ref2 + ref + epsilon)
-            new_continuum = new_conti.copy()
-            new_continuum[all_flux == 0] = conti[all_flux == 0]
-            new_continuum[new_continuum != new_continuum] = conti[
-                new_continuum != new_continuum
-            ]  # to supress mystic nan appearing
-            new_continuum[np.isnan(new_continuum)] = conti[np.isnan(new_continuum)]
-            new_continuum[new_continuum == 0] = conti[new_continuum == 0]
-            new_continuum = self.uncorrect_hole(new_continuum, conti)
-
-            # plot end
-
-            if (name == "thar") | (name == "stitching"):
-                max_var = grid[np.std(correction, axis=0).argsort()[::-1]]
-                if name == "thar":
-                    max_var = max_var[max_var < 4400][0]
-                else:
-                    max_var = max_var[max_var < 6700][0]
-                wave_min = myf.find_nearest(grid, max_var - 15)[1]
-                wave_max = myf.find_nearest(grid, max_var + 15)[1]
-
-                idx_min = myf.find_nearest(grid, wave_min)[0]
-                idx_max = myf.find_nearest(grid, wave_max)[0] + 1
-
-            new_wave = grid[int(idx_min) : int(idx_max)]
-
-            fig = plt.figure(figsize=(21, 9))
-
-            plt.axes([0.05, 0.66, 0.90, 0.25])
-            myf.my_colormesh(
-                new_wave,
-                np.arange(len(diff)),
-                100 * diff_backup[:, int(idx_min) : int(idx_max)],
-                vmin=low_cmap,
-                vmax=high_cmap,
-                cmap=cmap,
-            )
-            plt.tick_params(direction="in", top=True, right=True, labelbottom=False)
-            plt.ylabel("Spectra  indexes (time)", fontsize=14)
-            plt.ylim(0, None)
-            ax = plt.gca()
-            cbaxes = fig.add_axes([0.95, 0.66, 0.01, 0.25])
-            ax1 = plt.colorbar(cax=cbaxes)
-            ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
-
-            plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-            myf.my_colormesh(
-                new_wave,
-                np.arange(len(diff)),
-                100 * diff_ref2[:, int(idx_min) : int(idx_max)],
-                vmin=low_cmap,
-                vmax=high_cmap,
-                cmap=cmap,
-            )
-            plt.tick_params(direction="in", top=True, right=True, labelbottom=False)
-            plt.ylabel("Spectra  indexes (time)", fontsize=14)
-            plt.ylim(0, None)
-            ax = plt.gca()
-            cbaxes2 = fig.add_axes([0.95, 0.375, 0.01, 0.25])
-            ax2 = plt.colorbar(cax=cbaxes2)
-            ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
-
-            plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-            myf.my_colormesh(
-                new_wave,
-                np.arange(len(diff)),
-                100 * diff_backup[:, int(idx_min) : int(idx_max)]
-                - 100 * diff_ref2[:, int(idx_min) : int(idx_max)],
-                vmin=low_cmap,
-                vmax=high_cmap,
-                cmap=cmap,
-            )
-            plt.tick_params(direction="in", top=True, right=True, labelbottom=True)
-            plt.ylabel("Spectra  indexes (time)", fontsize=14)
-            plt.xlabel(r"Wavelength [$\AA$]", fontsize=14)
-            plt.ylim(0, None)
-            ax = plt.gca()
-            cbaxes3 = fig.add_axes([0.95, 0.09, 0.01, 0.25])
-            ax3 = plt.colorbar(cax=cbaxes3)
-            ax3.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
-
-            plt.savefig(self.dir_root + "IMAGES/Correction_" + name + ".png")
-
-            if name == "ghost_b":
-                diff_backup = []
-                self.import_dico_tree()
-                sub = np.array(
-                    self.dico_tree.loc[self.dico_tree["dico"] == "matching_ghost_a", "dico_used"]
-                )[0]
-                for i, j in enumerate(files):
-                    file = pd.read_pickle(j)
-                    f = file["flux" + kw]
-                    f_std = file["flux_err"]
-                    c = file[sub]["continuum_" + continuum]
-                    c_std = file["continuum_err"]
-                    f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
-                    diff_backup.append(f_norm - ref)
-                diff_backup = np.array(diff_backup)
-
-                fig = plt.figure(figsize=(21, 9))
-
-                plt.axes([0.05, 0.66, 0.90, 0.25])
-                myf.my_colormesh(
-                    new_wave,
-                    np.arange(len(diff)),
-                    100 * diff_backup[:, int(idx_min) : int(idx_max)],
-                    vmin=low_cmap,
-                    vmax=high_cmap,
-                    cmap=cmap,
-                )
-                plt.tick_params(direction="in", top=True, right=True, labelbottom=False)
-                plt.ylabel("Spectra  indexes (time)", fontsize=14)
-                plt.ylim(0, None)
-                ax = plt.gca()
-                cbaxes = fig.add_axes([0.95, 0.66, 0.01, 0.25])
-                ax1 = plt.colorbar(cax=cbaxes)
-                ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
-
-                plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-                myf.my_colormesh(
-                    new_wave,
-                    np.arange(len(diff)),
-                    100 * diff_ref2[:, int(idx_min) : int(idx_max)],
-                    vmin=low_cmap,
-                    vmax=high_cmap,
-                    cmap=cmap,
-                )
-                plt.tick_params(direction="in", top=True, right=True, labelbottom=False)
-                plt.ylabel("Spectra  indexes (time)", fontsize=14)
-                plt.ylim(0, None)
-                ax = plt.gca()
-                cbaxes2 = fig.add_axes([0.95, 0.375, 0.01, 0.25])
-                ax2 = plt.colorbar(cax=cbaxes2)
-                ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
-
-                plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-                myf.my_colormesh(
-                    new_wave,
-                    np.arange(len(diff)),
-                    100 * diff_backup[:, int(idx_min) : int(idx_max)]
-                    - 100 * diff_ref2[:, int(idx_min) : int(idx_max)],
-                    vmin=low_cmap,
-                    vmax=high_cmap,
-                    cmap=cmap,
-                )
-                plt.tick_params(direction="in", top=True, right=True, labelbottom=True)
-                plt.ylabel("Spectra  indexes (time)", fontsize=14)
-                plt.xlabel(r"Wavelength [$\AA$]", fontsize=14)
-                plt.ylim(0, None)
-                ax = plt.gca()
-                cbaxes3 = fig.add_axes([0.95, 0.09, 0.01, 0.25])
-                ax3 = plt.colorbar(cax=cbaxes3)
-                ax3.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
-
-                plt.savefig(self.dir_root + "IMAGES/Correction_ghost.png")
-
-            to_be_saved = {"wave": grid, "correction_map": correction}
-            io.pickle_dump(
-                to_be_saved,
-                open(self.dir_root + "CORRECTION_MAP/map_matching_" + name + ".p", "wb"),
-            )
-
-            print("\nComputation of the new continua, wait ... \n")
-            time.sleep(0.5)
-            i = -1
-            for j in tqdm(files):
-                i += 1
-                file = pd.read_pickle(j)
-                output = {"continuum_" + continuum: new_continuum[i]}
-                file["matching_" + name] = output
-                file["matching_" + name]["parameters"] = {
-                    "reference_spectrum": reference,
-                    "sub_dico_used": sub_dico,
-                    "equal_weight": equal_weight,
-                    "pca_comp_kept": pca_comp_kept,
-                    "step": step + 1,
-                }
-                io.save_pickle(j, file)
-
-            self.yarara_analyse_summary()
-
-            self.dico_actif = "matching_" + name
-
-            plt.show(block=False)
-
-    # instrument
-    def yarara_correct_borders_pxl(self, pixels_to_reject=[2, 4095], min_shift=-30, max_shift=30):
-        """Produce a brute mask to flag lines crossing pixels according to min-max shift
-
-        Parameters
-        ----------
-        pixels_to_reject : List of pixels
-        min_shift : min shist value in km/s
-        max_shift : max shist value in km/s
-        """
-
-        myf.print_box("\n---- RECIPE : CREATE PIXELS BORDERS MASK ----\n")
-
-        self.import_material()
-        load = self.material
-
-        wave = np.array(load["wave"])
-        dwave = np.mean(np.diff(wave))
-        pxl = self.yarara_get_pixels()
-        orders = self.yarara_get_orders()
-
-        pxl *= orders != 0
-
-        pixels_rejected = np.array(pixels_to_reject)
-
-        pxl[pxl == 0] = np.max(pxl) * 2
-
-        dist = np.zeros(len(pxl)).astype("bool")
-        for i in np.arange(np.shape(pxl)[1]):
-            dist = dist | (np.min(abs(pxl[:, i] - pixels_rejected[:, np.newaxis]), axis=0) == 0)
-
-        # idx1, dust, dist1 = myf.find_nearest(pixels_rejected,pxl[:,0])
-        # idx2, dust, dist2 = myf.find_nearest(pixels_rejected,pxl[:,1])
-
-        # dist = (dist1<=1)|(dist2<=1)
-
-        f = np.where(dist == 1)[0]
-        plt.figure()
-        for i in np.arange(np.shape(pxl)[1]):
-            plt.scatter(pxl[f, i], orders[f, i])
-
-        val, cluster = myf.clustering(dist, 0.5, 1)
-        val = np.array([np.product(v) for v in val])
-        cluster = cluster[val.astype("bool")]
-
-        left = np.round(wave[cluster[:, 0]] * min_shift / 3e5 / dwave, 0).astype("int")
-        right = np.round(wave[cluster[:, 1]] * max_shift / 3e5 / dwave, 0).astype("int")
-        # length = right-left+1
-
-        # wave_flagged = wave[f]
-        # left = myf.doppler_r(wave_flagged,min_shift*1000)[0]
-        # right = myf.doppler_r(wave_flagged,max_shift*1000)[0]
-
-        # idx_left = myf.find_nearest(wave,left)[0]
-        # idx_right = myf.find_nearest(wave,right)[0]
-
-        idx_left = cluster[:, 0] + left
-        idx_right = cluster[:, 1] + right
-
-        flag_region = np.zeros(len(wave)).astype("int")
-
-        for l, r in zip(idx_left, idx_right):
-            flag_region[l : r + 1] = 1
-
-        load["borders_pxl"] = flag_region.astype("int")
-        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
-
-    # outliers
     def yarara_correct_brute(
-        self,
+        self: spec_time_series,
         sub_dico="matching_mad",
         continuum="linear",
         reference="median",
@@ -8012,232 +7020,20 @@ class spec_time_series(object):
         extended=10,
         ghost2="HARPS03",
         borders_pxl=False,
-    ):
-
-        """
-        Brutal suppression of flux value with variance to high (final solution)
-
-        Parameters
-        ----------
-        sub_dico : The sub_dictionnary used to  select the continuum
-        continuum : The continuum to select (either linear or cubic)
-        reference : 'median', 'snr' or 'master' to select the reference normalised spectrum used in the difference
-        win_roll : window size of the rolling algorithm
-        min_length : minimum cluster length to be flagged
-        k_sigma : k_sigma of the rolling mad clipping
-        extended : extension of the cluster size
-        low : lowest cmap value
-        high : highest cmap value
-        cmap : cmap of the 2D plot
-        """
-
-        myf.print_box("\n---- RECIPE : CORRECTION BRUTE ----\n")
-
-        directory = self.directory
-
-        cmap = self.cmap
-        planet = self.planet
-        low_cmap = self.low_cmap
-        high_cmap = self.high_cmap
-
-        self.import_material()
-        load = self.material
-
-        epsilon = 1e-12
-
-        kw = "_planet" * planet
-        if kw != "":
-            print("\n---- PLANET ACTIVATED ----")
-
-        if sub_dico is None:
-            sub_dico = self.dico_actif
-        print("\n---- DICO %s used ----\n" % (sub_dico))
-
-        files = glob.glob(directory + "RASSI*.p")
-        files = np.sort(files)
-
-        all_flux = []
-        snr = []
-        jdb = []
-        conti = []
-
-        for i, j in enumerate(files):
-            file = pd.read_pickle(j)
-            if not i:
-                grid = file["wave"]
-            all_flux.append(file["flux" + kw] / file[sub_dico]["continuum_" + continuum])
-            conti.append(file[sub_dico]["continuum_" + continuum])
-            jdb.append(file["parameters"]["jdb"])
-            snr.append(file["parameters"]["SNR_5500"])
-
-        step = file[sub_dico]["parameters"]["step"]
-        all_flux = np.array(all_flux)
-        conti = np.array(conti)
-
-        if reference == "snr":
-            ref = all_flux[snr.argmax()]
-        elif reference == "median":
-            print("[INFO] Reference spectrum : median")
-            ref = np.median(all_flux, axis=0)
-        elif reference == "master":
-            print("[INFO] Reference spectrum : master")
-            ref = np.array(load["reference_spectrum"])
-        elif type(reference) == int:
-            print("[INFO] Reference spectrum : spectrum %.0f" % (reference))
-            ref = all_flux[reference]
-        else:
-            ref = 0 * np.median(all_flux, axis=0)
-
-        all_flux = all_flux - ref
-        metric = np.std(all_flux, axis=0)
-        smoothed_med = np.ravel(
-            pd.DataFrame(metric).rolling(win_roll, center=True, min_periods=1).quantile(0.5)
+    ) -> None:
+        return sts.outliers.yarara_correct_brute(
+            self,
+            sub_dico,
+            continuum,
+            reference,
+            win_roll,
+            min_length,
+            percent_removed,
+            k_sigma,
+            extended,
+            ghost2,
+            borders_pxl,
         )
-        smoothed_mad = np.ravel(
-            pd.DataFrame(abs(metric - smoothed_med))
-            .rolling(win_roll, center=True, min_periods=1)
-            .quantile(0.5)
-        )
-        mask = (metric - smoothed_med) > smoothed_mad * 1.48 * k_sigma
 
-        clus = myf.clustering(mask, 0.5, 1)[0]
-        clus = np.array([np.product(j) for j in clus])
-        cluster = myf.clustering(mask, 0.5, 1)[-1]
-        cluster = np.hstack([cluster, clus[:, np.newaxis]])
-        cluster = cluster[cluster[:, 3] == 1]
-        cluster = cluster[cluster[:, 2] >= min_length]
-
-        cluster2 = cluster.copy()
-        sum_mask = []
-        all_flat = []
-        for j in tqdm(range(200)):
-            cluster2[:, 0] -= extended
-            cluster2[:, 1] += extended
-            flat_vec = myf.flat_clustering(len(grid), cluster2[:, 0:2])
-            flat_vec = flat_vec >= 1
-            all_flat.append(flat_vec)
-            sum_mask.append(np.sum(flat_vec))
-        sum_mask = 100 * np.array(sum_mask) / len(grid)
-        all_flat = np.array(all_flat)
-
-        loc = myf.find_nearest(sum_mask, np.arange(5, 26, 5))[0]
-
-        plt.figure(figsize=(16, 16))
-
-        plt.subplot(3, 1, 1)
-        plt.plot(grid, metric - smoothed_med, color="k")
-        plt.plot(grid, smoothed_mad * 1.48 * k_sigma, color="r")
-        plt.ylim(0, 0.01)
-        ax = plt.gca()
-
-        plt.subplot(3, 1, 2, sharex=ax)
-        for i, j, k in zip(["5%", "10%", "15%", "20%", "25%"], loc, [1, 1.05, 1.1, 1.15, 1.2]):
-            plt.plot(grid, all_flat[j] * k, label=i)
-        plt.legend()
-
-        plt.subplot(3, 2, 5)
-        b = myc.tableXY(np.arange(len(sum_mask)) * 5, sum_mask)
-        b.null()
-        b.plot()
-        plt.xlabel("Extension of rejection zones", fontsize=14)
-        plt.ylabel("Percent of the spectrum rejected [%]", fontsize=14)
-
-        for j in loc:
-            plt.axhline(y=b.y[j], color="k", ls=":")
-
-        ax = plt.gca()
-        plt.subplot(3, 2, 6, sharex=ax)
-        b.diff(replace=False)
-        b.deri.plot()
-        for j in loc:
-            plt.axhline(y=b.deri.y[j], color="k", ls=":")
-
-        if percent_removed is None:
-            percent_removed = myf.sphinx("Select the percentage of spectrum removed")
-
-        percent_removed = int(percent_removed)
-
-        loc_select = myf.find_nearest(sum_mask, percent_removed)[0]
-
-        final_mask = np.ravel(all_flat[loc_select]).astype("bool")
-
-        if borders_pxl:
-            borders_pxl_mask = np.array(load["borders_pxl"]).astype("bool")
-        else:
-            borders_pxl_mask = np.zeros(len(final_mask)).astype("bool")
-
-        if ghost2:
-            g = pd.read_pickle(root + "/Python/Material/Ghost2_" + ghost2 + ".p")
-            ghost = myc.tableXY(g["wave"], g["ghost2"], 0 * g["wave"])
-            ghost.interpolate(new_grid=grid, replace=True, method="linear", interpolate_x=False)
-            ghost_brute_mask = ghost.y.astype("bool")
-        else:
-            ghost_brute_mask = np.zeros(len(final_mask)).astype("bool")
-        load["ghost2"] = ghost_brute_mask.astype("int")
-        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
-
-        final_mask = final_mask | ghost_brute_mask | borders_pxl_mask
-        self.brute_mask = final_mask
-
-        load["mask_brute"] = final_mask
-        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
-
-        all_flux2 = all_flux.copy()
-        all_flux2[:, final_mask] = 0
-
-        plt.figure()
-        plt.subplot(2, 1, 1)
-        plt.imshow(all_flux, aspect="auto", vmin=low_cmap, vmax=high_cmap, cmap=cmap)
-        ax = plt.gca()
-        plt.subplot(2, 1, 2, sharex=ax, sharey=ax)
-        plt.imshow(all_flux2, aspect="auto", vmin=low_cmap, vmax=high_cmap, cmap=cmap)
-        ax = plt.gca()
-
-        new_conti = conti * (all_flux + ref) / (all_flux2 + ref + epsilon)
-        new_continuum = new_conti.copy()
-        new_continuum[all_flux == 0] = conti[all_flux == 0]
-        new_continuum[new_continuum == 0] = conti[new_continuum == 0]
-        new_continuum[np.isnan(new_continuum)] = conti[np.isnan(new_continuum)]
-
-        print("\nComputation of the new continua, wait ... \n")
-        time.sleep(0.5)
-
-        i = -1
-        for j in tqdm(files):
-            i += 1
-            file = pd.read_pickle(j)
-            output = {"continuum_" + continuum: new_continuum[i]}
-            file["matching_brute"] = output
-            file["matching_brute"]["parameters"] = {
-                "reference_spectrum": reference,
-                "sub_dico_used": sub_dico,
-                "k_sigma": k_sigma,
-                "rolling_window": win_roll,
-                "minimum_length_cluster": min_length,
-                "percentage_removed": percent_removed,
-                "step": step + 1,
-            }
-            io.save_pickle(j, file)
-
-        self.dico_actif = "matching_brute"
-
-    # =============================================================================
-    # AIRMASS
-    # =============================================================================
-
-    # processing
-    def uncorrect_hole(self, conti, conti_ref, values_forbidden=[0, np.inf]):
-        file_test = self.import_spectrum()
-        wave = np.array(file_test["wave"])
-        hl = file_test["parameters"]["hole_left"]
-        hr = file_test["parameters"]["hole_right"]
-
-        if hl != -99.9:
-            i1 = int(myf.find_nearest(wave, hl)[0])
-            i2 = int(myf.find_nearest(wave, hr)[0])
-            conti[:, i1 - 1 : i2 + 2] = conti_ref[:, i1 - 1 : i2 + 2].copy()
-
-        for l in values_forbidden:
-            conti[conti == l] = conti_ref[conti == l].copy()
-
-        return conti
+    def uncorrect_hole(self: spec_time_series, conti, conti_ref, values_forbidden=[0, np.inf]):
+        return sts.processing.uncorrect_hole(self, conti, conti_ref, values_forbidden)
