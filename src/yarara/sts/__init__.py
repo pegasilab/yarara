@@ -10,6 +10,7 @@ from . import (
     management,
     outliers,
     processing,
+    telluric,
     util,
 )
 
@@ -23,8 +24,6 @@ __all__ = [
     "management",
     "outliers",
     "processing",
+    "telluric",
     "util",
 ]
-
-cwd = os.getcwd()
-root = "/".join(cwd.split("/")[:-1])
