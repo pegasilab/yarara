@@ -20,9 +20,11 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 
-import yarara.my_classes as myc
-import yarara.my_functions as myf
-import yarara.my_rassine_tools as myr
+from yarara.analysis import tableXY
+from yarara.io import pickle_dump
+from yarara.my_rassine_tools import spec_time_series
+from yarara.stats import IQ
+from yarara.util import print_iter
 
 # =============================================================================
 # PARAMETERS
@@ -178,15 +180,15 @@ def break_func(stage):
             return stage
 
 
-if stage == -2:
+if stage == -2 and False:
 
     # =============================================================================
     # EXTRACT INFORMATION IF IMPORTED FROM DACE
     # =============================================================================
 
-    myr.move_extract_dace(directory_to_dace, instrument=instrument)
+    move_extract_dace(directory_to_dace, instrument=instrument)
 
-    myr.extract_table_dace(
+    extract_table_dace(
         star,
         instrument=[instrument],
         update_table=False,
@@ -219,7 +221,7 @@ if stage == -2:
     stage = break_func(stage)
 
 
-if stage == -1:
+if stage == -1 and False:
 
     # =============================================================================
     # RUN RASSINE TRIGGER
@@ -265,7 +267,7 @@ if stage == -1:
 # =============================================================================
 
 try:
-    sts = myr.spec_time_series(directory_workspace)
+    sts = spec_time_series(directory_workspace)
     # file_test = sts.import_spectrum()
     sts.planet = planet_activated
     sts.instrument = ins
@@ -345,7 +347,7 @@ if stage == 0:
     sts.import_dace_table_rv(bin_length=bin_length, dbin=0)
     sts.import_table()
 
-    snr = myc.tableXY(sts.table.jdb, sts.table.snr)
+    snr = tableXY(sts.table.jdb, sts.table.snr)
     plt.figure()
     snr.myscatter()
     plt.axhline(y=np.nanpercentile(snr.y, 25), color="k")
@@ -363,7 +365,7 @@ if stage == 0:
 
     sts.yarara_correct_secular_acc(update_rv=True)
 
-    lim_inf = np.nanpercentile(snr.y, 50) - 1.5 * myf.IQ(snr.y)
+    lim_inf = np.nanpercentile(snr.y, 50) - 1.5 * IQ(snr.y)
 
     for lim in [100, 75, 50, 35, 20]:
         if (lim_inf < lim) & (np.nanpercentile(snr.y, 16) > lim):
@@ -956,7 +958,7 @@ if stage == 13:
         load = sts.material
 
         load["reference_spectrum_backup"] = load["reference_spectrum"].copy()
-        myf.pickle_dump(load, open(sts.directory + "Analyse_material.p", "wb"))
+        pickle_dump(load, open(sts.directory + "Analyse_material.p", "wb"))
 
     sts.yarara_cut_spectrum(wave_min=None, wave_max=6834)
 
@@ -3356,7 +3358,7 @@ if stage == 14:
 # SAVE INFO TIME
 # =============================================================================
 
-myr.print_iter(time.time() - begin)
+print_iter(time.time() - begin)
 
 if button:
     table_time = pd.DataFrame(time_step.values(), index=time_step.keys(), columns=["time_step"])
@@ -3368,7 +3370,6 @@ if button:
     )
     table_time.to_csv(filename_time)
 
-    myf.make_sound("Ya ra ra has finished")
 
 if False:
 

@@ -12,7 +12,8 @@ from colorama import Fore
 from tqdm import tqdm
 
 from .. import io
-from ..analysis import table, tableXY
+from ..analysis import table as table_cls
+from ..analysis import tableXY
 from ..paths import root
 from ..plots import my_colormesh, plot_color_box
 from ..stats import IQ as IQ_fun
@@ -387,7 +388,7 @@ def yarara_correct_telluric_proxy(
             ratio[j] = test.y
             err_flux[j] = test.yerr
 
-    t = table(ratio)
+    t = table_cls(ratio)
     t.rms_w(1 / (err_flux) ** 2, axis=0)
 
     rslope = []
@@ -458,7 +459,7 @@ def yarara_correct_telluric_proxy(
         second_guess_position = guess_position[k * len_segment : (k + 1) * len_segment]
         # print(second_guess_position)
 
-        collection = table(ratio.T[second_guess_position])
+        collection = table_cls(ratio.T[second_guess_position])
 
         base_vec = np.vstack(
             [np.ones(len(flux))] + [proxy[:, k] for k in range(len(proxies_corr))]
@@ -773,7 +774,7 @@ def yarara_correct_oxygen(
     inside_oxygene = inside_oxygene_mask.astype("bool")
 
     vec = ratio_ref.T[inside_oxygene]
-    collection = table(vec)
+    collection = table_cls(vec)
 
     print(np.shape(flux_err))
 
@@ -1476,7 +1477,7 @@ def yarara_correct_telluric_gradient(
     # self.debug = (X_train, X_train_std)
     # io.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
 
-    test2 = table(X_train)
+    test2 = table_cls(X_train)
 
     test2.WPCA("wpca", weight=1 / X_train_std**2, comp_max=nb_pca_comp)
 
@@ -1594,7 +1595,7 @@ def yarara_correct_telluric_gradient(
             + Fore.RESET
         )
 
-    collection = table(
+    collection = table_cls(
         ratio_ref.T[telluric_location.astype("bool")]
     )  # do fit only on flag position
 

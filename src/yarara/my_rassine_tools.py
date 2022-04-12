@@ -313,7 +313,9 @@ class spec_time_series(object):
         light_graphic=False,
         save_fig=True,
     ):
-        return sts.extract.yarara_get_berv_value(self, time, Draw, new, light_graphic, save_fig)
+        return sts.extract.yarara_get_berv_value(
+            self, time_value, Draw, new, light_graphic, save_fig
+        )
 
     def yarara_non_zero_flux(self: spec_time_series, spectrum=None, min_value=None):
         return sts.util.yarara_non_zero_flux(self, spectrum, min_value)
