@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -30,19 +30,19 @@ if TYPE_CHECKING:
 
 def yarara_telluric(
     self: spec_time_series,
-    sub_dico="matching_anchors",
-    continuum="linear",
-    suppress_broad=True,
-    delta_window=5,
-    mask=None,
-    weighted=False,
-    reference=True,
-    display_ccf=False,
-    ratio=False,
-    normalisation="slope",
-    ccf_oversampling=3,
-    wave_max=None,
-    wave_min=None,
+    sub_dico: str="matching_anchors",
+    continuum: str="linear",
+    suppress_broad: bool=True,
+    delta_window: int=5,
+    mask: Optional[str]=None,
+    weighted: bool=False,
+    reference: str=True,
+    display_ccf: bool=False,
+    ratio: bool=False,
+    normalisation: str="slope",
+    ccf_oversampling: int=3,
+    wave_max: None=None,
+    wave_min: None=None,
 ) -> None:
 
     """
@@ -214,21 +214,21 @@ def yarara_telluric(
 # telluric
 def yarara_correct_telluric_proxy(
     self: spec_time_series,
-    sub_dico="matching_fourier",
-    sub_dico_output="telluric",
-    continuum="linear",
-    wave_min=5700,
-    wave_max=5900,
-    reference="master",
-    berv_shift="berv",
-    smooth_corr=1,
-    proxies_corr=["h2o_depth", "h2o_fwhm"],
-    proxies_detrending=None,
-    wave_min_correction=4400,
-    wave_max_correction=None,
-    min_r_corr=0.40,
-    sigma_ext=2,
-):
+    sub_dico: str="matching_fourier",
+    sub_dico_output: str="telluric",
+    continuum: str="linear",
+    wave_min: int=5700,
+    wave_max: int=5900,
+    reference: str="master",
+    berv_shift: str="berv",
+    smooth_corr: int=1,
+    proxies_corr: List[str]=["h2o_depth", "h2o_fwhm"],
+    proxies_detrending: None=None,
+    wave_min_correction: int=4400,
+    wave_max_correction: None=None,
+    min_r_corr: float=0.40,
+    sigma_ext: int=2,
+) -> None:
 
     """
     Display the time-series spectra with proxies and its correlation
@@ -500,7 +500,7 @@ def yarara_correct_telluric_proxy(
         find_nearest(wave, hole_left - 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     correction_backup[:, index_hole_left : index_hole_right + 1] = 1
-
+  
     #        if positive_coeff:
     #            correction_backup[correction_backup>0] = 0
 
@@ -630,14 +630,14 @@ def yarara_correct_telluric_proxy(
 # telluric
 def yarara_correct_oxygen(
     self: spec_time_series,
-    sub_dico="matching_telluric",
-    continuum="linear",
-    berv_shift="berv",
-    reference="master",
-    wave_min=5760,
-    wave_max=5850,
-    oxygene_bands=[[5787, 5835], [6275, 6340], [6800, 6950]],
-):
+    sub_dico: str="matching_telluric",
+    continuum: str="linear",
+    berv_shift: str="berv",
+    reference: str="master",
+    wave_min: int=5760,
+    wave_max: int=5850,
+    oxygene_bands: List[List[int]]=[[5787, 5835], [6275, 6340], [6800, 6950]],
+) -> None:
 
     """
     Display the time-series spectra with proxies and its correlation
@@ -945,24 +945,24 @@ def yarara_correct_oxygen(
 
 def yarara_correct_telluric_gradient(
     self: spec_time_series,
-    sub_dico_detection="matching_fourier",
-    sub_dico_correction="matching_oxygen",
-    continuum="linear",
-    wave_min_train=4200,
-    wave_max_train=5000,
-    wave_min_correction=4400,
-    wave_max_correction=6600,
-    smooth_map=1,
-    berv_shift="berv",
-    reference="master",
-    inst_resolution=110000,
-    debug=False,
-    equal_weight=True,
-    nb_pca_comp=20,
-    nb_pca_comp_kept=None,
-    nb_pca_max_kept=5,
-    calib_std=1e-3,
-):
+    sub_dico_detection: str="matching_fourier",
+    sub_dico_correction: None="matching_oxygen",
+    continuum: str="linear",
+    wave_min_train: int=4200,
+    wave_max_train: int=5000,
+    wave_min_correction: int=4400,
+    wave_max_correction: int=6600,
+    smooth_map: int=1,
+    berv_shift: str="berv",
+    reference: str="master",
+    inst_resolution: int=110000,
+    debug: bool=False,
+    equal_weight: bool=True,
+    nb_pca_comp: int=20,
+    nb_pca_comp_kept: None=None,
+    nb_pca_max_kept: int=5,
+    calib_std: float=1e-3,
+) -> None:
 
     """
     Display the time-series spectra with proxies and its correlation

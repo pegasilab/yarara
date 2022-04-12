@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from numpy import ndarray
 
 from .. import io
 from ..analysis import tableXY
@@ -14,7 +15,12 @@ if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
 
 
-def yarara_master_ccf(self: spec_time_series, sub_dico="matching_diff", name_ext="", rvs=None):
+def yarara_master_ccf(
+    self: spec_time_series,
+    sub_dico: str = "matching_diff",
+    name_ext: str = "",
+    rvs: Optional[ndarray] = None,
+) -> None:
     self.import_table()
 
     vrad, ccfs = (self.all_ccf_saved[sub_dico][0], self.all_ccf_saved[sub_dico][1])

@@ -4,15 +4,18 @@ import datetime
 import glob as glob
 import os
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from astropy.io import fits
 from colorama import Fore
+from numpy import ndarray
 from scipy.interpolate import interp1d
 from tqdm import tqdm
+
+from yarara.analysis import tableXY
 
 from .. import io
 from ..analysis import table, tableXY
@@ -33,17 +36,17 @@ if TYPE_CHECKING:
 
 def yarara_activity_index(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    plot=True,
-    debug=False,
-    calib_std=0,
-    optimize=False,
-    substract_map=[],
-    add_map=[],
-    p_noise=1 / np.inf,
-    save=True,
-):
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    plot: bool = True,
+    debug: bool = False,
+    calib_std: int = 0,
+    optimize: bool = False,
+    substract_map: List[Any] = [],
+    add_map: List[Any] = [],
+    p_noise: float = 1 / np.inf,
+    save: bool = True,
+) -> None:
     """
     Produce the activity proxy time-series. Need to cancel the RV systemic of the star
 
@@ -527,40 +530,40 @@ def yarara_activity_index(
 
 def yarara_ccf(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    mask=None,
-    mask_name=None,
-    ccf_name=None,
-    mask_col="weight_rv",
-    treshold_telluric=1,
-    ratio=False,
-    element=None,
-    reference=True,
-    weighted=True,
-    plot=False,
-    display_ccf=False,
-    save=True,
-    save_ccf_profile=False,
-    normalisation="left",
-    del_outside_max=False,
-    bis_analysis=False,
-    ccf_oversampling=1,
-    rv_range=None,
-    rv_borders=None,
-    delta_window=5,
-    debug=False,
-    rv_sys=None,
-    rv_shift=None,
-    speed_up=True,
-    force_brute=False,
-    wave_min=None,
-    wave_max=None,
-    squared=True,
-    p_noise=1 / np.inf,
-    substract_map=[],
-    add_map=[],
-):
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    mask: Optional[Union[ndarray, str]] = None,
+    mask_name: None = None,
+    ccf_name: None = None,
+    mask_col: str = "weight_rv",
+    treshold_telluric: int = 1,
+    ratio: bool = False,
+    element: None = None,
+    reference: Union[bool, str] = True,
+    weighted: bool = True,
+    plot: bool = False,
+    display_ccf: bool = False,
+    save: bool = True,
+    save_ccf_profile: bool = False,
+    normalisation: str = "left",
+    del_outside_max: bool = False,
+    bis_analysis: bool = False,
+    ccf_oversampling: int = 1,
+    rv_range: Optional[int] = None,
+    rv_borders: Optional[int] = None,
+    delta_window: int = 5,
+    debug: bool = False,
+    rv_sys: Optional[int] = None,
+    rv_shift: Optional[ndarray] = None,
+    speed_up: bool = True,
+    force_brute: bool = False,
+    wave_min: None = None,
+    wave_max: None = None,
+    squared: bool = True,
+    p_noise: float = 1 / np.inf,
+    substract_map: List[Any] = [],
+    add_map: List[Any] = [],
+) -> Dict[str, tableXY]:
     """
     Compute the CCF of a spectrum, reference to use always the same continuum (matching_anchors highest SNR).
     Display_ccf to plot all the individual CCF. Plot to plot the FWHM, contrast and RV.
@@ -1426,27 +1429,27 @@ def yarara_ccf(
 
 def yarara_map(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    planet=False,
-    modulo=None,
-    unit=1.0,
-    wave_min=4000,
-    wave_max=4300,
-    time_min=None,
-    time_max=None,
-    index="index",
-    ratio=False,
-    reference="median",
-    berv_shift=False,
-    rv_shift=False,
-    new=True,
-    Plot=True,
-    substract_map=[],
-    add_map=[],
-    correction_factor=True,
-    p_noise=1 / np.inf,
-):
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    planet: bool = False,
+    modulo: None = None,
+    unit: float = 1.0,
+    wave_min: None = 4000,
+    wave_max: None = 4300,
+    time_min: None = None,
+    time_max: None = None,
+    index: str = "index",
+    ratio: bool = False,
+    reference: bool = "median",
+    berv_shift: bool = False,
+    rv_shift: bool = False,
+    new: bool = True,
+    Plot: bool = True,
+    substract_map: List[Any] = [],
+    add_map: List[Any] = [],
+    correction_factor: bool = True,
+    p_noise: float = 1 / np.inf,
+) -> Tuple[ndarray, ndarray, ndarray]:
 
     """
     Display the time-series spectra with proxies and its correlation
@@ -1688,10 +1691,10 @@ def yarara_map(
 
 def yarara_retropropagation_correction(
     self: spec_time_series,
-    correction_map="matching_smooth",
-    sub_dico="matching_cosmics",
-    continuum="linear",
-):
+    correction_map: str = "matching_smooth",
+    sub_dico: str = "matching_cosmics",
+    continuum: str = "linear",
+) -> None:
 
     # we introduce the continuum correction (post-processing of rassine normalisation) inside the cosmics correction
     # it allow to not lose the output product of rassine (no need of backup)
@@ -1769,7 +1772,12 @@ def yarara_retropropagation_correction(
         io.save_pickle(j, file)
 
 
-def uncorrect_hole(self: spec_time_series, conti, conti_ref, values_forbidden=[0, np.inf]):
+def uncorrect_hole(
+    self: spec_time_series,
+    conti: ndarray,
+    conti_ref: ndarray,
+    values_forbidden: List[Union[int, float]] = [0, np.inf],
+) -> ndarray:
     file_test = self.import_spectrum()
     wave = np.array(file_test["wave"])
     hl = file_test["parameters"]["hole_left"]

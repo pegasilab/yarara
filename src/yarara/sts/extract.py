@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pylab as plt
 import numpy as np
+from numpy import float64, ndarray
 
 from ..analysis import tableXY
 from ..util import map_rnr
@@ -19,12 +20,12 @@ if TYPE_CHECKING:
 
 def yarara_get_berv_value(
     self: spec_time_series,
-    time_value,
-    Draw=False,
-    new=True,
-    light_graphic=False,
-    save_fig=True,
-):
+    time_value: float,
+    Draw: bool = False,
+    new: bool = True,
+    light_graphic: bool = False,
+    save_fig: bool = True,
+) -> float64:
     """Return the berv value for a given jdb date"""
 
     self.import_table()
@@ -66,7 +67,7 @@ def yarara_get_berv_value(
     return berv_value
 
 
-def yarara_get_orders(self: spec_time_series):
+def yarara_get_orders(self: spec_time_series) -> ndarray:
     self.import_material()
     mat = self.material
     orders = np.array(mat["orders_rnr"])
@@ -77,7 +78,7 @@ def yarara_get_orders(self: spec_time_series):
 
 
 # extract
-def yarara_get_pixels(self: spec_time_series):
+def yarara_get_pixels(self: spec_time_series) -> ndarray:
     self.import_material()
     mat = self.material
     pixels = np.array(mat["pixels_rnr"])

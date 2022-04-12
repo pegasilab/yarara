@@ -1,13 +1,31 @@
 """
 This modules does XXX
 """
+from typing import Iterable, Optional, Tuple, Union
+
 import numpy as np
 from colorama import Fore
+from numpy import float32, float64, ndarray
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
 
-def print_iter(verbose):
+def sphinx(sentence: str, rep: Optional[Iterable[str]] = None, s2: str = ""):
+    answer = "-99.9"
+    print(
+        " ______________ \n\n --- SPHINX --- \n\n TTTTTTTTTTTTTT \n\n Question : "
+        + sentence
+        + "\n\n [Deafening silence ...] \n\n ______________ \n\n --- OEDIPE --- \n\n XXXXXXXXXXXXXX \n "
+    )
+    if rep != None:
+        while answer not in rep:
+            answer = input("Answer : " + s2)
+    else:
+        answer = input("Answer : " + s2)
+    return answer
+
+
+def print_iter(verbose: float) -> None:
     if verbose == -1:
         print(
             Fore.BLUE
@@ -50,13 +68,15 @@ def print_iter(verbose):
         )
 
 
-def yarara_artefact_suppressed(old_continuum, new_continuum, larger_than=50, lower_than=-50):
+def yarara_artefact_suppressed(
+    old_continuum: ndarray, new_continuum: ndarray, larger_than: int = 50, lower_than: int = -50
+) -> ndarray:
     ratio = (new_continuum / old_continuum - 1) * 100
     mask = (ratio > larger_than) | (ratio < lower_than)
     return mask
 
 
-def get_phase(array, period):
+def get_phase(array: ndarray, period: float) -> int:
     new_array = np.sort((array % period))
     j0 = np.min(new_array) + (period - np.max(new_array))
     diff = np.diff(new_array)
@@ -82,7 +102,7 @@ def my_ruler(mini, maxi, dmini, dmaxi):
 
 
 # util
-def map_rnr(array, val_max=None, n=2):
+def map_rnr(array: ndarray, val_max: None = None, n: int = 2) -> ndarray:
     """val_max must be strictly larger than all number in the array, n smaller than 10"""
     if type(array) != np.ndarray:
         array = np.hstack([array])
@@ -126,8 +146,9 @@ def map_rnr(array, val_max=None, n=2):
         return decoded
 
 
-# util
-def flux_norm_std(flux, flux_std, continuum, continuum_std):
+def flux_norm_std(
+    flux: ndarray, flux_std: ndarray, continuum: ndarray, continuum_std: ndarray
+) -> Tuple[ndarray, ndarray]:
     flux_norm = flux / continuum
     flux_norm_std = np.sqrt(
         (flux_std / continuum) ** 2 + (flux * continuum_std / continuum**2) ** 2
@@ -139,8 +160,15 @@ def flux_norm_std(flux, flux_std, continuum, continuum_std):
     return flux_norm, flux_norm_std
 
 
-# util
-def ccf(wave, spec1, spec2, extended=1500, rv_range=45, oversampling=10, spec1_std=None):
+def ccf(
+    wave: ndarray,
+    spec1: ndarray,
+    spec2: ndarray,
+    extended: int = 1500,
+    rv_range: int = 45,
+    oversampling: int = 10,
+    spec1_std: Optional[ndarray] = None,
+) -> Tuple[ndarray, ndarray, ndarray]:
     "CCF for a equidistant grid in log wavelength spec1 = spectrum, spec2 =  binary mask"
     dwave = np.median(np.diff(wave))
 
@@ -196,7 +224,6 @@ def ccf(wave, spec1, spec2, extended=1500, rv_range=45, oversampling=10, spec1_s
     )
 
 
-# util
 def ratio_line(l1, l2, grid, spectrei, continuum, window=3):
     """index  of the  grid element ofline  1,2 plus the  grid the spectrumand the continuum"""
 
@@ -238,7 +265,7 @@ def ratio_line(l1, l2, grid, spectrei, continuum, window=3):
     )
 
 
-def print_box(sentence):
+def print_box(sentence: str) -> None:
     print("\n")
     print("L" * len(sentence))
     print(sentence)
@@ -246,7 +273,9 @@ def print_box(sentence):
     print("\n")
 
 
-def doppler_r(lamb, v):
+def doppler_r(
+    lamb: Union[float32, float, ndarray, float64], v: Union[int, float64]
+) -> Tuple[ndarray, ndarray]:
     """Relativistic Doppler. Take (wavelength, velocity in [m/s]) and return lambda observed and lambda source"""
     c = 299.792e6
     button = False

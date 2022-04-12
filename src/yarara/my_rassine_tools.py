@@ -4,11 +4,15 @@ import glob as glob
 import os
 import time
 import warnings
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from numpy import float64, int64, ndarray
+from pandas.core.frame import DataFrame
 
 from . import io, sts
+from .analysis import tableXY
 from .paths import root
 
 warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
@@ -20,7 +24,7 @@ warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 
 
 class spec_time_series(object):
-    def __init__(self, directory):
+    def __init__(self, directory: str) -> None:
         if len(directory.split("/")) == 1:
             directory = root + "/Yarara/" + directory + "/data/s1d/HARPS03/WORKSPACE/"
         if directory[-1] != "/":
@@ -194,48 +198,50 @@ class spec_time_series(object):
         if not os.path.exists(self.dir_root + "CORRECTION_MAP/"):
             os.system("mkdir " + self.dir_root + "CORRECTION_MAP/")
 
-    def import_rassine_output(self: spec_time_series, return_name=False, kw1=None, kw2=None):
+    def import_rassine_output(
+        self: spec_time_series, return_name: bool = False, kw1: None = None, kw2: None = None
+    ) -> Any:
         return sts.io.import_rassine_output(self, return_name, kw1, kw2)
 
-    def import_star_info(self: spec_time_series):
+    def import_star_info(self: spec_time_series) -> None:
         return sts.io.import_star_info(self)
 
-    def import_table(self: spec_time_series):
+    def import_table(self: spec_time_series) -> None:
         return sts.io.import_table(self)
 
-    def import_material(self: spec_time_series):
+    def import_material(self: spec_time_series) -> None:
         return sts.io.import_material(self)
 
-    def import_dico_tree(self: spec_time_series):
+    def import_dico_tree(self: spec_time_series) -> None:
         return sts.io.import_dico_tree(self)
 
-    def import_spectrum(self: spec_time_series, num=None):
+    def import_spectrum(self: spec_time_series, num: Optional[int64] = None) -> Dict[str, Any]:
         return sts.io.import_spectrum(self, num)
 
     def yarara_star_info(
         self: spec_time_series,
-        Rv_sys=None,
-        simbad_name=None,
-        magB=None,
-        magV=None,
-        magR=None,
-        BV=None,
-        VR=None,
-        sp_type=None,
-        Mstar=None,
-        Rstar=None,
-        Vsini=None,
-        Vmicro=None,
-        Teff=None,
-        log_g=None,
-        FeH=None,
-        Prot=None,
-        Fwhm=None,
-        Contrast=None,
-        CCF_delta=None,
-        Pmag=None,
-        stellar_template=None,
-    ):
+        Rv_sys: None = None,
+        simbad_name: None = None,
+        magB: None = None,
+        magV: None = None,
+        magR: None = None,
+        BV: None = None,
+        VR: None = None,
+        sp_type: None = None,
+        Mstar: None = None,
+        Rstar: None = None,
+        Vsini: None = None,
+        Vmicro: None = None,
+        Teff: None = None,
+        log_g: None = None,
+        FeH: None = None,
+        Prot: None = None,
+        Fwhm: Optional[List[Union[str, float64]]] = None,
+        Contrast: Optional[List[Union[str, float64]]] = None,
+        CCF_delta: None = None,
+        Pmag: None = None,
+        stellar_template: None = None,
+    ) -> None:
         return sts.io.yarara_star_info(
             self,
             Rv_sys,
@@ -261,79 +267,90 @@ class spec_time_series(object):
             stellar_template,
         )
 
-    def yarara_master_ccf(self: spec_time_series, sub_dico="matching_diff", name_ext="", rvs=None):
+    def yarara_master_ccf(
+        self: spec_time_series,
+        sub_dico: str = "matching_diff",
+        name_ext: str = "",
+        rvs: Optional[ndarray] = None,
+    ) -> None:
         return sts.limbo.yarara_master_ccf(self, sub_dico, name_ext, rvs)
 
     def yarara_poissonian_noise(
-        self: spec_time_series, noise_wanted=1 / 100, wave_ref=None, flat_snr=True, seed=9
-    ):
+        self: spec_time_series,
+        noise_wanted: float = 1 / 100,
+        wave_ref: None = None,
+        flat_snr: bool = True,
+        seed: int = 9,
+    ) -> Tuple[ndarray, ndarray]:
         return sts.util.yarara_poissonian_noise(self, noise_wanted, wave_ref, flat_snr, seed)
 
     def yarara_obs_info(
         self: spec_time_series,
-        kw=[None, None],
-        jdb=None,
-        berv=None,
-        rv=None,
-        airmass=None,
-        texp=None,
-        seeing=None,
-        humidity=None,
-    ):
+        kw: DataFrame = [None, None],
+        jdb: None = None,
+        berv: None = None,
+        rv: None = None,
+        airmass: None = None,
+        texp: None = None,
+        seeing: None = None,
+        humidity: None = None,
+    ) -> None:
         return sts.io.yarara_obs_info(self, kw, jdb, berv, rv, airmass, texp, seeing, humidity)
 
-    def yarara_get_orders(self: spec_time_series):
+    def yarara_get_orders(self: spec_time_series) -> ndarray:
         return sts.extract.yarara_get_orders(self)
 
-    def yarara_get_pixels(self: spec_time_series):
+    def yarara_get_pixels(self: spec_time_series) -> ndarray:
         return sts.extract.yarara_get_pixels(self)
 
     def supress_time_spectra(
         self: spec_time_series,
-        liste=None,
-        jdb_min=None,
-        jdb_max=None,
-        num_min=None,
-        num_max=None,
-        supress=False,
-        name_ext="temp",
-    ):
+        liste: Optional[ndarray] = None,
+        jdb_min: None = None,
+        jdb_max: None = None,
+        num_min: None = None,
+        num_max: None = None,
+        supress: bool = False,
+        name_ext: str = "temp",
+    ) -> None:
         return sts.io.supress_time_spectra(
             self, liste, jdb_min, jdb_max, num_min, num_max, supress, name_ext
         )
 
-    def yarara_analyse_summary(self: spec_time_series, rm_old=False):
+    def yarara_analyse_summary(self: spec_time_series, rm_old: bool = False) -> None:
         return sts.io.yarara_analyse_summary(self, rm_old)
 
     def yarara_get_berv_value(
         self: spec_time_series,
-        time_value,
-        Draw=False,
-        new=True,
-        light_graphic=False,
-        save_fig=True,
-    ):
+        time_value: float,
+        Draw: bool = False,
+        new: bool = True,
+        light_graphic: bool = False,
+        save_fig: bool = True,
+    ) -> float64:
         return sts.extract.yarara_get_berv_value(
             self, time_value, Draw, new, light_graphic, save_fig
         )
 
-    def yarara_non_zero_flux(self: spec_time_series, spectrum=None, min_value=None):
+    def yarara_non_zero_flux(
+        self: spec_time_series, spectrum: Optional[ndarray] = None, min_value: None = None
+    ) -> ndarray:
         return sts.util.yarara_non_zero_flux(self, spectrum, min_value)
 
     def yarara_median_master_backup(
         self,
-        sub_dico="matching_diff",
-        method="mean",
-        continuum="linear",
-        supress_telluric=True,
-        shift_spectrum=False,
-        telluric_tresh=0.001,
-        wave_min=5750,
-        wave_max=5900,
-        jdb_range=[-100000, 100000, 1],
-        mask_percentile=[None, 50],
-        save=True,
-    ):
+        sub_dico: Optional[str] = "matching_diff",
+        method: str = "mean",
+        continuum: str = "linear",
+        supress_telluric: bool = True,
+        shift_spectrum: bool = False,
+        telluric_tresh: float = 0.001,
+        wave_min: int = 5750,
+        wave_max: int = 5900,
+        jdb_range: List[int] = [-100000, 100000, 1],
+        mask_percentile: List[Optional[int]] = [None, 50],
+        save: bool = True,
+    ) -> None:
         return sts.util.yarara_median_master_backup(
             self,
             sub_dico,
@@ -351,21 +368,21 @@ class spec_time_series(object):
 
     def yarara_median_master(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        method="max",
-        smooth_box=7,
-        supress_telluric=True,
-        shift_spectrum=False,
-        wave_min=5750,
-        wave_max=5900,
-        bin_berv=10,
-        bin_snr=None,
-        telluric_tresh=0.001,
-        jdb_range=[-100000, 100000, 1],
-        mask_percentile=[None, 50],
-        save=True,
-    ):
+        sub_dico: Optional[str] = "matching_diff",
+        continuum: str = "linear",
+        method: str = "max",
+        smooth_box: int = 7,
+        supress_telluric: bool = True,
+        shift_spectrum: bool = False,
+        wave_min: int = 5750,
+        wave_max: int = 5900,
+        bin_berv: int = 10,
+        bin_snr: Optional[int] = None,
+        telluric_tresh: float = 0.001,
+        jdb_range: List[int] = [-100000, 100000, 1],
+        mask_percentile: List[Optional[int]] = [None, 50],
+        save: bool = True,
+    ) -> None:
         return sts.util.yarara_median_master(
             self,
             sub_dico,
@@ -384,22 +401,24 @@ class spec_time_series(object):
             save,
         )
 
-    def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
+    def yarara_cut_spectrum(
+        self: spec_time_series, wave_min: None = None, wave_max: Optional[int] = None
+    ) -> None:
         return sts.util.yarara_cut_spectrum(self, wave_min, wave_max)
 
     def yarara_activity_index(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        plot=True,
-        debug=False,
-        calib_std=0,
-        optimize=False,
-        substract_map=[],
-        add_map=[],
-        p_noise=1 / np.inf,
-        save=True,
-    ):
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        plot: bool = True,
+        debug: bool = False,
+        calib_std: int = 0,
+        optimize: bool = False,
+        substract_map: List[Any] = [],
+        add_map: List[Any] = [],
+        p_noise: float = 1 / np.inf,
+        save: bool = True,
+    ) -> None:
         return sts.processing.yarara_activity_index(
             self,
             sub_dico,
@@ -416,20 +435,20 @@ class spec_time_series(object):
 
     def yarara_telluric(
         self: spec_time_series,
-        sub_dico="matching_anchors",
-        continuum="linear",
-        suppress_broad=True,
-        delta_window=5,
-        mask=None,
-        weighted=False,
-        reference=True,
-        display_ccf=False,
-        ratio=False,
-        normalisation="slope",
-        ccf_oversampling=3,
-        wave_max=None,
-        wave_min=None,
-    ):
+        sub_dico: str = "matching_anchors",
+        continuum: str = "linear",
+        suppress_broad: bool = True,
+        delta_window: int = 5,
+        mask: Optional[str] = None,
+        weighted: bool = False,
+        reference: str = True,
+        display_ccf: bool = False,
+        ratio: bool = False,
+        normalisation: str = "slope",
+        ccf_oversampling: int = 3,
+        wave_max: None = None,
+        wave_min: None = None,
+    ) -> None:
         return sts.telluric.yarara_telluric(
             self,
             sub_dico,
@@ -449,40 +468,40 @@ class spec_time_series(object):
 
     def yarara_ccf(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        mask=None,
-        mask_name=None,
-        ccf_name=None,
-        mask_col="weight_rv",
-        treshold_telluric=1,
-        ratio=False,
-        element=None,
-        reference=True,
-        weighted=True,
-        plot=False,
-        display_ccf=False,
-        save=True,
-        save_ccf_profile=False,
-        normalisation="left",
-        del_outside_max=False,
-        bis_analysis=False,
-        ccf_oversampling=1,
-        rv_range=None,
-        rv_borders=None,
-        delta_window=5,
-        debug=False,
-        rv_sys=None,
-        rv_shift=None,
-        speed_up=True,
-        force_brute=False,
-        wave_min=None,
-        wave_max=None,
-        squared=True,
-        p_noise=1 / np.inf,
-        substract_map=[],
-        add_map=[],
-    ):
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        mask: Optional[Union[ndarray, str]] = None,
+        mask_name: None = None,
+        ccf_name: None = None,
+        mask_col: str = "weight_rv",
+        treshold_telluric: int = 1,
+        ratio: bool = False,
+        element: None = None,
+        reference: Union[bool, str] = True,
+        weighted: bool = True,
+        plot: bool = False,
+        display_ccf: bool = False,
+        save: bool = True,
+        save_ccf_profile: bool = False,
+        normalisation: str = "left",
+        del_outside_max: bool = False,
+        bis_analysis: bool = False,
+        ccf_oversampling: int = 1,
+        rv_range: Optional[int] = None,
+        rv_borders: Optional[int] = None,
+        delta_window: int = 5,
+        debug: bool = False,
+        rv_sys: Optional[int] = None,
+        rv_shift: Optional[ndarray] = None,
+        speed_up: bool = True,
+        force_brute: bool = False,
+        wave_min: None = None,
+        wave_max: None = None,
+        squared: bool = True,
+        p_noise: float = 1 / np.inf,
+        substract_map: List[Any] = [],
+        add_map: List[Any] = [],
+    ) -> Dict[str, tableXY]:
         return sts.processing.yarara_ccf(
             self,
             sub_dico,
@@ -522,27 +541,27 @@ class spec_time_series(object):
 
     def yarara_map(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        planet=False,
-        modulo=None,
-        unit=1.0,
-        wave_min=4000,
-        wave_max=4300,
-        time_min=None,
-        time_max=None,
-        index="index",
-        ratio=False,
-        reference="median",
-        berv_shift=False,
-        rv_shift=False,
-        new=True,
-        Plot=True,
-        substract_map=[],
-        add_map=[],
-        correction_factor=True,
-        p_noise=1 / np.inf,
-    ):
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        planet: bool = False,
+        modulo: None = None,
+        unit: float = 1.0,
+        wave_min: None = 4000,
+        wave_max: None = 4300,
+        time_min: None = None,
+        time_max: None = None,
+        index: str = "index",
+        ratio: bool = False,
+        reference: bool = "median",
+        berv_shift: bool = False,
+        rv_shift: bool = False,
+        new: bool = True,
+        Plot: bool = True,
+        substract_map: List[Any] = [],
+        add_map: List[Any] = [],
+        correction_factor: bool = True,
+        p_noise: float = 1 / np.inf,
+    ) -> Tuple[ndarray, ndarray, ndarray]:
         return sts.processing.yarara_map(
             self,
             sub_dico,
@@ -569,16 +588,16 @@ class spec_time_series(object):
 
     def yarara_correct_pattern(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        wave_min=6000,
-        wave_max=6100,
-        reference="median",
-        width_range=[0.1, 20],
-        correct_blue=True,
-        correct_red=True,
-        jdb_range=None,
-    ):
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        wave_min: int = 6000,
+        wave_max: int = 6100,
+        reference: str = "median",
+        width_range: List[float] = [0.1, 20],
+        correct_blue: bool = True,
+        correct_red: bool = True,
+        jdb_range: Optional[List[int]] = None,
+    ) -> None:
         return sts.instrument.yarara_correct_pattern(
             self,
             sub_dico,
@@ -594,44 +613,44 @@ class spec_time_series(object):
 
     def yarara_correct_smooth(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        reference="median",
-        wave_min=4200,
-        wave_max=4300,
-        window_ang=5,
-    ):
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        reference: str = "median",
+        wave_min: int = 4200,
+        wave_max: int = 4300,
+        window_ang: int = 5,
+    ) -> None:
         return sts.outliers.yarara_correct_smooth(
             self, sub_dico, continuum, reference, wave_min, wave_max, window_ang
         )
 
     def yarara_retropropagation_correction(
         self: spec_time_series,
-        correction_map="matching_smooth",
-        sub_dico="matching_cosmics",
-        continuum="linear",
-    ):
+        correction_map: str = "matching_smooth",
+        sub_dico: str = "matching_cosmics",
+        continuum: str = "linear",
+    ) -> None:
         return sts.processing.yarara_retropropagation_correction(
             self, correction_map, sub_dico, continuum
         )
 
     def yarara_correct_telluric_proxy(
         self: spec_time_series,
-        sub_dico="matching_fourier",
-        sub_dico_output="telluric",
-        continuum="linear",
-        wave_min=5700,
-        wave_max=5900,
-        reference="master",
-        berv_shift="berv",
-        smooth_corr=1,
-        proxies_corr=["h2o_depth", "h2o_fwhm"],
-        proxies_detrending=None,
-        wave_min_correction=4400,
-        wave_max_correction=None,
-        min_r_corr=0.40,
-        sigma_ext=2,
-    ):
+        sub_dico: str = "matching_fourier",
+        sub_dico_output: str = "telluric",
+        continuum: str = "linear",
+        wave_min: int = 5700,
+        wave_max: int = 5900,
+        reference: str = "master",
+        berv_shift: str = "berv",
+        smooth_corr: int = 1,
+        proxies_corr: List[str] = ["h2o_depth", "h2o_fwhm"],
+        proxies_detrending: None = None,
+        wave_min_correction: int = 4400,
+        wave_max_correction: None = None,
+        min_r_corr: float = 0.40,
+        sigma_ext: int = 2,
+    ) -> None:
         return sts.telluric.yarara_correct_telluric_proxy(
             self,
             sub_dico,
@@ -652,38 +671,38 @@ class spec_time_series(object):
 
     def yarara_correct_oxygen(
         self: spec_time_series,
-        sub_dico="matching_telluric",
-        continuum="linear",
-        berv_shift="berv",
-        reference="master",
-        wave_min=5760,
-        wave_max=5850,
-        oxygene_bands=[[5787, 5835], [6275, 6340], [6800, 6950]],
-    ):
+        sub_dico: str = "matching_telluric",
+        continuum: str = "linear",
+        berv_shift: str = "berv",
+        reference: str = "master",
+        wave_min: int = 5760,
+        wave_max: int = 5850,
+        oxygene_bands: List[List[int]] = [[5787, 5835], [6275, 6340], [6800, 6950]],
+    ) -> None:
         return sts.telluric.yarara_correct_oxygen(
             self, sub_dico, continuum, berv_shift, reference, wave_min, wave_max, oxygene_bands
         )
 
     def yarara_correct_telluric_gradient(
         self: spec_time_series,
-        sub_dico_detection="matching_fourier",
-        sub_dico_correction="matching_oxygen",
-        continuum="linear",
-        wave_min_train=4200,
-        wave_max_train=5000,
-        wave_min_correction=4400,
-        wave_max_correction=6600,
-        smooth_map=1,
-        berv_shift="berv",
-        reference="master",
-        inst_resolution=110000,
-        debug=False,
-        equal_weight=True,
-        nb_pca_comp=20,
-        nb_pca_comp_kept=None,
-        nb_pca_max_kept=5,
-        calib_std=1e-3,
-    ):
+        sub_dico_detection: str = "matching_fourier",
+        sub_dico_correction: None = "matching_oxygen",
+        continuum: str = "linear",
+        wave_min_train: int = 4200,
+        wave_max_train: int = 5000,
+        wave_min_correction: int = 4400,
+        wave_max_correction: int = 6600,
+        smooth_map: int = 1,
+        berv_shift: str = "berv",
+        reference: str = "master",
+        inst_resolution: int = 110000,
+        debug: bool = False,
+        equal_weight: bool = True,
+        nb_pca_comp: int = 20,
+        nb_pca_comp_kept: None = None,
+        nb_pca_max_kept: int = 5,
+        calib_std: float = 1e-3,
+    ) -> None:
         return sts.telluric.yarara_correct_telluric_gradient(
             self,
             sub_dico_detection,
@@ -707,15 +726,15 @@ class spec_time_series(object):
 
     def yarara_correct_activity(
         self: spec_time_series,
-        sub_dico="matching_telluric",
-        continuum="linear",
-        wave_min=3900,
-        wave_max=4400,
-        smooth_corr=5,
-        reference="median",
-        rv_shift="none",
-        proxy_corr=["CaII"],
-    ):
+        sub_dico: str = "matching_telluric",
+        continuum: str = "linear",
+        wave_min: int = 3900,
+        wave_max: int = 4400,
+        smooth_corr: int = 5,
+        reference: str = "median",
+        rv_shift: str = "none",
+        proxy_corr: List[str] = ["CaII"],
+    ) -> None:
         return sts.activity.yarara_correct_activity(
             self,
             sub_dico,
@@ -730,56 +749,56 @@ class spec_time_series(object):
 
     def yarara_correct_cosmics(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        k_sigma=3,
-        bypass_warning=True,
-    ):
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        k_sigma: int = 3,
+        bypass_warning: bool = True,
+    ) -> None:
         return sts.outliers.yarara_correct_cosmics(
             self, sub_dico, continuum, k_sigma, bypass_warning
         )
 
     def yarara_correct_mad(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        k_sigma=2,
-        k_mad=2,
-        n_iter=1,
-        ext="0",
-    ):
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        k_sigma: int = 2,
+        k_mad: int = 2,
+        n_iter: int = 1,
+        ext: str = "0",
+    ) -> None:
         return sts.outliers.yarara_correct_mad(
             self, sub_dico, continuum, k_sigma, k_mad, n_iter, ext
         )
 
     def yarara_produce_mask_contam(
-        self: spec_time_series, frog_file=root + "/Python/Material/Contam_HARPN.p"
-    ):
+        self: spec_time_series, frog_file: str = root + "/Python/Material/Contam_HARPN.p"
+    ) -> None:
         return sts.instrument.yarara_produce_mask_contam(self, frog_file)
 
     def yarara_produce_mask_frog(
-        self: spec_time_series, frog_file=root + "/Python/Material/Ghost_HARPS03.p"
-    ):
+        self: spec_time_series, frog_file: str = root + "/Python/Material/Ghost_HARPS03.p"
+    ) -> None:
         return sts.instrument.yarara_produce_mask_frog(self, frog_file)
 
     def yarara_correct_frog(
         self: spec_time_series,
-        sub_dico="matching_diff",
-        continuum="linear",
-        correction="stitching",
-        berv_shift=False,
-        wave_min=3800,
-        wave_max=3975,
-        wave_min_train=3700,
-        wave_max_train=6000,
-        complete_analysis=False,
-        reference="median",
-        equal_weight=True,
-        nb_pca_comp=10,
-        pca_comp_kept=None,
-        rcorr_min=0,
-        treshold_contam=0.5,
-        algo_pca="empca",
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        correction: str = "stitching",
+        berv_shift: str = False,
+        wave_min: int = 3800,
+        wave_max: int = 3975,
+        wave_min_train: int = 3700,
+        wave_max_train: int = 6000,
+        complete_analysis: bool = False,
+        reference: str = "median",
+        equal_weight: bool = True,
+        nb_pca_comp: int = 10,
+        pca_comp_kept: Optional[int] = None,
+        rcorr_min: int = 0,
+        treshold_contam: Union[int, float] = 0.5,
+        algo_pca: str = "empca",
     ) -> None:
         return sts.instrument.yarara_correct_frog(
             self,
@@ -794,24 +813,27 @@ class spec_time_series(object):
         )
 
     def yarara_correct_borders_pxl(
-        self: spec_time_series, pixels_to_reject=[2, 4095], min_shift=-30, max_shift=30
-    ):
+        self: spec_time_series,
+        pixels_to_reject: ndarray = [2, 4095],
+        min_shift: int = -30,
+        max_shift: int = 30,
+    ) -> None:
         return sts.instrument.yarara_correct_borders_pxl(
             self, pixels_to_reject, min_shift, max_shift
         )
 
     def yarara_correct_brute(
         self: spec_time_series,
-        sub_dico="matching_mad",
-        continuum="linear",
-        reference="median",
-        win_roll=1000,
-        min_length=5,
-        percent_removed=10,
-        k_sigma=2,
-        extended=10,
-        ghost2="HARPS03",
-        borders_pxl=False,
+        sub_dico: str = "matching_mad",
+        continuum: str = "linear",
+        reference: str = "median",
+        win_roll: int = 1000,
+        min_length: int = 5,
+        percent_removed: int = 10,
+        k_sigma: int = 2,
+        extended: int = 10,
+        ghost2: bool = "HARPS03",
+        borders_pxl: bool = False,
     ) -> None:
         return sts.outliers.yarara_correct_brute(
             self,
@@ -827,5 +849,10 @@ class spec_time_series(object):
             borders_pxl,
         )
 
-    def uncorrect_hole(self: spec_time_series, conti, conti_ref, values_forbidden=[0, np.inf]):
+    def uncorrect_hole(
+        self: spec_time_series,
+        conti: ndarray,
+        conti_ref: ndarray,
+        values_forbidden: List[Union[int, float]] = [0, np.inf],
+    ) -> ndarray:
         return sts.processing.uncorrect_hole(self, conti, conti_ref, values_forbidden)

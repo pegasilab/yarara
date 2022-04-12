@@ -13,10 +13,11 @@ import pandas as pd
 from tqdm import tqdm
 
 from .. import io
-from .. import my_classes as myc
-from .. import my_functions as myf
+from ..analysis import tableXY
 from ..paths import root
-from ..util import yarara_artefact_suppressed
+from ..plots import my_colormesh
+from ..stats import clustering, find_nearest, flat_clustering, smooth
+from ..util import flux_norm_std, print_box, sphinx, yarara_artefact_suppressed
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -24,15 +25,15 @@ if TYPE_CHECKING:
 
 def yarara_correct_smooth(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    reference="median",
-    wave_min=4200,
-    wave_max=4300,
-    window_ang=5,
-):
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    reference: str = "median",
+    wave_min: int = 4200,
+    wave_max: int = 4300,
+    window_ang: int = 5,
+) -> None:
 
-    myf.print_box("\n---- RECIPE : CORRECTION SMOOTH ----\n")
+    print_box("\n---- RECIPE : CORRECTION SMOOTH ----\n")
 
     directory = self.directory
 
@@ -84,7 +85,7 @@ def yarara_correct_smooth(
         f_std = file["flux_err"]
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
         flux.append(f_norm)
         # flux_err.append(f_norm_std)
         conti.append(c)
@@ -118,14 +119,14 @@ def yarara_correct_smooth(
     box_pts = int(window_ang / dgrid)
 
     for k in tqdm(range(len(all_flux))):
-        spec_smooth = myf.smooth(
-            myf.smooth(flux_ratio[k], box_pts=box_pts, shape=50),
+        spec_smooth = smooth(
+            smooth(flux_ratio[k], box_pts=box_pts, shape=50),
             box_pts=box_pts,
             shape="savgol",
         )
         if hl is not None:
-            i1 = int(myf.find_nearest(wave, hl)[0])
-            i2 = int(myf.find_nearest(wave, hr)[0])
+            i1 = int(find_nearest(wave, hl)[0])
+            i2 = int(find_nearest(wave, hr)[0])
             spec_smooth[i1 - box_pts : i2 + box_pts] = 0
 
         flux_ratio[k] -= spec_smooth
@@ -153,19 +154,19 @@ def yarara_correct_smooth(
     idx_max = len(wave)
 
     if wave_min is not None:
-        idx_min = myf.find_nearest(wave, wave_min)[0]
+        idx_min = find_nearest(wave, wave_min)[0]
     if wave_max is not None:
-        idx_max = myf.find_nearest(wave, wave_max)[0] + 1
+        idx_max = find_nearest(wave, wave_max)[0] + 1
 
     if (idx_min == 0) & (idx_max == 1):
-        idx_max = myf.find_nearest(wave, np.min(wave) + 200)[0] + 1
+        idx_max = find_nearest(wave, np.min(wave) + 200)[0] + 1
 
     new_wave = wave[int(idx_min) : int(idx_max)]
 
     fig = plt.figure(figsize=(21, 9))
 
     plt.axes([0.05, 0.66, 0.90, 0.25])
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
         100 * diff_ref[:, int(idx_min) : int(idx_max)],
@@ -182,7 +183,7 @@ def yarara_correct_smooth(
     ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
     plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
         100 * diff_ref2[:, int(idx_min) : int(idx_max)],
@@ -199,7 +200,7 @@ def yarara_correct_smooth(
     ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
     plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
         100
@@ -275,11 +276,11 @@ def yarara_correct_smooth(
 # =============================================================================
 def yarara_correct_cosmics(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    k_sigma=3,
-    bypass_warning=True,
-):
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    k_sigma: int = 3,
+    bypass_warning: bool = True,
+) -> None:
 
     """
     Supress flux value outside k-sigma mad clipping
@@ -291,7 +292,7 @@ def yarara_correct_cosmics(
 
     """
 
-    myf.print_box("\n---- RECIPE : CORRECTION COSMICS ----\n")
+    print_box("\n---- RECIPE : CORRECTION COSMICS ----\n")
 
     directory = self.directory
     planet = self.planet
@@ -305,7 +306,7 @@ def yarara_correct_cosmics(
             logging.warn(
                 "Launch that recipes will remove the smooth correction of the previous loop iteration."
             )
-            answer = myf.sphinx("Do you want to purchase (y/n) ?", rep=["y", "n"])
+            answer = sphinx("Do you want to purchase (y/n) ?", rep=["y", "n"])
             if answer == "n":
                 reduction_accepted = False
 
@@ -421,13 +422,13 @@ def yarara_correct_cosmics(
 
 def yarara_correct_mad(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    k_sigma=2,
-    k_mad=2,
-    n_iter=1,
-    ext="0",
-):
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    k_sigma: int = 2,
+    k_mad: int = 2,
+    n_iter: int = 1,
+    ext: str = "0",
+) -> None:
 
     """
     Supress flux value outside k-sigma mad clipping
@@ -439,7 +440,7 @@ def yarara_correct_mad(
 
     """
 
-    myf.print_box("\n---- RECIPE : CORRECTION MAD ----\n")
+    print_box("\n---- RECIPE : CORRECTION MAD ----\n")
 
     directory = self.directory
     planet = self.planet
@@ -469,7 +470,7 @@ def yarara_correct_mad(
         f_std = file["flux_err"]
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
         all_flux.append(f_norm)
         all_flux_std.append(f_norm_std)
         all_snr.append(file["parameters"]["SNR_5500"])
@@ -513,7 +514,7 @@ def yarara_correct_mad(
         counter_removed = []
         cum_curve = []
         for j in tqdm(range(len(all_flux2))):
-            sigma = myc.tableXY(grid, (abs(all_flux2[j] - med) - all_flux_std[j] * k_sigma) / mad)
+            sigma = tableXY(grid, (abs(all_flux2[j] - med) - all_flux_std[j] * k_sigma) / mad)
             sigma.smooth(box_pts=6, shape="rectangular")
             # sigma.rolling(window=100,quantile=0.50)
             # sig = (sigma.y>(sigma.roll_Q1+3*sigma.roll_IQ))
@@ -577,7 +578,7 @@ def yarara_correct_mad(
             plt.axhline(y=0, color="r")
 
             plt.show(block=False)
-            ok = myf.sphinx(
+            ok = sphinx(
                 " Do you want to iterate one more time (y), quit (n) or save (s) ? (y/n/s)",
                 rep=["y", "n", "s"],
             )
@@ -709,16 +710,16 @@ def yarara_correct_mad(
 
 def yarara_correct_brute(
     self: spec_time_series,
-    sub_dico="matching_mad",
-    continuum="linear",
-    reference="median",
-    win_roll=1000,
-    min_length=5,
-    percent_removed=10,
-    k_sigma=2,
-    extended=10,
-    ghost2="HARPS03",
-    borders_pxl=False,
+    sub_dico: str = "matching_mad",
+    continuum: str = "linear",
+    reference: str = "median",
+    win_roll: int = 1000,
+    min_length: int = 5,
+    percent_removed: int = 10,
+    k_sigma: int = 2,
+    extended: int = 10,
+    ghost2: bool = "HARPS03",
+    borders_pxl: bool = False,
 ) -> None:
 
     """
@@ -738,7 +739,7 @@ def yarara_correct_brute(
     cmap : cmap of the 2D plot
     """
 
-    myf.print_box("\n---- RECIPE : CORRECTION BRUTE ----\n")
+    print_box("\n---- RECIPE : CORRECTION BRUTE ----\n")
 
     directory = self.directory
 
@@ -807,9 +808,9 @@ def yarara_correct_brute(
     )
     mask = (metric - smoothed_med) > smoothed_mad * 1.48 * k_sigma
 
-    clus = myf.clustering(mask, 0.5, 1)[0]
+    clus = clustering(mask, 0.5, 1)[0]
     clus = np.array([np.product(j) for j in clus])
-    cluster = myf.clustering(mask, 0.5, 1)[-1]
+    cluster = clustering(mask, 0.5, 1)[-1]
     cluster = np.hstack([cluster, clus[:, np.newaxis]])
     cluster = cluster[cluster[:, 3] == 1]
     cluster = cluster[cluster[:, 2] >= min_length]
@@ -820,14 +821,14 @@ def yarara_correct_brute(
     for j in tqdm(range(200)):
         cluster2[:, 0] -= extended
         cluster2[:, 1] += extended
-        flat_vec = myf.flat_clustering(len(grid), cluster2[:, 0:2])
+        flat_vec = flat_clustering(len(grid), cluster2[:, 0:2])
         flat_vec = flat_vec >= 1
         all_flat.append(flat_vec)
         sum_mask.append(np.sum(flat_vec))
     sum_mask = 100 * np.array(sum_mask) / len(grid)
     all_flat = np.array(all_flat)
 
-    loc = myf.find_nearest(sum_mask, np.arange(5, 26, 5))[0]
+    loc = find_nearest(sum_mask, np.arange(5, 26, 5))[0]
 
     plt.figure(figsize=(16, 16))
 
@@ -843,7 +844,7 @@ def yarara_correct_brute(
     plt.legend()
 
     plt.subplot(3, 2, 5)
-    b = myc.tableXY(np.arange(len(sum_mask)) * 5, sum_mask)
+    b = tableXY(np.arange(len(sum_mask)) * 5, sum_mask)
     b.null()
     b.plot()
     plt.xlabel("Extension of rejection zones", fontsize=14)
@@ -860,11 +861,11 @@ def yarara_correct_brute(
         plt.axhline(y=b.deri.y[j], color="k", ls=":")
 
     if percent_removed is None:
-        percent_removed = myf.sphinx("Select the percentage of spectrum removed")
+        percent_removed = sphinx("Select the percentage of spectrum removed")
 
     percent_removed = int(percent_removed)
 
-    loc_select = myf.find_nearest(sum_mask, percent_removed)[0]
+    loc_select = find_nearest(sum_mask, percent_removed)[0]
 
     final_mask = np.ravel(all_flat[loc_select]).astype("bool")
 
@@ -875,7 +876,7 @@ def yarara_correct_brute(
 
     if ghost2:
         g = pd.read_pickle(root + "/Python/Material/Ghost2_" + ghost2 + ".p")
-        ghost = myc.tableXY(g["wave"], g["ghost2"], 0 * g["wave"])
+        ghost = tableXY(g["wave"], g["ghost2"], 0 * g["wave"])
         ghost.interpolate(new_grid=grid, replace=True, method="linear", interpolate_x=False)
         ghost_brute_mask = ghost.y.astype("bool")
     else:

@@ -3,12 +3,13 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from colorama import Fore
+from numpy import ndarray
 from tqdm import tqdm
 
 from .. import io
@@ -27,7 +28,9 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-def yarara_non_zero_flux(self: spec_time_series, spectrum=None, min_value=None):
+def yarara_non_zero_flux(
+    self: spec_time_series, spectrum: Optional[ndarray] = None, min_value: None = None
+) -> ndarray:
     file_test = self.import_spectrum()
     hole_left = file_test["parameters"]["hole_left"]
     hole_right = file_test["parameters"]["hole_right"]
@@ -63,19 +66,19 @@ def yarara_non_zero_flux(self: spec_time_series, spectrum=None, min_value=None):
 
 
 def yarara_median_master_backup(
-    self,
-    sub_dico="matching_diff",
-    method="mean",
-    continuum="linear",
-    supress_telluric=True,
-    shift_spectrum=False,
-    telluric_tresh=0.001,
-    wave_min=5750,
-    wave_max=5900,
-    jdb_range=[-100000, 100000, 1],
-    mask_percentile=[None, 50],
-    save=True,
-):
+    self: spec_time_series,
+    sub_dico: Optional[str] = "matching_diff",
+    method: str = "mean",
+    continuum: str = "linear",
+    supress_telluric: bool = True,
+    shift_spectrum: bool = False,
+    telluric_tresh: float = 0.001,
+    wave_min: int = 5750,
+    wave_max: int = 5900,
+    jdb_range: List[int] = [-100000, 100000, 1],
+    mask_percentile: List[Optional[int]] = [None, 50],
+    save: bool = True,
+) -> None:
     """
     Produce a median master by masking region of the spectrum
 
@@ -421,21 +424,21 @@ def yarara_median_master_backup(
 
 def yarara_median_master(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    method="max",
-    smooth_box=7,
-    supress_telluric=True,
-    shift_spectrum=False,
-    wave_min=5750,
-    wave_max=5900,
-    bin_berv=10,
-    bin_snr=None,
-    telluric_tresh=0.001,
-    jdb_range=[-100000, 100000, 1],
-    mask_percentile=[None, 50],
-    save=True,
-):
+    sub_dico: Optional[str] = "matching_diff",
+    continuum: str = "linear",
+    method: str = "max",
+    smooth_box: int = 7,
+    supress_telluric: bool = True,
+    shift_spectrum: bool = False,
+    wave_min: int = 5750,
+    wave_max: int = 5900,
+    bin_berv: int = 10,
+    bin_snr: Optional[int] = None,
+    telluric_tresh: float = 0.001,
+    jdb_range: List[int] = [-100000, 100000, 1],
+    mask_percentile: List[Optional[int]] = [None, 50],
+    save: bool = True,
+) -> None:
     """
     Produce a median master by masking region of the spectrum
 
@@ -638,7 +641,9 @@ def yarara_median_master(
 # =============================================================================
 
 
-def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
+def yarara_cut_spectrum(
+    self: spec_time_series, wave_min: None = None, wave_max: Optional[int] = None
+) -> None:
     """Cut the spectrum time-series borders to reach the specified wavelength limits (included)
     There is no way to cancel this step ! Use it wisely."""
 
@@ -782,8 +787,12 @@ def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
 
 
 def yarara_poissonian_noise(
-    self: spec_time_series, noise_wanted=1 / 100, wave_ref=None, flat_snr=True, seed=9
-):
+    self: spec_time_series,
+    noise_wanted: float = 1 / 100,
+    wave_ref: None = None,
+    flat_snr: bool = True,
+    seed: int = 9,
+) -> Tuple[ndarray, ndarray]:
     self.import_table()
     self.import_material()
 

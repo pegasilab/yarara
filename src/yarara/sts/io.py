@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import glob as glob
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+from numpy import float64, int64, ndarray
+from pandas.core.frame import DataFrame
 
 from .. import io
 
@@ -18,7 +20,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-def import_rassine_output(self: spec_time_series, return_name=False, kw1=None, kw2=None):
+def import_rassine_output(self: spec_time_series, return_name: bool=False, kw1: None=None, kw2: None=None) -> Any:
     """
     Import all the RASSINE dictionnaries in a list
 
@@ -83,8 +85,7 @@ def import_material(self: spec_time_series) -> None:
 # IMPORT THE FULL DICO CHAIN
 # =============================================================================
 
-# io
-def import_dico_tree(self: spec_time_series):
+def import_dico_tree(self: spec_time_series) -> None:
     file_test = self.import_spectrum()
     kw = list(file_test.keys())
     kw_kept = []
@@ -112,7 +113,7 @@ def import_dico_tree(self: spec_time_series):
 # =============================================================================
 
 
-def import_spectrum(self: spec_time_series, num=None):
+def import_spectrum(self: spec_time_series, num: Optional[int64]=None) -> Dict[str, Any]:
     """
     Import a pickle file of a spectrum to get fast common information shared by all spectra
 
@@ -149,28 +150,28 @@ def import_spectrum(self: spec_time_series, num=None):
 
 def yarara_star_info(
     self: spec_time_series,
-    Rv_sys=None,
-    simbad_name=None,
-    magB=None,
-    magV=None,
-    magR=None,
-    BV=None,
-    VR=None,
-    sp_type=None,
-    Mstar=None,
-    Rstar=None,
-    Vsini=None,
-    Vmicro=None,
-    Teff=None,
-    log_g=None,
-    FeH=None,
-    Prot=None,
-    Fwhm=None,
-    Contrast=None,
-    CCF_delta=None,
-    Pmag=None,
-    stellar_template=None,
-):
+    Rv_sys: None=None,
+    simbad_name: None=None,
+    magB: None=None,
+    magV: None=None,
+    magR: None=None,
+    BV: None=None,
+    VR: None=None,
+    sp_type: None=None,
+    Mstar: None=None,
+    Rstar: None=None,
+    Vsini: None=None,
+    Vmicro: None=None,
+    Teff: None=None,
+    log_g: None=None,
+    FeH: None=None,
+    Prot: None=None,
+    Fwhm: Optional[List[Union[str, float64]]]=None,
+    Contrast: Optional[List[Union[str, float64]]]=None,
+    CCF_delta: None=None,
+    Pmag: None=None,
+    stellar_template: None=None,
+) -> None:
 
     kw = [
         "Rv_sys",
@@ -251,7 +252,7 @@ def yarara_star_info(
 # =============================================================================
 
 # io
-def yarara_analyse_summary(self: spec_time_series, rm_old=False):
+def yarara_analyse_summary(self: spec_time_series, rm_old: bool=False) -> None:
     """
     Produce a summary table with the RASSINE files of the specified directory
 
@@ -654,15 +655,15 @@ def yarara_analyse_summary(self: spec_time_series, rm_old=False):
 
 def yarara_obs_info(
     self: spec_time_series,
-    kw=[None, None],
-    jdb=None,
-    berv=None,
-    rv=None,
-    airmass=None,
-    texp=None,
-    seeing=None,
-    humidity=None,
-):
+    kw: DataFrame=[None, None],
+    jdb: None=None,
+    berv: None=None,
+    rv: None=None,
+    airmass: None=None,
+    texp: None=None,
+    seeing: None=None,
+    humidity: None=None,
+) -> None:
     """
     Add some observationnal information in the RASSINE files and produce a summary table
 
@@ -727,14 +728,14 @@ def yarara_obs_info(
 
 def supress_time_spectra(
     self: spec_time_series,
-    liste=None,
-    jdb_min=None,
-    jdb_max=None,
-    num_min=None,
-    num_max=None,
-    supress=False,
-    name_ext="temp",
-):
+    liste: Optional[ndarray]=None,
+    jdb_min: None=None,
+    jdb_max: None=None,
+    num_min: None=None,
+    num_max: None=None,
+    supress: bool=False,
+    name_ext: str="temp",
+) -> None:
     """
     Supress spectra according to time
 

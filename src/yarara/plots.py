@@ -3,10 +3,12 @@ This modules does XXX
 """
 
 import platform
+from typing import Optional
 
 import matplotlib
 import matplotlib.pylab as plt
 import numpy as np
+from numpy import ndarray
 from scipy import ndimage
 
 from .stats import IQ, smooth2d
@@ -24,7 +26,14 @@ def init_matplotlib() -> None:
         matplotlib.use("Qt5Agg", force=True)
 
 
-def plot_color_box(color="r", font="bold", lw=2, ax=None, side="all", ls="-"):
+def plot_color_box(
+    color: str = "r",
+    font: str = "bold",
+    lw: int = 2,
+    ax: None = None,
+    side: str = "all",
+    ls: str = "-",
+) -> None:
     if ls == "-":
         ls = "solid"
 
@@ -52,18 +61,18 @@ def plot_color_box(color="r", font="bold", lw=2, ax=None, side="all", ls="-"):
 
 
 def my_colormesh(
-    x,
-    y,
-    z,
-    cmap="seismic",
-    vmin=None,
-    vmax=None,
-    zoom=1,
-    shading="auto",
-    return_output=False,
-    order=3,
-    smooth_box=1,
-):
+    x: ndarray,
+    y: ndarray,
+    z: ndarray,
+    cmap: str = "seismic",
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    zoom: int = 1,
+    shading: str = "auto",
+    return_output: bool = False,
+    order: int = 3,
+    smooth_box: int = 1,
+) -> None:
 
     dx = x[-1] - x[-2]
     dy = y[-1] - y[-2]
@@ -90,7 +99,7 @@ def my_colormesh(
         plt.pcolormesh(X, Y, Z, shading=shading, cmap=cmap, vmin=vmin, vmax=vmax)
 
 
-def auto_axis(vec, axis="y", m=3):
+def auto_axis(vec: ndarray, axis: str = "y", m: int = 3) -> None:
     iq = IQ(vec)
     q1 = np.nanpercentile(vec, 25)
     q3 = np.nanpercentile(vec, 75)

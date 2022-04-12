@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import glob as glob
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -18,7 +18,7 @@ from ..util import doppler_r, print_box
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
 
-
+ 
 # =============================================================================
 #  ACTIVITY CORRECTION
 # =============================================================================
@@ -26,14 +26,14 @@ if TYPE_CHECKING:
 # activity
 def yarara_correct_activity(
     self: spec_time_series,
-    sub_dico="matching_telluric",
-    continuum="linear",
-    wave_min=3900,
-    wave_max=4400,
-    smooth_corr=5,
-    reference="median",
-    rv_shift="none",
-    proxy_corr=["CaII"],
+    sub_dico: str = "matching_telluric",
+    continuum: str = "linear",
+    wave_min: int = 3900,
+    wave_max: int = 4400,
+    smooth_corr: int = 5,
+    reference: str = "median",
+    rv_shift: str = "none",
+    proxy_corr: List[str] = ["CaII"],
 ) -> None:
     """
     Display the time-series spectra with proxies and its correlation

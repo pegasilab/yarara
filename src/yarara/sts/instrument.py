@@ -2,18 +2,28 @@ from __future__ import annotations
 
 import glob as glob
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from colorama import Fore
+from numpy import ndarray
 from tqdm import tqdm
 
 from .. import io
-from .. import my_classes as myc
-from .. import my_functions as myf
+from ..analysis import table, tableXY
 from ..paths import root
+from ..plots import my_colormesh, plot_color_box
+from ..stats import (
+    clustering,
+    find_nearest,
+    flat_clustering,
+    match_nearest,
+    merge_borders,
+    smooth2d,
+)
+from ..util import doppler_r, flux_norm_std, print_box, sphinx
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -26,15 +36,15 @@ if TYPE_CHECKING:
 
 def yarara_correct_pattern(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    wave_min=6000,
-    wave_max=6100,
-    reference="median",
-    width_range=[0.1, 20],
-    correct_blue=True,
-    correct_red=True,
-    jdb_range=None,
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    wave_min: int = 6000,
+    wave_max: int = 6100,
+    reference: str = "median",
+    width_range: List[float] = [0.1, 20],
+    correct_blue: bool = True,
+    correct_red: bool = True,
+    jdb_range: Optional[List[int]] = None,
 ) -> None:
 
     """
@@ -67,7 +77,7 @@ def yarara_correct_pattern(
     self.import_table()
     load = self.material
 
-    myf.print_box("\n---- RECIPE : CORRECTION FRINGING ----\n")
+    print_box("\n---- RECIPE : CORRECTION FRINGING ----\n")
 
     kw = "_planet" * planet
     if kw != "":
@@ -116,8 +126,8 @@ def yarara_correct_pattern(
     snr = np.array(snr)
     jdb = np.array(jdb)
 
-    idx_min = int(myf.find_nearest(wave, wave_min)[0])
-    idx_max = int(myf.find_nearest(wave, wave_max)[0])
+    idx_min = int(find_nearest(wave, wave_min)[0])
+    idx_max = int(find_nearest(wave, wave_max)[0])
 
     mask = np.zeros(len(snr)).astype("bool")
     if jdb_range is not None:
@@ -152,11 +162,11 @@ def yarara_correct_pattern(
     print("[INFO] Pattern analysis for range mm : ", width_range)
     # low = np.percentile(flux-ref,2.5)
     # high = np.percentile(flux-ref,97.5)
-    old_diff = myf.smooth2d(flux - ref, smooth_map)
+    old_diff = smooth2d(flux - ref, smooth_map)
     low = np.percentile(flux / (ref + epsilon), 2.5)
     high = np.percentile(flux / (ref + epsilon), 97.5)
 
-    diff = myf.smooth2d(flux / (ref + epsilon), smooth_map) - 1  # changed for a ratio 21-01-20
+    diff = smooth2d(flux / (ref + epsilon), smooth_map) - 1  # changed for a ratio 21-01-20
     diff[diff == -1] = 0
     diff_backup = diff.copy()
 
@@ -165,7 +175,7 @@ def yarara_correct_pattern(
 
         plt.axes([0.06, 0.28, 0.7, 0.65])
 
-        myf.my_colormesh(
+        my_colormesh(
             wave[idx_min:idx_max],
             np.arange(len(diff)),
             diff[:, idx_min:idx_max],
@@ -197,8 +207,8 @@ def yarara_correct_pattern(
         plt.tick_params(direction="in", top=True, right=True)
 
         plt.show(block=False)
-        index_sphinx = int(myf.sphinx("Which index present a clear pattern ?"))
-        index_sphinx2 = int(myf.sphinx("Which index present no pattern ?"))
+        index_sphinx = int(sphinx("Which index present a clear pattern ?"))
+        index_sphinx2 = int(sphinx("Which index present no pattern ?"))
         plt.close()
     else:
         snr = np.array(self.table.snr)
@@ -225,7 +235,7 @@ def yarara_correct_pattern(
     if index_sphinx >= 0:
 
         for j in tqdm(range(len(diff))):
-            diff_pattern = myc.tableXY(wave, diff[j].copy(), 0 * wave)
+            diff_pattern = tableXY(wave, diff[j].copy(), 0 * wave)
             diff_pattern.rolling(
                 window=10000, median=False
             )  # HARDCODE PARAMETER rolling filter to remove telluric power in the fourrier space
@@ -236,12 +246,12 @@ def yarara_correct_pattern(
             )
             diff[j] = diff_pattern.y
 
-        diff_pattern = myc.tableXY(2 / wave[::-1], diff[index_sphinx][::-1])
+        diff_pattern = tableXY(2 / wave[::-1], diff[index_sphinx][::-1])
 
         if np.float(index_sphinx2) >= 0:
-            diff_flat = myc.tableXY(2 / wave[::-1], diff[index_sphinx2][::-1], 0 * wave)
+            diff_flat = tableXY(2 / wave[::-1], diff[index_sphinx2][::-1], 0 * wave)
         else:
-            diff_flat = myc.tableXY(2 / wave[::-1], np.median(diff, axis=0)[::-1], 0 * wave)
+            diff_flat = tableXY(2 / wave[::-1], np.median(diff, axis=0)[::-1], 0 * wave)
 
         new_grid = np.linspace(diff_pattern.x.min(), diff_pattern.x.max(), len(diff_pattern.x))
         diff_pattern.interpolate(new_grid=new_grid, interpolate_x=False)
@@ -290,7 +300,7 @@ def yarara_correct_pattern(
 
         for j in range(len(diff)):
 
-            diff_pattern = myc.tableXY(2 / wave[::-1], diff[j][::-1], 0 * wave)
+            diff_pattern = tableXY(2 / wave[::-1], diff[j][::-1], 0 * wave)
             diff_pattern.interpolate(new_grid=new_grid, interpolate_x=False)
             diff_pattern_backup = diff_pattern.y.copy()
             # diff_pattern.rolling(window=1000)  #HARDCODE PARAMETER rolling filter to remove telluric power in the fourrier space
@@ -304,7 +314,7 @@ def yarara_correct_pattern(
                 dstep_clust = abs(np.mean(np.diff(diff[j])))
                 if dstep_clust == 0:
                     dstep_clust = np.mean(abs(np.mean(np.diff(diff, axis=1), axis=1)))
-                mask = myf.clustering(np.cumsum(diff[j]), dstep_clust, 0)[-1]
+                mask = clustering(np.cumsum(diff[j]), dstep_clust, 0)[-1]
                 highest = mask[mask[:, 2].argmax()]
 
                 left = (
@@ -328,8 +338,8 @@ def yarara_correct_pattern(
                         emergency = 0
 
             if (highest[2] > 1000) & (emergency):  # because gap between ccd is large
-                left = myf.find_nearest(diff_pattern.x, left)[0]
-                right = myf.find_nearest(diff_pattern.x, right)[0]
+                left = find_nearest(diff_pattern.x, left)[0]
+                right = find_nearest(diff_pattern.x, right)[0]
 
                 left, right = (
                     right[0],
@@ -366,9 +376,9 @@ def yarara_correct_pattern(
                     0 : int(len(diff_fourrier_right) / 2) + 1
                 ]
 
-                maxima_left = myc.tableXY(
+                maxima_left = tableXY(
                     width_left[(width_left > width_range[0]) & (width_left < width_range[1])],
-                    myf.smooth(
+                    smooth(
                         diff_fourrier_pos_left[
                             (width_left > width_range[0]) & (width_left < width_range[1])
                         ],
@@ -377,9 +387,9 @@ def yarara_correct_pattern(
                 )
                 maxima_left.find_max(vicinity=int(hard_window / 2))
 
-                maxima_right = myc.tableXY(
+                maxima_right = tableXY(
                     width_right[(width_right > width_range[0]) & (width_right < width_range[1])],
-                    myf.smooth(
+                    smooth(
                         diff_fourrier_pos_right[
                             (width_right > width_range[0]) & (width_right < width_range[1])
                         ],
@@ -403,7 +413,7 @@ def yarara_correct_pattern(
                 five_maxima_right = five_maxima_right[five_maxima_right_y > thresh_right]
 
                 if len(five_maxima_left) > 0:
-                    where, freq_maximum_left, dust = myf.find_nearest(
+                    where, freq_maximum_left, dust = find_nearest(
                         five_maxima_left, freq_maximum_ref
                     )
                     maximum_left = maxima_left.index_max[np.argsort(maxima_left.y_max)[::-1]][0:10]
@@ -411,7 +421,7 @@ def yarara_correct_pattern(
                 else:
                     freq_maximum_left = 0
                 if len(five_maxima_right) > 0:
-                    where, freq_maximum_right, dust = myf.find_nearest(
+                    where, freq_maximum_right, dust = find_nearest(
                         five_maxima_right, freq_maximum_ref
                     )
                     maximum_right = maxima_right.index_max[np.argsort(maxima_right.y_max)[::-1]][
@@ -439,7 +449,7 @@ def yarara_correct_pattern(
                     index_corrected_pattern_red.append(timer_red)
 
                     # left
-                    smooth = myc.tableXY(
+                    smooth = tableXY(
                         np.arange(len(diff_fourrier_pos_left)),
                         np.ravel(
                             pd.DataFrame(diff_fourrier_pos_left)
@@ -448,13 +458,13 @@ def yarara_correct_pattern(
                         ),
                     )
                     smooth.find_max(vicinity=int(hard_window / 2))
-                    maxi = myf.find_nearest(smooth.x_max, maximum_left + offset_left)[1]
+                    maxi = find_nearest(smooth.x_max, maximum_left + offset_left)[1]
 
                     smooth.diff(replace=False)
                     smooth.deri.rm_outliers(m=5, kind="sigma")
 
                     loc_slope = np.arange(len(smooth.deri.mask))[~smooth.deri.mask]
-                    cluster = myf.clustering(loc_slope, hard_window / 2, 0)[
+                    cluster = clustering(loc_slope, hard_window / 2, 0)[
                         0
                     ]  # half size of the rolling window
                     dist = np.ravel([np.mean(k) - maxi for k in cluster])
@@ -477,7 +487,7 @@ def yarara_correct_pattern(
                     timer_blue += 1
                     index_corrected_pattern_blue.append(timer_blue)
 
-                    smooth = myc.tableXY(
+                    smooth = tableXY(
                         np.arange(len(diff_fourrier_pos_right)),
                         np.ravel(
                             pd.DataFrame(diff_fourrier_pos_right)
@@ -486,14 +496,14 @@ def yarara_correct_pattern(
                         ),
                     )
                     smooth.find_max(vicinity=int(hard_window / 2))
-                    maxi = myf.find_nearest(smooth.x_max, maximum_right + offset_right)[1]
+                    maxi = find_nearest(smooth.x_max, maximum_right + offset_right)[1]
                     smooth.diff(replace=False)
                     smooth.deri.rm_outliers(
                         m=5, kind="sigma"
                     )  # find peak in fourier space and width from derivative
 
                     loc_slope = np.arange(len(smooth.deri.mask))[~smooth.deri.mask]
-                    cluster = myf.clustering(loc_slope, hard_window / 2, 0)[
+                    cluster = clustering(loc_slope, hard_window / 2, 0)[
                         0
                     ]  # half size of the rolling window
                     dist = np.ravel([np.mean(k) - maxi for k in cluster])
@@ -508,7 +518,7 @@ def yarara_correct_pattern(
 
                     # final
 
-                correction = myc.tableXY(
+                correction = tableXY(
                     diff_pattern.x,
                     diff_pattern_backup - diff_pattern.y,
                     0 * diff_pattern.x,
@@ -531,7 +541,7 @@ def yarara_correct_pattern(
                     / dl
                 )  # transformation of the frequency in mm of the material
 
-                maxima = myc.tableXY(
+                maxima = tableXY(
                     width[(width > width_range[0]) & (width < width_range[1])],
                     diff_fourrier_pos[(width > width_range[0]) & (width < width_range[1])],
                 )
@@ -552,7 +562,7 @@ def yarara_correct_pattern(
                     timer_blue += 1
                     index_corrected_pattern_red.append(timer_red)
 
-                    smooth = myc.tableXY(
+                    smooth = tableXY(
                         np.arange(len(diff_fourrier_pos)),
                         np.ravel(
                             pd.DataFrame(diff_fourrier_pos)
@@ -561,15 +571,13 @@ def yarara_correct_pattern(
                         ),
                     )
                     smooth.find_max(vicinity=30)
-                    maxi = myf.find_nearest(smooth.x_max, maximum + offset)[1]
+                    maxi = find_nearest(smooth.x_max, maximum + offset)[1]
 
                     smooth.diff(replace=False)
                     smooth.deri.rm_outliers(m=5, kind="sigma")
 
                     loc_slope = np.arange(len(smooth.deri.mask))[~smooth.deri.mask]
-                    cluster = myf.clustering(loc_slope, 50, 0)[
-                        0
-                    ]  # half size of the rolling window
+                    cluster = clustering(loc_slope, 50, 0)[0]  # half size of the rolling window
                     dist = np.ravel([np.mean(k) - maxi for k in cluster])
 
                     closest = np.sort(np.abs(dist).argsort()[0:2])
@@ -611,7 +619,7 @@ def yarara_correct_pattern(
 
         fig = plt.figure(figsize=(21, 9))
         plt.axes([0.05, 0.66, 0.90, 0.25])
-        myf.my_colormesh(
+        my_colormesh(
             wave[idx_min:idx_max],
             np.arange(len(diff)),
             100 * old_diff[:, idx_min:idx_max],
@@ -628,7 +636,7 @@ def yarara_correct_pattern(
         ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
         plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-        myf.my_colormesh(
+        my_colormesh(
             wave[idx_min:idx_max],
             np.arange(len(new_diff)),
             100 * diff2_backup[:, idx_min:idx_max],
@@ -645,7 +653,7 @@ def yarara_correct_pattern(
         ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
         plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-        myf.my_colormesh(
+        my_colormesh(
             wave[idx_min:idx_max],
             np.arange(len(new_diff)),
             100 * old_diff[:, idx_min:idx_max] - 100 * diff2_backup[:, idx_min:idx_max],
@@ -715,7 +723,7 @@ def yarara_correct_pattern(
 
 
 def yarara_produce_mask_contam(
-    self: spec_time_series, frog_file=root + "/Python/Material/Contam_HARPN.p"
+    self: spec_time_series, frog_file: str = root + "/Python/Material/Contam_HARPN.p"
 ) -> None:
     """
     Creation of the stitching mask on the spectrum
@@ -730,7 +738,7 @@ def yarara_produce_mask_contam(
     if kw != "":
         print("\n---- PLANET ACTIVATED ----")
 
-    myf.print_box("\n---- RECIPE : PRODUCTION CONTAM MASK ----\n")
+    print_box("\n---- RECIPE : PRODUCTION CONTAM MASK ----\n")
 
     print("\n [INFO] FROG file used : %s" % (frog_file))
     self.import_table()
@@ -748,7 +756,7 @@ def yarara_produce_mask_contam(
     wave_contam = np.hstack(frog_table["wave"])
     contam = np.hstack(frog_table["contam"])
 
-    vec = myc.tableXY(wave_contam, contam)
+    vec = tableXY(wave_contam, contam)
     vec.order()
     vec.interpolate(new_grid=np.array(load["wave"]), method="linear")
 
@@ -757,7 +765,7 @@ def yarara_produce_mask_contam(
 
 
 def yarara_produce_mask_frog(
-    self: spec_time_series, frog_file=root + "/Python/Material/Ghost_HARPS03.p"
+    self: spec_time_series, frog_file: str = root + "/Python/Material/Ghost_HARPS03.p"
 ) -> None:
     """
     Correction of the stitching/ghost on the spectrum by PCA fitting
@@ -771,7 +779,7 @@ def yarara_produce_mask_frog(
     frog_file : files containing the wavelength of the stitching
     """
 
-    myf.print_box("\n---- RECIPE : MASK GHOST/STITCHING/THAR WITH FROG ----\n")
+    print_box("\n---- RECIPE : MASK GHOST/STITCHING/THAR WITH FROG ----\n")
 
     directory = self.directory
     kw = "_planet" * self.planet
@@ -787,15 +795,8 @@ def yarara_produce_mask_frog(
 
     berv_max = self.table["berv" + kw].max()
     berv_min = self.table["berv" + kw].min()
-    imin = (
-        myf.find_nearest(grid, myf.doppler_r(grid[0], np.max(abs(self.table.berv)) * 1000)[0])[0][
-            0
-        ]
-        + 1
-    )
-    imax = myf.find_nearest(grid, myf.doppler_r(grid[-1], np.max(abs(self.table.berv)) * 1000)[1])[
-        0
-    ][0]
+    imin = find_nearest(grid, doppler_r(grid[0], np.max(abs(self.table.berv)) * 1000)[0])[0][0] + 1
+    imax = find_nearest(grid, doppler_r(grid[-1], np.max(abs(self.table.berv)) * 1000)[1])[0][0]
 
     # extract frog table
     frog_table = pd.read_pickle(frog_file)
@@ -810,14 +811,14 @@ def yarara_produce_mask_frog(
                 wave_stitching = np.hstack(frog_table["wave"])
                 gap_stitching = np.hstack(frog_table["stitching"])
 
-                vec = myc.tableXY(wave_stitching, gap_stitching)
+                vec = tableXY(wave_stitching, gap_stitching)
                 vec.order()
                 stitching = vec.x[vec.y != 0]
 
-                stitching_b0 = myf.doppler_r(stitching, 0 * berv_file * 1000)[0]
-                # all_stitch = myf.doppler_r(stitching_b0, berv*1000)[0]
+                stitching_b0 = doppler_r(stitching, 0 * berv_file * 1000)[0]
+                # all_stitch = doppler_r(stitching_b0, berv*1000)[0]
 
-                match_stitching = myf.match_nearest(grid, stitching_b0)
+                match_stitching = match_nearest(grid, stitching_b0)
                 indext = match_stitching[:, 0].astype("int")
 
                 wavet_delta = np.zeros(len(grid))
@@ -851,16 +852,16 @@ def yarara_produce_mask_frog(
                 wave_s2d = []
                 order_s2d = []
                 for order in np.arange(len(contam)):
-                    vec = myc.tableXY(
-                        myf.doppler_r(frog_table["wave"][order], 0 * berv_file * 1000)[0],
+                    vec = tableXY(
+                        doppler_r(frog_table["wave"][order], 0 * berv_file * 1000)[0],
                         contam[order],
                         0 * contam[order],
                     )
                     vec.order()
                     vec.y[0:2] = 0
                     vec.y[-2:] = 0
-                    begin = int(myf.find_nearest(grid, vec.x[0])[0])
-                    end = int(myf.find_nearest(grid, vec.x[-1])[0])
+                    begin = int(find_nearest(grid, vec.x[0])[0])
+                    end = int(find_nearest(grid, vec.x[-1])[0])
                     sub_grid = grid[begin:end]
                     vec.interpolate(new_grid=sub_grid, method="linear", interpolate_x=False)
                     model = np.array(
@@ -886,7 +887,10 @@ def yarara_produce_mask_frog(
 
 
 def yarara_correct_borders_pxl(
-    self: spec_time_series, pixels_to_reject=[2, 4095], min_shift=-30, max_shift=30
+    self: spec_time_series,
+    pixels_to_reject: ndarray = [2, 4095],
+    min_shift: int = -30,
+    max_shift: int = 30,
 ) -> None:
     """Produce a brute mask to flag lines crossing pixels according to min-max shift
 
@@ -897,7 +901,7 @@ def yarara_correct_borders_pxl(
     max_shift : max shist value in km/s
     """
 
-    myf.print_box("\n---- RECIPE : CREATE PIXELS BORDERS MASK ----\n")
+    print_box("\n---- RECIPE : CREATE PIXELS BORDERS MASK ----\n")
 
     self.import_material()
     load = self.material
@@ -917,8 +921,8 @@ def yarara_correct_borders_pxl(
     for i in np.arange(np.shape(pxl)[1]):
         dist = dist | (np.min(abs(pxl[:, i] - pixels_rejected[:, np.newaxis]), axis=0) == 0)
 
-    # idx1, dust, dist1 = myf.find_nearest(pixels_rejected,pxl[:,0])
-    # idx2, dust, dist2 = myf.find_nearest(pixels_rejected,pxl[:,1])
+    # idx1, dust, dist1 = find_nearest(pixels_rejected,pxl[:,0])
+    # idx2, dust, dist2 = find_nearest(pixels_rejected,pxl[:,1])
 
     # dist = (dist1<=1)|(dist2<=1)
 
@@ -927,7 +931,7 @@ def yarara_correct_borders_pxl(
     for i in np.arange(np.shape(pxl)[1]):
         plt.scatter(pxl[f, i], orders[f, i])
 
-    val, cluster = myf.clustering(dist, 0.5, 1)
+    val, cluster = clustering(dist, 0.5, 1)
     val = np.array([np.product(v) for v in val])
     cluster = cluster[val.astype("bool")]
 
@@ -936,11 +940,11 @@ def yarara_correct_borders_pxl(
     # length = right-left+1
 
     # wave_flagged = wave[f]
-    # left = myf.doppler_r(wave_flagged,min_shift*1000)[0]
-    # right = myf.doppler_r(wave_flagged,max_shift*1000)[0]
+    # left = doppler_r(wave_flagged,min_shift*1000)[0]
+    # right = doppler_r(wave_flagged,max_shift*1000)[0]
 
-    # idx_left = myf.find_nearest(wave,left)[0]
-    # idx_right = myf.find_nearest(wave,right)[0]
+    # idx_left = find_nearest(wave,left)[0]
+    # idx_right = find_nearest(wave,right)[0]
 
     idx_left = cluster[:, 0] + left
     idx_right = cluster[:, 1] + right
@@ -956,22 +960,22 @@ def yarara_correct_borders_pxl(
 
 def yarara_correct_frog(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    correction="stitching",
-    berv_shift=False,
-    wave_min=3800,
-    wave_max=3975,
-    wave_min_train=3700,
-    wave_max_train=6000,
-    complete_analysis=False,
-    reference="median",
-    equal_weight=True,
-    nb_pca_comp=10,
-    pca_comp_kept=None,
-    rcorr_min=0,
-    treshold_contam=0.5,
-    algo_pca="empca",
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    correction: str = "stitching",
+    berv_shift: str = False,
+    wave_min: int = 3800,
+    wave_max: int = 3975,
+    wave_min_train: int = 3700,
+    wave_max_train: int = 6000,
+    complete_analysis: bool = False,
+    reference: str = "median",
+    equal_weight: bool = True,
+    nb_pca_comp: int = 10,
+    pca_comp_kept: None = None,
+    rcorr_min: int = 0,
+    treshold_contam: float = 0.5,
+    algo_pca: str = "empca",
 ) -> None:
 
     """
@@ -985,7 +989,7 @@ def yarara_correct_frog(
     extended : extension of the cluster size
     """
 
-    myf.print_box("\n---- RECIPE : CORRECTION %s WITH FROG ----\n" % (correction.upper()))
+    print_box("\n---- RECIPE : CORRECTION %s WITH FROG ----\n" % (correction.upper()))
 
     directory = self.directory
     self.import_table()
@@ -1027,7 +1031,7 @@ def yarara_correct_frog(
         f_std = file["flux_err"]
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
         all_flux.append(f_norm)
         all_flux_std.append(f_norm_std)
         conti.append(c)
@@ -1073,8 +1077,8 @@ def yarara_correct_frog(
 
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(all_flux))):
-            test = myc.tableXY(grid, diff[j], all_flux_std[j])
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
+            test = tableXY(grid, diff[j], all_flux_std[j])
+            test.x = doppler_r(test.x, berv[j] * 1000)[1]
             test.interpolate(new_grid=grid, method="cubic", replace=True, interpolate_x=False)
             diff[j] = test.y
             all_flux_std[j] = test.yerr
@@ -1088,7 +1092,7 @@ def yarara_correct_frog(
     loc_ghost = mask != 0
 
     # mask[mask<treshold_contam] = 0
-    val, borders = myf.clustering(loc_ghost, 0.5, 1)
+    val, borders = clustering(loc_ghost, 0.5, 1)
     val = np.array([np.product(v) for v in val])
     borders = borders[val == 1]
 
@@ -1204,7 +1208,7 @@ def yarara_correct_frog(
 
     # io.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
 
-    test2 = myc.table(X_train)
+    test2 = table(X_train)
     test2.WPCA(algo_pca, weight=1 / X_train_std**2, comp_max=nb_pca_comp)
 
     phase_mod = np.arange(365)[
@@ -1286,11 +1290,11 @@ def yarara_correct_frog(
         rcorr = np.nanmax([rcorr1, rcorr], axis=0)
     rcorr[np.isnan(rcorr)] = 0
 
-    val, borders = myf.clustering(mask_ghost, 0.5, 1)
+    val, borders = clustering(mask_ghost, 0.5, 1)
     val = np.array([np.product(j) for j in val])
     borders = borders[val.astype("bool")]
-    borders = myf.merge_borders(borders)
-    flat_mask = myf.flat_clustering(len(grid), borders, extended=50).astype("bool")
+    borders = merge_borders(borders)
+    flat_mask = flat_clustering(len(grid), borders, extended=50).astype("bool")
     rcorr_free = rcorr[~flat_mask]
     rcorr_contaminated = rcorr[flat_mask]
 
@@ -1321,7 +1325,7 @@ def yarara_correct_frog(
     check = ["r", "g"][crit]  # three times more correlation than in the control group
     plt.xlabel(r"|$\mathcal{R}_{pearson}$|", fontsize=14, fontweight="bold", color=check)
     plt.title("Density", color=check)
-    myf.plot_color_box(color=check)
+    plot_color_box(color=check)
 
     plt.savefig(self.dir_root + "IMAGES/" + name + "_control_check.pdf")
     print(" [INFO] %.0f versus %.0f" % (sum_a, sum_b))
@@ -1338,15 +1342,15 @@ def yarara_correct_frog(
 
     diff_ref[np.isnan(diff_ref)] = 0
 
-    idx_min = myf.find_nearest(grid, wave_min)[0]
-    idx_max = myf.find_nearest(grid, wave_max)[0] + 1
+    idx_min = find_nearest(grid, wave_min)[0]
+    idx_max = find_nearest(grid, wave_max)[0] + 1
 
     new_wave = grid[int(idx_min) : int(idx_max)]
 
     if complete_analysis:
         plt.figure(figsize=(18, 12))
         plt.subplot(pca_comp_kept // 2 + 1, 2, 1)
-        myf.my_colormesh(
+        my_colormesh(
             new_wave,
             np.arange(len(diff)),
             diff[:, int(idx_min) : int(idx_max)],
@@ -1357,7 +1361,7 @@ def yarara_correct_frog(
         ax = plt.gca()
         for nb_vec in tqdm(range(1, pca_comp_kept)):
             correction2 = np.zeros((len(grid), len(jdb)))
-            collection = myc.table(diff_ref.T)
+            collection = table(diff_ref.T)
             base_vec = np.vstack([np.ones(len(diff)), test2.vec[:, 0:nb_vec].T])
             collection.fit_base(base_vec, num_sim=1)
             correction2[mask_ghost] = collection.coeff_fitted.dot(base_vec)
@@ -1365,7 +1369,7 @@ def yarara_correct_frog(
             diff_ref2 = diff - correction2
             plt.subplot(pca_comp_kept // 2 + 1, 2, nb_vec + 1, sharex=ax, sharey=ax)
             plt.title("Vec PCA fitted = %0.f" % (nb_vec))
-            myf.my_colormesh(
+            my_colormesh(
                 new_wave,
                 np.arange(len(diff)),
                 diff_ref2[:, int(idx_min) : int(idx_max)],
@@ -1381,7 +1385,7 @@ def yarara_correct_frog(
             plt.plot(new_wave, ref[int(idx_min) : int(idx_max)], color="gray")
     else:
         correction = np.zeros((len(grid), len(jdb)))
-        collection = myc.table(diff_ref.T)
+        collection = table(diff_ref.T)
         base_vec = np.vstack([np.ones(len(diff)), test2.vec[:, 0:pca_comp_kept].T])
         collection.fit_base(base_vec, num_sim=1)
         correction[mask_ghost] = collection.coeff_fitted.dot(base_vec)
@@ -1390,20 +1394,20 @@ def yarara_correct_frog(
 
         if np.sum(abs(berv)) != 0:
             for j in tqdm(np.arange(len(all_flux))):
-                test = myc.tableXY(grid, correction[j], 0 * grid)
-                test.x = myf.doppler_r(test.x, berv[j] * 1000)[0]
+                test = tableXY(grid, correction[j], 0 * grid)
+                test.x = doppler_r(test.x, berv[j] * 1000)[0]
                 test.interpolate(new_grid=grid, method="cubic", replace=True, interpolate_x=False)
                 correction[j] = test.y
 
-            index_min_backup = int(myf.find_nearest(grid, myf.doppler_r(grid[0], 30000)[0])[0])
-            index_max_backup = int(myf.find_nearest(grid, myf.doppler_r(grid[-1], -30000)[0])[0])
+            index_min_backup = int(find_nearest(grid, doppler_r(grid[0], 30000)[0])[0])
+            index_max_backup = int(find_nearest(grid, doppler_r(grid[-1], -30000)[0])[0])
             correction[:, 0 : index_min_backup * 2] = 0
             correction[:, index_max_backup * 2 :] = 0
             index_hole_right = int(
-                myf.find_nearest(grid, hole_right + 1)[0]
+                find_nearest(grid, hole_right + 1)[0]
             )  # correct 1 angstrom band due to stange artefact at the border of the gap
             index_hole_left = int(
-                myf.find_nearest(grid, hole_left - 1)[0]
+                find_nearest(grid, hole_left - 1)[0]
             )  # correct 1 angstrom band due to stange artefact at the border of the gap
             correction[:, index_hole_left : index_hole_right + 1] = 0
 
@@ -1427,18 +1431,18 @@ def yarara_correct_frog(
                 max_var = max_var[max_var < 4400][0]
             else:
                 max_var = max_var[max_var < 6700][0]
-            wave_min = myf.find_nearest(grid, max_var - 15)[1]
-            wave_max = myf.find_nearest(grid, max_var + 15)[1]
+            wave_min = find_nearest(grid, max_var - 15)[1]
+            wave_max = find_nearest(grid, max_var + 15)[1]
 
-            idx_min = myf.find_nearest(grid, wave_min)[0]
-            idx_max = myf.find_nearest(grid, wave_max)[0] + 1
+            idx_min = find_nearest(grid, wave_min)[0]
+            idx_max = find_nearest(grid, wave_max)[0] + 1
 
         new_wave = grid[int(idx_min) : int(idx_max)]
 
         fig = plt.figure(figsize=(21, 9))
 
         plt.axes([0.05, 0.66, 0.90, 0.25])
-        myf.my_colormesh(
+        my_colormesh(
             new_wave,
             np.arange(len(diff)),
             100 * diff_backup[:, int(idx_min) : int(idx_max)],
@@ -1455,7 +1459,7 @@ def yarara_correct_frog(
         ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
         plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-        myf.my_colormesh(
+        my_colormesh(
             new_wave,
             np.arange(len(diff)),
             100 * diff_ref2[:, int(idx_min) : int(idx_max)],
@@ -1472,7 +1476,7 @@ def yarara_correct_frog(
         ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
         plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-        myf.my_colormesh(
+        my_colormesh(
             new_wave,
             np.arange(len(diff)),
             100 * diff_backup[:, int(idx_min) : int(idx_max)]
@@ -1504,14 +1508,14 @@ def yarara_correct_frog(
                 f_std = file["flux_err"]
                 c = file[sub]["continuum_" + continuum]
                 c_std = file["continuum_err"]
-                f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+                f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
                 diff_backup.append(f_norm - ref)
             diff_backup = np.array(diff_backup)
 
             fig = plt.figure(figsize=(21, 9))
 
             plt.axes([0.05, 0.66, 0.90, 0.25])
-            myf.my_colormesh(
+            my_colormesh(
                 new_wave,
                 np.arange(len(diff)),
                 100 * diff_backup[:, int(idx_min) : int(idx_max)],
@@ -1528,7 +1532,7 @@ def yarara_correct_frog(
             ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
             plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-            myf.my_colormesh(
+            my_colormesh(
                 new_wave,
                 np.arange(len(diff)),
                 100 * diff_ref2[:, int(idx_min) : int(idx_max)],
@@ -1545,7 +1549,7 @@ def yarara_correct_frog(
             ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
             plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-            myf.my_colormesh(
+            my_colormesh(
                 new_wave,
                 np.arange(len(diff)),
                 100 * diff_backup[:, int(idx_min) : int(idx_max)]
@@ -1570,7 +1574,7 @@ def yarara_correct_frog(
             to_be_saved,
             open(self.dir_root + "CORRECTION_MAP/map_matching_" + name + ".p", "wb"),
         )
- 
+
         print("\nComputation of the new continua, wait ... \n")
         time.sleep(0.5)
         i = -1

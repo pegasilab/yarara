@@ -2,16 +2,18 @@
 This modules does XXX
 """
 from itertools import combinations
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from numpy import float64, ndarray
 from scipy import signal
 from scipy.signal import savgol_filter
 from scipy.stats import norm
 from tqdm import tqdm
 
 
-def mad(array, axis: int = 0, sigma_conv=True):
+def mad(array: ndarray, axis: int = 0, sigma_conv: bool = True) -> float64:
     """"""
     if axis == 0:
         step = abs(array - np.nanmedian(array, axis=axis))
@@ -25,7 +27,7 @@ def combination(items):
     return output
 
 
-def local_max(spectre, vicinity):
+def local_max(spectre: ndarray, vicinity: int) -> ndarray:
     vec_base = spectre[vicinity:-vicinity]
     maxima = np.ones(len(vec_base))
     for k in range(1, vicinity):
@@ -43,7 +45,7 @@ def local_max(spectre, vicinity):
     return np.array([index, flux])
 
 
-def smooth2d(y, box_pts, borders=True, mode="same"):
+def smooth2d(y: ndarray, box_pts: int, borders: bool = True, mode: str = "same") -> ndarray:
     if box_pts > 1:
         box = 1 / (box_pts**2) * np.ones(box_pts) * np.ones(box_pts)[:, np.newaxis]
         y_smooth = signal.convolve2d(y, box, mode=mode)
@@ -66,7 +68,9 @@ def smooth2d(y, box_pts, borders=True, mode="same"):
     return y_smooth
 
 
-def smooth(y, box_pts, shape="rectangular"):  # rectangular kernel for the smoothing
+def smooth(
+    y: ndarray, box_pts: int, shape: Union[int, str] = "rectangular"
+) -> ndarray:  # rectangular kernel for the smoothing
     box2_pts = int(2 * box_pts - 1)
     if type(shape) == int:
         y_smooth = np.ravel(
@@ -92,7 +96,9 @@ def smooth(y, box_pts, shape="rectangular"):  # rectangular kernel for the smoot
     return y_smooth
 
 
-def find_nearest(array, value, dist_abs=True):
+def find_nearest(
+    array: ndarray, value: Any, dist_abs: bool = True
+) -> Tuple[ndarray, ndarray, ndarray]:
     if type(array) != np.ndarray:
         array = np.array(array)
     if type(value) != np.ndarray:
@@ -107,11 +113,15 @@ def find_nearest(array, value, dist_abs=True):
     return idx, array[idx], distance
 
 
-def IQ(array, axis=None):
+def IQ(
+    array: Union[ndarray, List[Union[float64, float]], List[float64]], axis: Optional[int] = None
+) -> Union[ndarray, float64]:
     return np.nanpercentile(array, 75, axis=axis) - np.nanpercentile(array, 25, axis=axis)
 
 
-def clustering(array, tresh, num):
+def clustering(
+    array: ndarray, tresh: Union[int, float], num: Union[int, float]
+) -> Tuple[ndarray, ndarray]:
     difference = abs(np.diff(array))
     cluster = difference < tresh
     if len(cluster) > 0:
@@ -140,7 +150,7 @@ def clustering(array, tresh, num):
         print("no cluster found with such treshhold")
 
 
-def merge_borders(cluster_output):
+def merge_borders(cluster_output: ndarray) -> ndarray:
     matrix1 = cluster_output.copy()
     for j in range(10):  # to converge
         matrix = matrix1.copy()
@@ -158,7 +168,9 @@ def merge_borders(cluster_output):
     return matrix1
 
 
-def flat_clustering(length, cluster_output, extended=0, elevation=1):
+def flat_clustering(
+    length: int, cluster_output: ndarray, extended: int = 0, elevation: int = 1
+) -> ndarray:
     vec = np.arange(length)
     if type(elevation) == int:
         elevation = np.ones(len(cluster_output)) * elevation
@@ -174,7 +186,7 @@ def flat_clustering(length, cluster_output, extended=0, elevation=1):
 
 
 # stats
-def identify_nearest(array1, array2):
+def identify_nearest(array1: ndarray, array2: ndarray) -> ndarray:
     """identify the closest elements in array2 of array1"""
     array1 = np.sort(array1)
     array2 = np.sort(array2)
@@ -189,7 +201,9 @@ def identify_nearest(array1, array2):
     return np.ravel(identification)
 
 
-def match_nearest(array1, array2, fast=True, max_dist=None):
+def match_nearest(
+    array1: ndarray, array2: ndarray, fast: bool = True, max_dist: None = None
+) -> ndarray:
     """return a table [idx1,idx2,num1,num2,distance] matching the closest element from two arrays. Remark : algorithm very slow by conception if the arrays are too large."""
     if type(array1) != np.ndarray:
         array1 = np.array(array1)
@@ -288,7 +302,9 @@ def match_nearest(array1, array2, fast=True, max_dist=None):
         return mat
 
 
-def rm_outliers(array, m=1.5, kind="sigma", axis=0, return_borders=False):
+def rm_outliers(
+    array: ndarray, m: int = 1.5, kind: str = "sigma", axis: int = 0, return_borders: bool = False
+) -> Tuple[ndarray, ndarray]:
     if type(array) != np.ndarray:
         array = np.array(array)
 

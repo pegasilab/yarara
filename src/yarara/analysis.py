@@ -1,11 +1,16 @@
 """
 This modules does XXX
 """
+from __future__ import annotations
+
+from typing import List, Optional, Union
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from lmfit import Model, Parameters
+from numpy import float64, ndarray
+from pandas.core.series import Series
 from scipy.interpolate import interp1d
 from statsmodels.stats.weightstats import DescrStatsW
 from wpca import EMPCA
@@ -21,11 +26,11 @@ from .stats import smooth
 class table(object):
     """this classe has been establish with pandas DataFrame"""
 
-    def __init__(self, array):
+    def __init__(self, array: ndarray) -> None:
         self.table = array
         self.dim = np.shape(array)
 
-    def rms_w(self, weights, axis=1):
+    def rms_w(self, weights: ndarray, axis: int = 1) -> None:
         average = np.average(self.table, weights=weights, axis=axis)
 
         if axis == 1:
@@ -35,8 +40,15 @@ class table(object):
 
         variance = np.average((data_recentered) ** 2, weights=weights, axis=axis)
         self.rms = np.sqrt(variance)
-
-    def WPCA(self, pca, weight=None, comp_max=None, m=2, kind="inter"):
+ 
+    def WPCA(
+        self,
+        pca: str,
+        weight: Optional[ndarray] = None,
+        comp_max: Optional[int] = None,
+        m: int = 2,
+        kind: str = "inter",
+    ) -> None:
         """from https://github.com/jakevdp/wpca/blob/master/WPCA-Example.ipynb
         enter which pca do yo want either 'pca', 'wpca' or 'empca'
         empca slower than wpca
@@ -91,7 +103,9 @@ class table(object):
 
         self.wpca_model = pca
 
-    def fit_base(self, base_vec, weight=None, num_sim=1):
+    def fit_base(
+        self, base_vec: ndarray, weight: Optional[ndarray] = None, num_sim: int = 1
+    ) -> None:
         """weights define as 1/sigma**2 self.table = MxT, base_vec = NxT, N the number of basis element"""
 
         if np.shape(base_vec)[1] != np.shape(self.table)[0]:
@@ -181,13 +195,17 @@ class table(object):
         self.phi_base = np.sum(coeff_pos < 0, axis=0) / len(coeff_pos)
 
 
-# -> analysis
 class tableXY(object):
     """
     Describes a scatter plot (x, y)
     """
 
-    def __init__(self, x, y, *yerr):
+    def __init__(
+        self,
+        x: Union[Series, ndarray],
+        y: Union[Series, List[float64], ndarray, List[Union[float64, float]]],
+        *yerr,
+    ) -> None:
         self.stats = pd.DataFrame({}, index=[0])
         self.y = np.array(y)  # vector of y
 
@@ -222,7 +240,7 @@ class tableXY(object):
                 self.yerr = np.ones(len(self.x))
             self.xerr = np.zeros(len(self.x))
 
-    def rms_w(self):
+    def rms_w(self) -> None:
         if len(self.x) > 1:
             self.rms = DescrStatsW(self.y, weights=1.0 / self.yerr**2).std
             self.weighted_average = DescrStatsW(self.y, weights=1.0 / self.yerr**2).mean
@@ -231,7 +249,7 @@ class tableXY(object):
             self.rms = 0
             self.weighted_average = self.y[0]
 
-    def copy(self):
+    def copy(self) -> tableXY:
         return tableXY(self.x.copy(), self.y.copy(), self.xerr.copy(), self.yerr.copy())
 
     def switch(self):
@@ -242,7 +260,7 @@ class tableXY(object):
         self.x = np.hstack(self.x)
         self.y = np.hstack(self.y)
 
-    def order(self, order=None):
+    def order(self, order: None = None) -> None:
         if order is None:
             order = self.x.argsort()
         self.order_liste = order
@@ -251,10 +269,16 @@ class tableXY(object):
         self.xerr = self.xerr[order]
         self.yerr = self.yerr[order]
 
-    def null(self):
+    def null(self) -> None:
         self.yerr = 0 * self.yerr
 
-    def clip(self, min=[None, None], max=[None, None], replace=True, invers=False):
+    def clip(
+        self,
+        min: List[Optional[Union[float, float64, int]]] = [None, None],
+        max: List[Optional[Union[float, float64, int]]] = [None, None],
+        replace: bool = True,
+        invers: bool = False,
+    ) -> None:
         """This function seems sometimes to not work without any reason WARNING"""
         min2 = np.array(min).copy()
         max2 = np.array(max).copy()
@@ -288,7 +312,7 @@ class tableXY(object):
             self.clipyerr = self.yerr[mask]
             self.clipxerr = self.xerr[mask]
 
-    def supress_nan(self):
+    def supress_nan(self) -> None:
         mask = ~np.isnan(self.x) & ~np.isnan(self.y) & ~np.isnan(self.yerr) & ~np.isnan(self.xerr)
         if sum(~mask) == len(mask):
             self.replace_nan()
@@ -299,19 +323,21 @@ class tableXY(object):
             self.xerr = self.xerr[mask]
             self.yerr = self.yerr[mask]
 
-    def replace_nan(self):
+    def replace_nan(self) -> None:
         self.y[np.isnan(self.y)] = np.random.randn(sum(np.isnan(self.y)))
         self.x[np.isnan(self.x)] = np.random.randn(sum(np.isnan(self.x)))
         self.yerr[np.isnan(self.yerr)] = np.random.randn(sum(np.isnan(self.yerr)))
         self.xerr[np.isnan(self.xerr)] = np.random.randn(sum(np.isnan(self.xerr)))
 
-    def supress_mask(self, mask):
+    def supress_mask(self, mask: ndarray) -> None:
         self.x = self.x[mask]
         self.y = self.y[mask]
         self.xerr = self.xerr[mask]
         self.yerr = self.yerr[mask]
 
-    def center_symmetrise(self, center, replace=False, Plot=False):
+    def center_symmetrise(
+        self, center: ndarray, replace: bool = False, Plot: bool = False
+    ) -> None:
         x = self.x
         kernel = self.copy()
         window = np.min([np.max(x) - center, center - np.min(x)])
@@ -338,27 +364,27 @@ class tableXY(object):
 
     def plot(
         self,
-        Show=False,
-        color="k",
-        label="",
-        ls="",
-        offset=0,
-        mask=None,
-        capsize=3,
-        fmt="o",
-        markersize=6,
-        zorder=1,
-        species=None,
-        alpha=1,
-        modulo=None,
-        modulo_norm=False,
-        cmap="viridis",
-        new=False,
-        phase_mod=0,
-        periodic=False,
-        frac=1,
-        yerr=True,
-    ):
+        Show: bool = False,
+        color: str = "k",
+        label: str = "",
+        ls: str = "",
+        offset: int = 0,
+        mask: None = None,
+        capsize: int = 3,
+        fmt: str = "o",
+        markersize: int = 6,
+        zorder: int = 1,
+        species: None = None,
+        alpha: int = 1,
+        modulo: Optional[float] = None,
+        modulo_norm: bool = False,
+        cmap: str = "viridis",
+        new: bool = False,
+        phase_mod: int = 0,
+        periodic: bool = False,
+        frac: int = 1,
+        yerr: bool = True,
+    ) -> None:
 
         """For the mask give either the first and last index in a list [a,b] or the mask boolean"""
 
@@ -477,20 +503,20 @@ class tableXY(object):
             plt.legend()
             plt.show()
 
-    def find_max(self, vicinity=3):
+    def find_max(self, vicinity: int = 3) -> None:
         self.index_max, self.y_max = local_max(self.y, vicinity=vicinity)
         self.index_max = self.index_max.astype("int")
         self.x_max = self.x[self.index_max.astype("int")]
         self.max_extremum = tableXY(self.x_max, self.y_max)
 
-    def find_min(self, vicinity=3):
+    def find_min(self, vicinity: int = 3) -> None:
         self.index_min, self.y_min = local_max(-self.y, vicinity=vicinity)
         self.index_min = self.index_min.astype("int")
         self.y_min *= -1
         self.x_min = self.x[self.index_min.astype("int")]
         self.min_extremum = tableXY(self.x_min, self.y_min)
 
-    def smooth(self, box_pts=5, shape="rectangular", replace=True):
+    def smooth(self, box_pts: int = 5, shape: str = "rectangular", replace: bool = True) -> None:
         self.y_smoothed = smooth(self.y, box_pts, shape=shape)
 
         self.smoothed = tableXY(self.x, self.y_smoothed, self.xerr, self.yerr)
@@ -502,7 +528,7 @@ class tableXY(object):
             self.yerr_backup = self.yerr.copy()
             self.y = self.y_smoothed
 
-    def diff(self, replace=True):
+    def diff(self, replace: bool = True) -> None:
         diff = np.diff(self.y) / np.diff(self.x)
         new = tableXY(self.x[0:-1] + np.diff(self.x) / 2, diff)
         new.interpolate(new_grid=self.x, replace=True)
@@ -513,7 +539,7 @@ class tableXY(object):
             self.y_backup = self.y
             self.y = new.y
 
-    def substract_polyfit(self, deg, replace=False, Draw=False):
+    def substract_polyfit(self, deg: int, replace: bool = False, Draw: bool = False) -> None:
         model = None
         self.replace_nan()
 
@@ -546,7 +572,9 @@ class tableXY(object):
         self.poly_curve = model
         self.model = model
 
-    def rolling(self, window=1, quantile=None, median=True, iq=True):
+    def rolling(
+        self, window: int = 1, quantile: Optional[int] = None, median: bool = True, iq: bool = True
+    ) -> None:
         if median:
             self.roll_median = np.ravel(
                 pd.DataFrame(self.y).rolling(window, min_periods=1, center=True).quantile(0.50)
@@ -564,7 +592,7 @@ class tableXY(object):
                 pd.DataFrame(self.y).rolling(window, min_periods=1, center=True).quantile(quantile)
             )
 
-    def fit_poly(self, Draw=False, d=2, color="r", cov=True):
+    def fit_poly(self, Draw: bool = False, d: int = 2, color: str = "r", cov: bool = True) -> None:
         if np.sum(self.yerr) != 0:
             weights = self.yerr
         else:
@@ -590,7 +618,15 @@ class tableXY(object):
             # uncertainty = np.sqrt(np.sum([(err[j]*new_x**j)**2 for j in range(len(err))],axis=0))
             # plt.fill_between(new_x,np.polyval(coeff, new_x)-uncertainty/2,np.polyval(coeff, new_x)+uncertainty/2,alpha=0.4,color=color)
 
-    def fit_sinus(self, Draw=False, d=0, guess=[0, 1, 0, 0, 0, 0], p_max=500, report=False, c="r"):
+    def fit_sinus(
+        self,
+        Draw: bool = False,
+        d: int = 0,
+        guess: List[Union[int, float]] = [0, 1, 0, 0, 0, 0],
+        p_max: int = 500,
+        report: bool = False,
+        c: str = "r",
+    ) -> None:
         gmodel = Model(sinus)
         fit_params = Parameters()
         fit_params.add("amp", value=guess[0])
@@ -621,7 +657,14 @@ class tableXY(object):
         self.lmfit = result2
         self.params = result2.params
 
-    def rm_outliers(self, who="Y", m=2, kind="inter", bin_length=0, replace=True):
+    def rm_outliers(
+        self,
+        who: str = "Y",
+        m: int = 2,
+        kind: str = "inter",
+        bin_length: int = 0,
+        replace: bool = True,
+    ) -> None:
         vec = self.copy()
         if bin_length:
             self.night_stack(bin_length=bin_length, replace=False)
@@ -659,7 +702,9 @@ class tableXY(object):
             self.yerr = self.yerr[mask]
             self.xerr = self.xerr[mask]
 
-    def fit_gaussian(self, guess=None, Plot=True, color="r", free_offset=True):
+    def fit_gaussian(
+        self, guess: None = None, Plot: bool = True, color: str = "r", free_offset: bool = True
+    ) -> None:
         """guess = [amp,cen,width,offset]"""
         if guess is None:
             guess = [-0.5, 0, 3, 1]
@@ -681,13 +726,13 @@ class tableXY(object):
 
     def interpolate(
         self,
-        new_grid="auto",
-        method="cubic",
-        replace=True,
-        interpolate_x=True,
-        fill_value="extrapolate",
-        scale="lin",
-    ):
+        new_grid: Union[ndarray, str] = "auto",
+        method: str = "cubic",
+        replace: bool = True,
+        interpolate_x: bool = True,
+        fill_value: Union[float, str] = "extrapolate",
+        scale: str = "lin",
+    ) -> None:
 
         if scale != "lin":
             self.inv()
