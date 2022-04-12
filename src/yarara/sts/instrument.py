@@ -35,7 +35,7 @@ def yarara_correct_pattern(
     correct_blue=True,
     correct_red=True,
     jdb_range=None,
-):
+) -> None:
 
     """
     Suppress interferency pattern produced by a material of a certain width by making a Fourier filtering.
@@ -53,8 +53,7 @@ def yarara_correct_pattern(
     cmap : cmap of the 2D plot
     width_min : minimum width in mm above which to search for a peak in Fourier space
     correct_blue : enable correction of the blue detector for HARPS
-    correct_blue : enable correction of the red detector for HARPS
-
+    correct_red : enable correction of the red detector for HARPS
     """
 
     directory = self.directory
@@ -717,7 +716,7 @@ def yarara_correct_pattern(
 
 def yarara_produce_mask_contam(
     self: spec_time_series, frog_file=root + "/Python/Material/Contam_HARPN.p"
-):
+) -> None:
     """
     Creation of the stitching mask on the spectrum
 
@@ -759,7 +758,7 @@ def yarara_produce_mask_contam(
 
 def yarara_produce_mask_frog(
     self: spec_time_series, frog_file=root + "/Python/Material/Ghost_HARPS03.p"
-):
+) -> None:
     """
     Correction of the stitching/ghost on the spectrum by PCA fitting
 
@@ -888,7 +887,7 @@ def yarara_produce_mask_frog(
 
 def yarara_correct_borders_pxl(
     self: spec_time_series, pixels_to_reject=[2, 4095], min_shift=-30, max_shift=30
-):
+) -> None:
     """Produce a brute mask to flag lines crossing pixels according to min-max shift
 
     Parameters
@@ -1571,7 +1570,7 @@ def yarara_correct_frog(
             to_be_saved,
             open(self.dir_root + "CORRECTION_MAP/map_matching_" + name + ".p", "wb"),
         )
-
+ 
         print("\nComputation of the new continua, wait ... \n")
         time.sleep(0.5)
         i = -1

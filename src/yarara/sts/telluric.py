@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import glob as glob
+import logging
 import time
 from typing import TYPE_CHECKING
 
-import matplotlib.cm as cmx
-import matplotlib.colors as mplcolors
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
@@ -13,10 +12,11 @@ from colorama import Fore
 from tqdm import tqdm
 
 from .. import io
-from .. import my_classes as myc
-from .. import my_functions as myf
+from ..analysis import table, tableXY
 from ..paths import root
-from ..util import yarara_artefact_suppressed
+from ..plots import my_colormesh, plot_color_box
+from ..stats import clustering, find_nearest, flat_clustering, mad, merge_borders, smooth, smooth2d
+from ..util import doppler_r, flux_norm_std, print_box
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -41,7 +41,7 @@ def yarara_telluric(
     ccf_oversampling=3,
     wave_max=None,
     wave_min=None,
-):
+) -> None:
 
     """
     Plot all the RASSINE spectra in the same plot
@@ -55,14 +55,13 @@ def yarara_telluric(
     display_ccf : display all the ccf
     normalisation : 'left' or 'slope'. if left normalise the CCF by the most left value, otherwise fit a line between the two highest point
     planet : True/False to use the flux containing the injected planet or not
-
     """
 
     kw = "_planet" * self.planet
     if kw != "":
         print("\n---- PLANET ACTIVATED ----")
 
-    myf.print_box("\n---- RECIPE : COMPUTE TELLURIC CCF MOMENT ----\n")
+    print_box("\n---- RECIPE : COMPUTE TELLURIC CCF MOMENT ----\n")
 
     self.import_table()
 
@@ -91,7 +90,7 @@ def yarara_telluric(
     flux = one_file["flux" + kw] / one_file[sub_dico]["continuum_linear"]
     dg = grid[1] - grid[0]
     ccf_sigma = int(one_file["parameters"]["fwhm_ccf"] * 10 / 3e5 * 6000 / dg)
-    test = myc.tableXY(grid, flux)
+    test = tableXY(grid, flux)
 
     telluric_tag = "telluric"
     if mask is None:
@@ -112,7 +111,7 @@ def yarara_telluric(
 
     test.clip(min=[mask[0, 0], None], max=[mask[-1, 0], None])
     test.rolling(window=ccf_sigma, quantile=1)  # to supress telluric in broad asorption line
-    tt, matrix = myf.clustering((test.roll < 0.97).astype("int"), tresh=0.5, num=0.5)
+    tt, matrix = clustering((test.roll < 0.97).astype("int"), tresh=0.5, num=0.5)
     t = np.array([k[0] for k in tt]) == 1
     matrix = matrix[t, :]
 
@@ -121,10 +120,10 @@ def yarara_telluric(
         left = test.x[matrix[j, 0]]
         right = test.x[matrix[j, 1]]
 
-        c1 = np.sign(myf.doppler_r(wave_tel, 30000)[0] - left)
-        c2 = np.sign(myf.doppler_r(wave_tel, 30000)[1] - left)
-        c3 = np.sign(myf.doppler_r(wave_tel, 30000)[0] - right)
-        c4 = np.sign(myf.doppler_r(wave_tel, 30000)[1] - right)
+        c1 = np.sign(doppler_r(wave_tel, 30000)[0] - left)
+        c2 = np.sign(doppler_r(wave_tel, 30000)[1] - left)
+        c3 = np.sign(doppler_r(wave_tel, 30000)[0] - right)
+        c4 = np.sign(doppler_r(wave_tel, 30000)[1] - right)
         keep_telluric = keep_telluric & ((c1 == c2) * (c1 == c3) * (c1 == c4))
 
     if (sum(keep_telluric) > 25) & (
@@ -256,13 +255,13 @@ def yarara_correct_telluric_proxy(
     """
 
     if sub_dico_output == "telluric":
-        myf.print_box("\n---- RECIPE : CORRECTION TELLURIC WATER ----\n")
+        print_box("\n---- RECIPE : CORRECTION TELLURIC WATER ----\n")
         name = "water"
     elif sub_dico_output == "oxygen":
-        myf.print_box("\n---- RECIPE : CORRECTION TELLURIC OXYGEN ----\n")
+        print_box("\n---- RECIPE : CORRECTION TELLURIC OXYGEN ----\n")
         name = "oxygen"
     else:
-        myf.print_box("\n---- RECIPE : CORRECTION TELLURIC PROXY ----\n")
+        print_box("\n---- RECIPE : CORRECTION TELLURIC PROXY ----\n")
         name = "telluric"
 
     directory = self.directory
@@ -315,7 +314,7 @@ def yarara_correct_telluric_proxy(
         f_std = file["flux_err"]
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
         flux.append(f_norm)
         conti.append(c)
         err_flux.append(f_norm_std)
@@ -353,7 +352,7 @@ def yarara_correct_telluric_proxy(
         proxies_detrending = [0] * len(proxies_corr)
 
     for k in range(len(proxies_corr)):
-        proxy1 = myc.tableXY(jdb, proxy[:, k])
+        proxy1 = tableXY(jdb, proxy[:, k])
         proxy1.substract_polyfit(proxies_detrending[k])
         proxy[:, k] = proxy1.detrend_poly.y
 
@@ -374,20 +373,20 @@ def yarara_correct_telluric_proxy(
     low = np.percentile(flux - ref, 2.5)
     high = np.percentile(flux - ref, 97.5)
 
-    ratio = myf.smooth2d(flux / (ref + 1e-6), smooth_map)
+    ratio = smooth2d(flux / (ref + 1e-6), smooth_map)
     ratio_backup = ratio.copy()
 
-    diff_backup = myf.smooth2d(flux - ref, smooth_map)
+    diff_backup = smooth2d(flux - ref, smooth_map)
 
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, ratio[j], err_flux[j] / (ref + 1e-6))
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
+            test = tableXY(wave, ratio[j], err_flux[j] / (ref + 1e-6))
+            test.x = doppler_r(test.x, berv[j] * 1000)[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             ratio[j] = test.y
             err_flux[j] = test.yerr
 
-    t = myc.table(ratio)
+    t = table(ratio)
     t.rms_w(1 / (err_flux) ** 2, axis=0)
 
     rslope = []
@@ -409,7 +408,7 @@ def yarara_correct_telluric_proxy(
     rcorr = np.array(rcorr)
 
     rcorr = np.max(rcorr, axis=0)
-    r_corr = myc.tableXY(wave, rcorr)
+    r_corr = tableXY(wave, rcorr)
     r_corr.smooth(box_pts=smooth_corr, shape="savgol", replace=True)
     rcorr = r_corr.y
 
@@ -420,7 +419,7 @@ def yarara_correct_telluric_proxy(
         wave_max_correction = np.max(wave)
 
     if min_r_corr is None:
-        min_r_corr = np.percentile(rcorr[wave < 5400], 75) + 1.5 * myf.IQ(rcorr[wave < 5400])
+        min_r_corr = np.percentile(rcorr[wave < 5400], 75) + 1.5 * IQ(rcorr[wave < 5400])
         print(
             "\n [INFO] Significative R Pearson detected as %.2f based on wavelength smaller than 5400 \AA"
             % (min_r_corr)
@@ -433,7 +432,7 @@ def yarara_correct_telluric_proxy(
 
     # fwhm_telluric = np.median(self.table['telluric_fwhm'])
     fwhm_telluric = self.star_info["FWHM"][""]  # 09.08.21
-    val, borders = myf.clustering(first_guess_position, 0.5, 1)
+    val, borders = clustering(first_guess_position, 0.5, 1)
     val = np.array([np.product(v) for v in val]).astype("bool")
     borders = borders[val]
     wave_tel = wave[(0.5 * (borders[:, 0] + borders[:, 1])).astype("int")]
@@ -441,8 +440,8 @@ def yarara_correct_telluric_proxy(
     borders[:, 0] -= extension
     borders[:, 1] += extension
     borders[:, 2] = borders[:, 1] - borders[:, 0] + 1
-    borders = myf.merge_borders(borders)
-    second_guess_position = myf.flat_clustering(len(wave), borders).astype("bool")
+    borders = merge_borders(borders)
+    second_guess_position = flat_clustering(len(wave), borders).astype("bool")
 
     guess_position = np.arange(len(second_guess_position))[second_guess_position]
 
@@ -458,14 +457,14 @@ def yarara_correct_telluric_proxy(
         second_guess_position = guess_position[k * len_segment : (k + 1) * len_segment]
         # print(second_guess_position)
 
-        collection = myc.table(ratio.T[second_guess_position])
+        collection = table(ratio.T[second_guess_position])
 
         base_vec = np.vstack(
             [np.ones(len(flux))] + [proxy[:, k] for k in range(len(proxies_corr))]
         )
         # rm outliers and define weight for the fit
         weights = (1 / (err_flux / (ref + 1e-6)) ** 2).T[second_guess_position]
-        IQ = myf.IQ(collection.table, axis=1)
+        IQ = IQ(collection.table, axis=1)
         Q1 = np.nanpercentile(collection.table, 25, axis=1)
         Q3 = np.nanpercentile(collection.table, 75, axis=1)
         sup = Q3 + 1.5 * IQ
@@ -483,22 +482,20 @@ def yarara_correct_telluric_proxy(
     correction_backup = correction.copy()
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, correction[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[0]
+            test = tableXY(wave, correction[j], 0 * wave)
+            test.x = doppler_r(test.x, berv[j] * 1000)[0]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             correction_backup[j] = test.y
 
-    index_min_backup = int(myf.find_nearest(wave, myf.doppler_r(wave[0], berv.max() * 1000)[0])[0])
-    index_max_backup = int(
-        myf.find_nearest(wave, myf.doppler_r(wave[-1], berv.min() * 1000)[0])[0]
-    )
+    index_min_backup = int(find_nearest(wave, doppler_r(wave[0], berv.max() * 1000)[0])[0])
+    index_max_backup = int(find_nearest(wave, doppler_r(wave[-1], berv.min() * 1000)[0])[0])
     correction_backup[:, 0:index_min_backup] = 1
     correction_backup[:, index_max_backup:] = 1
     index_hole_right = int(
-        myf.find_nearest(wave, hole_right + 1)[0]
+        find_nearest(wave, hole_right + 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     index_hole_left = int(
-        myf.find_nearest(wave, hole_left - 1)[0]
+        find_nearest(wave, hole_left - 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     correction_backup[:, index_hole_left : index_hole_right + 1] = 1
 
@@ -528,16 +525,16 @@ def yarara_correct_telluric_proxy(
     idx_max = len(wave)
 
     if wave_min is not None:
-        idx_min = myf.find_nearest(wave, wave_min)[0]
+        idx_min = find_nearest(wave, wave_min)[0]
     if wave_max is not None:
-        idx_max = myf.find_nearest(wave, wave_max)[0] + 1
+        idx_max = find_nearest(wave, wave_max)[0] + 1
 
     new_wave = wave[int(idx_min) : int(idx_max)]
 
     fig = plt.figure(figsize=(21, 9))
 
     plt.axes([0.05, 0.66, 0.90, 0.25])
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_backup)),
         diff_backup[:, int(idx_min) : int(idx_max)],
@@ -554,7 +551,7 @@ def yarara_correct_telluric_proxy(
     plt.colorbar(cax=cbaxes)
 
     plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_backup)),
         diff2_backup[:, int(idx_min) : int(idx_max)],
@@ -571,7 +568,7 @@ def yarara_correct_telluric_proxy(
     plt.colorbar(cax=cbaxes2)
 
     plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_backup)),
         (diff_backup - diff2_backup)[:, int(idx_min) : int(idx_max)],
@@ -659,7 +656,7 @@ def yarara_correct_oxygen(
 
     """
 
-    myf.print_box("\n---- RECIPE : CORRECTION TELLURIC OXYGEN ----\n")
+    print_box("\n---- RECIPE : CORRECTION TELLURIC OXYGEN ----\n")
 
     directory = self.directory
 
@@ -705,7 +702,7 @@ def yarara_correct_oxygen(
         f_std = file["flux_err"]
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
         flux.append(f_norm)
         flux_err.append(f_norm_std)
         conti.append(c)
@@ -739,7 +736,7 @@ def yarara_correct_oxygen(
     berv = berv - mean_berv - rv_shift
 
     def idx_wave(wavelength):
-        return int(myf.find_nearest(wave, wavelength)[0])
+        return int(find_nearest(wave, wavelength)[0])
 
     if reference == "snr":
         ref = flux[snr.argmax()]
@@ -752,36 +749,36 @@ def yarara_correct_oxygen(
     else:
         ref = 0 * np.median(flux, axis=0)
 
-    diff_ref = myf.smooth2d(flux - ref, smooth_map)
-    ratio_ref = myf.smooth2d(flux / (ref + epsilon), smooth_map)
+    diff_ref = smooth2d(flux - ref, smooth_map)
+    ratio_ref = smooth2d(flux / (ref + epsilon), smooth_map)
 
     diff_backup = diff_ref.copy()
     ratio_backup = ratio_ref.copy()
 
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, ratio_ref[j], flux_err[j] / (ref + epsilon))
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
+            test = tableXY(wave, ratio_ref[j], flux_err[j] / (ref + epsilon))
+            test.x = doppler_r(test.x, berv[j] * 1000)[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             ratio_ref[j] = test.y
             flux_err[j] = test.yerr
 
     inside_oxygene_mask = np.zeros(len(ratio_ref.T))
     for k in range(len(oxygene_bands)):
-        first = myf.find_nearest(wave, oxygene_bands[k][0])[0]
-        last = myf.find_nearest(wave, oxygene_bands[k][1])[0]
+        first = find_nearest(wave, oxygene_bands[k][0])[0]
+        last = find_nearest(wave, oxygene_bands[k][1])[0]
         inside_oxygene_mask[int(first) : int(last)] = 1
     # inside_oxygene[wave>6600] = 0  #reject band [HYPERPARAMETER HARDCODED]
     inside_oxygene = inside_oxygene_mask.astype("bool")
 
     vec = ratio_ref.T[inside_oxygene]
-    collection = myc.table(vec)
+    collection = table(vec)
 
     print(np.shape(flux_err))
 
     weights = 1 / (flux_err) ** 2
     weights = weights.T[inside_oxygene]
-    IQ = myf.IQ(collection.table, axis=1)
+    IQ = IQ(collection.table, axis=1)
     Q1 = np.nanpercentile(collection.table, 25, axis=1)
     Q3 = np.nanpercentile(collection.table, 75, axis=1)
     sup = Q3 + 1.5 * IQ
@@ -801,22 +798,20 @@ def yarara_correct_oxygen(
 
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, correction[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[0]
+            test = tableXY(wave, correction[j], 0 * wave)
+            test.x = doppler_r(test.x, berv[j] * 1000)[0]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             correction_backup[j] = test.y
 
-    index_min_backup = int(myf.find_nearest(wave, myf.doppler_r(wave[0], berv.max() * 1000)[0])[0])
-    index_max_backup = int(
-        myf.find_nearest(wave, myf.doppler_r(wave[-1], berv.min() * 1000)[0])[0]
-    )
+    index_min_backup = int(find_nearest(wave, doppler_r(wave[0], berv.max() * 1000)[0])[0])
+    index_max_backup = int(find_nearest(wave, doppler_r(wave[-1], berv.min() * 1000)[0])[0])
     correction_backup[:, 0:index_min_backup] = 1
     correction_backup[:, index_max_backup:] = 1
     index_hole_right = int(
-        myf.find_nearest(wave, hole_right + 1)[0]
+        find_nearest(wave, hole_right + 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     index_hole_left = int(
-        myf.find_nearest(wave, hole_left - 1)[0]
+        find_nearest(wave, hole_left - 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     correction_backup[:, index_hole_left : index_hole_right + 1] = 1
 
@@ -843,16 +838,16 @@ def yarara_correct_oxygen(
     idx_max = len(wave)
 
     if wave_min is not None:
-        idx_min = myf.find_nearest(wave, wave_min)[0]
+        idx_min = find_nearest(wave, wave_min)[0]
     if wave_max is not None:
-        idx_max = myf.find_nearest(wave, wave_max)[0] + 1
+        idx_max = find_nearest(wave, wave_max)[0] + 1
 
     new_wave = wave[int(idx_min) : int(idx_max)]
 
     fig = plt.figure(figsize=(21, 9))
 
     plt.axes([0.05, 0.66, 0.90, 0.25])
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_backup)),
         100 * diff_backup[:, int(idx_min) : int(idx_max)],
@@ -870,7 +865,7 @@ def yarara_correct_oxygen(
     ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
     plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_backup)),
         100 * diff2_backup[:, int(idx_min) : int(idx_max)],
@@ -888,7 +883,7 @@ def yarara_correct_oxygen(
     ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
     plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_backup)),
         100 * (diff_backup - diff2_backup)[:, int(idx_min) : int(idx_max)],
@@ -986,7 +981,7 @@ def yarara_correct_telluric_gradient(
 
     """
 
-    myf.print_box("\n---- RECIPE : CORRECTION TELLURIC PCA ----\n")
+    print_box("\n---- RECIPE : CORRECTION TELLURIC PCA ----\n")
 
     directory = self.directory
 
@@ -1036,7 +1031,7 @@ def yarara_correct_telluric_gradient(
         f_std = file["flux_err"]
         c = file[sub_dico_correction]["continuum_" + continuum]
         c_std = file["continuum_err"]
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
         flux_err.append(f_norm_std)
         flux_corr.append(f_norm)
         conti.append(c)
@@ -1079,7 +1074,7 @@ def yarara_correct_telluric_gradient(
         )
 
     def idx_wave(wavelength):
-        return int(myf.find_nearest(wave, wavelength)[0])
+        return int(find_nearest(wave, wavelength)[0])
 
     if reference == "snr":
         ref = flux[snr.argmax()]
@@ -1095,10 +1090,10 @@ def yarara_correct_telluric_gradient(
     else:
         ref = 0 * np.median(flux, axis=0)
 
-    diff = myf.smooth2d(flux, smooth_map)
-    diff_ref = myf.smooth2d(flux - ref, smooth_map)
-    diff_ref_to_correct = myf.smooth2d(flux_to_correct - ref, smooth_map)
-    ratio_ref = myf.smooth2d(flux_to_correct / (ref + epsilon), smooth_map)
+    diff = smooth2d(flux, smooth_map)
+    diff_ref = smooth2d(flux - ref, smooth_map)
+    diff_ref_to_correct = smooth2d(flux_to_correct - ref, smooth_map)
+    ratio_ref = smooth2d(flux_to_correct / (ref + epsilon), smooth_map)
     diff_backup = diff_ref.copy()
     ratio_backup = ratio_ref.copy()
 
@@ -1106,18 +1101,18 @@ def yarara_correct_telluric_gradient(
 
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, diff[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
+            test = tableXY(wave, diff[j], 0 * wave)
+            test.x = doppler_r(test.x, berv[j] * 1000)[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             diff[j] = test.y
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, diff_ref[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
+            test = tableXY(wave, diff_ref[j], 0 * wave)
+            test.x = doppler_r(test.x, berv[j] * 1000)[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             diff_ref[j] = test.y
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, ratio_ref[j], flux_err[j] / (ref + epsilon))
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
+            test = tableXY(wave, ratio_ref[j], flux_err[j] / (ref + epsilon))
+            test.x = doppler_r(test.x, berv[j] * 1000)[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             ratio_ref[j] = test.y
             flux_err[j] = test.yerr
@@ -1203,14 +1198,14 @@ def yarara_correct_telluric_gradient(
     ztot -= np.median(ztot)
 
     dint = int(3 / np.mean(np.diff(wave)))
-    criterion = myc.tableXY(wave, ztot)
+    criterion = tableXY(wave, ztot)
     criterion.rolling(window=dint)
     iq = np.percentile(ztot, 75) - np.percentile(ztot, 25)
 
     # telluric detection
 
     inside = (
-        myf.smooth(ztot, 5, shape="savgol") > 1.5 * iq
+        smooth(ztot, 5, shape="savgol") > 1.5 * iq
     )  # &(criterion.y>criterion.roll_median) # hyperparameter
     pos_peaks = (inside > np.roll(inside, 1)) & (inside > np.roll(inside, -1))
     inside = inside * (1 - pos_peaks)
@@ -1220,9 +1215,9 @@ def yarara_correct_telluric_gradient(
     # comparison with Molecfit
 
     model = pd.read_pickle(root + "/Python/Material/model_telluric.p")
-    wave_model = myf.doppler_r(model["wave"], mean_berv * 1000)[0]
+    wave_model = doppler_r(model["wave"], mean_berv * 1000)[0]
     telluric_model = model["flux_norm"]
-    model = myc.tableXY(wave_model, telluric_model, 0 * wave_model)
+    model = tableXY(wave_model, telluric_model, 0 * wave_model)
     model.interpolate(new_grid=wave, interpolate_x=False)
     model.find_min(vicinity=5)
     mask_model = np.zeros(len(wave))
@@ -1289,11 +1284,11 @@ def yarara_correct_telluric_gradient(
             % (100 * 10 ** (tel_depth_grid[np.where(comp_percent == 100)[0][0]])),
         )
         plt.axvline(
-            x=tel_depth_grid[myf.find_nearest(comp_percent, 90)[0]],
+            x=tel_depth_grid[find_nearest(comp_percent, 90)[0]],
             color="b",
             ls=":",
             label="90%% Completeness : %.2f [%%]"
-            % (100 * 10 ** (tel_depth_grid[myf.find_nearest(comp_percent, 90)[0]])),
+            % (100 * 10 ** (tel_depth_grid[find_nearest(comp_percent, 90)[0]])),
         )
     plt.ylabel("Completness [%]", fontsize=16)
     plt.xlabel(r"$\log_{10}$(Telluric depth)", fontsize=16)
@@ -1312,7 +1307,7 @@ def yarara_correct_telluric_gradient(
 
     # extraction of uncontaminated telluric
 
-    plateau, cluster = myf.clustering(telluric_location, 0.5, 1)
+    plateau, cluster = clustering(telluric_location, 0.5, 1)
     plateau = np.array([np.product(j) for j in plateau]).astype("bool")
     cluster = cluster[plateau]
     # med_width = np.median(cluster[:,-1])
@@ -1322,7 +1317,7 @@ def yarara_correct_telluric_gradient(
     # telluric_kept = np.hstack([telluric_kept,wave[telluric_kept[:,0],np.newaxis]])
     # plt.figure();plt.hist(telluric_kept[:,-1],bins=100)
     telluric_kept = telluric_kept[
-        telluric_kept[:, -1] > np.nanmedian(telluric_kept[:, -1]) - myf.mad(telluric_kept[:, -1])
+        telluric_kept[:, -1] > np.nanmedian(telluric_kept[:, -1]) - mad(telluric_kept[:, -1])
     ]
     min_telluric_size = wave / inst_resolution / np.gradient(wave)
     telluric_kept = telluric_kept[min_telluric_size[telluric_kept[:, 0]] < telluric_kept[:, -1]]
@@ -1338,7 +1333,7 @@ def yarara_correct_telluric_gradient(
         ax = plt.gca()
         border_y = ax.get_ylim()
         (l,) = plt.plot(5500 * np.ones(2), border_y, color="r")
-        idx = myf.find_nearest(wave, 5500)[0].astype("int")
+        idx = find_nearest(wave, 5500)[0].astype("int")
         plt.ylim(border_y)
         for j in range(len(telluric_kept)):
             plt.axvspan(
@@ -1375,7 +1370,7 @@ def yarara_correct_telluric_gradient(
 
         class Index:
             def update_data(self: spec_time_series, newx, newy):
-                idx = myf.find_nearest(wave, newx)[0].astype("int")
+                idx = find_nearest(wave, newx)[0].astype("int")
                 l.set_xdata(newx * np.ones(len(l.get_xdata())))
                 l2.set_xdata(newx * np.ones(len(l.get_xdata())))
                 l4.set_xdata(newx * np.ones(len(l.get_xdata())))
@@ -1480,7 +1475,7 @@ def yarara_correct_telluric_gradient(
     # self.debug = (X_train, X_train_std)
     # io.pickle_dump({'jdb':np.array(self.table.jdb),'ratio_flux':X_train,'ratio_flux_std':X_train_std},open(root+'/Python/datasets/telluri_cenB.p','wb'))
 
-    test2 = myc.table(X_train)
+    test2 = table(X_train)
 
     test2.WPCA("wpca", weight=1 / X_train_std**2, comp_max=nb_pca_comp)
 
@@ -1558,11 +1553,9 @@ def yarara_correct_telluric_gradient(
         rcorr = np.nanmax([rcorr1, rcorr], axis=0)
     rcorr[np.isnan(rcorr)] = 0
     rcorr_telluric_free = rcorr[
-        int(myf.find_nearest(wave, 4800)[0]) : int(myf.find_nearest(wave, 5000)[0])
+        int(find_nearest(wave, 4800)[0]) : int(find_nearest(wave, 5000)[0])
     ]
-    rcorr_telluric = rcorr[
-        int(myf.find_nearest(wave, 5800)[0]) : int(myf.find_nearest(wave, 6000)[0])
-    ]
+    rcorr_telluric = rcorr[int(find_nearest(wave, 5800)[0]) : int(find_nearest(wave, 6000)[0])]
 
     plt.figure(figsize=(8, 6))
     bins_contam, bins, dust = plt.hist(
@@ -1586,7 +1579,7 @@ def yarara_correct_telluric_gradient(
     check = ["r", "g"][crit]  # five times more correlation than in the control group
     plt.xlabel(r"|$\mathcal{R}_{pearson}$|", fontsize=14, fontweight="bold", color=check)
     plt.title("Density", color=check)
-    myf.plot_color_box(color=check)
+    plot_color_box(color=check)
 
     plt.savefig(self.dir_root + "IMAGES/telluric_control_check.pdf")
     print(" [INFO] %.0f versus %.0f" % (sum_a, sum_b))
@@ -1600,13 +1593,13 @@ def yarara_correct_telluric_gradient(
             + Fore.RESET
         )
 
-    collection = myc.table(
+    collection = table(
         ratio_ref.T[telluric_location.astype("bool")]
     )  # do fit only on flag position
 
     weights = 1 / (flux_err) ** 2
     weights = weights.T[telluric_location.astype("bool")]
-    IQ = myf.IQ(collection.table, axis=1)
+    IQ = IQ(collection.table, axis=1)
     Q1 = np.nanpercentile(collection.table, 25, axis=1)
     Q3 = np.nanpercentile(collection.table, 75, axis=1)
     sup = Q3 + 1.5 * IQ
@@ -1631,22 +1624,20 @@ def yarara_correct_telluric_gradient(
 
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, correction[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[0]
+            test = tableXY(wave, correction[j], 0 * wave)
+            test.x = doppler_r(test.x, berv[j] * 1000)[0]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             correction_backup[j] = test.y
 
-    index_min_backup = int(myf.find_nearest(wave, myf.doppler_r(wave[0], berv.max() * 1000)[0])[0])
-    index_max_backup = int(
-        myf.find_nearest(wave, myf.doppler_r(wave[-1], berv.min() * 1000)[0])[0]
-    )
+    index_min_backup = int(find_nearest(wave, doppler_r(wave[0], berv.max() * 1000)[0])[0])
+    index_max_backup = int(find_nearest(wave, doppler_r(wave[-1], berv.min() * 1000)[0])[0])
     correction_backup[:, 0:index_min_backup] = 1
     correction_backup[:, index_max_backup:] = 1
     index_hole_right = int(
-        myf.find_nearest(wave, hole_right + 1)[0]
+        find_nearest(wave, hole_right + 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     index_hole_left = int(
-        myf.find_nearest(wave, hole_left - 1)[0]
+        find_nearest(wave, hole_left - 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     correction_backup[:, index_hole_left : index_hole_right + 1] = 1
 
@@ -1667,15 +1658,15 @@ def yarara_correct_telluric_gradient(
 
     diff2_backup = flux_backup / new_continuum - ref
 
-    idx_min = myf.find_nearest(wave, 5700)[0]
-    idx_max = myf.find_nearest(wave, 5900)[0] + 1
+    idx_min = find_nearest(wave, 5700)[0]
+    idx_max = find_nearest(wave, 5900)[0] + 1
 
     new_wave = wave[int(idx_min) : int(idx_max)]
 
     fig = plt.figure(figsize=(21, 9))
     plt.axes([0.05, 0.55, 0.90, 0.40])
     ax = plt.gca()
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
         100 * diff_backup[:, int(idx_min) : int(idx_max)],
@@ -1693,7 +1684,7 @@ def yarara_correct_telluric_gradient(
     ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
     plt.axes([0.05, 0.1, 0.90, 0.40], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
         100 * diff2_backup[:, int(idx_min) : int(idx_max)],

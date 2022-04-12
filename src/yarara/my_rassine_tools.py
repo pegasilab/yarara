@@ -1,42 +1,15 @@
 from __future__ import annotations
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Oct  2 15:07:14 2019
-
-@author: Cretignier Michael 
-@university University of Geneva
-"""
-
-# =============================================================================
-# Yet Another RAssine Related Arborescence (YARARA)
-# =============================================================================
-
-import datetime
 import glob as glob
-import logging
 import os
 import time
 import warnings
 
-import matplotlib.cm as cmx
-import matplotlib.colors as mplcolors
-import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-from astropy.io import fits
-from colorama import Fore
-from scipy.interpolate import interp1d
-from tqdm import tqdm
 
-from . import Rassine_functions as ras
-from . import io
-from . import my_classes as myc
-from . import my_functions as myf
-from . import sts
-from .paths import cwd, root
-from .util import print_iter, yarara_artefact_suppressed
+from . import io, sts
+from .paths import root
 
 warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 

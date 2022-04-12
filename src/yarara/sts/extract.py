@@ -3,11 +3,12 @@ from __future__ import annotations
 import glob as glob
 from typing import TYPE_CHECKING
 
+import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 
-from .. import my_classes as myc
-from .. import my_functions as myf
+from ..analysis import tableXY
+from ..util import map_rnr
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -30,7 +31,7 @@ def yarara_get_berv_value(
 
     self.import_table()
     tab = self.table
-    berv = myc.tableXY(tab["jdb"], tab["berv"], tab["berv"] * 0 + 0.3)
+    berv = tableXY(tab["jdb"], tab["berv"], tab["berv"] * 0 + 0.3)
     berv.fit_sinus(guess=[30, 365.25, 0, 0, 0, 0], Draw=False)
     amp = berv.lmfit.params["amp"].value
     period = berv.lmfit.params["period"].value
@@ -71,7 +72,7 @@ def yarara_get_orders(self: spec_time_series):
     self.import_material()
     mat = self.material
     orders = np.array(mat["orders_rnr"])
-    orders = myf.map_rnr(orders)
+    orders = map_rnr(orders)
     orders = np.round(orders, 0)
     self.orders = orders
     return orders
@@ -82,7 +83,7 @@ def yarara_get_pixels(self: spec_time_series):
     self.import_material()
     mat = self.material
     pixels = np.array(mat["pixels_rnr"])
-    pixels = myf.map_rnr(pixels)
+    pixels = map_rnr(pixels)
     pixels = np.round(pixels, 0)
     self.pixels = pixels
     return pixels

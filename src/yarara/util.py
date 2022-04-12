@@ -1,15 +1,9 @@
 """
 This modules does XXX
 """
-import matplotlib.pylab as plt
 import numpy as np
-import pandas as pd
-from astropy.modeling.models import Voigt1D
 from colorama import Fore
-from scipy import ndimage, signal
 from scipy.interpolate import interp1d
-from scipy.signal import savgol_filter
-from scipy.stats import norm
 from tqdm import tqdm
 
 
@@ -244,7 +238,6 @@ def ratio_line(l1, l2, grid, spectrei, continuum, window=3):
     )
 
 
-# util
 def print_box(sentence):
     print("\n")
     print("L" * len(sentence))
@@ -253,7 +246,6 @@ def print_box(sentence):
     print("\n")
 
 
-# util
 def doppler_r(lamb, v):
     """Relativistic Doppler. Take (wavelength, velocity in [m/s]) and return lambda observed and lambda source"""
     c = 299.792e6

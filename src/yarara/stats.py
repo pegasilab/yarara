@@ -1,16 +1,11 @@
 """
 This modules does XXX
 """
-import os
-import pickle
 from itertools import combinations
 
-import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-from astropy.modeling.models import Voigt1D
-from scipy import ndimage, signal
-from scipy.interpolate import interp1d
+from scipy import signal
 from scipy.signal import savgol_filter
 from scipy.stats import norm
 from tqdm import tqdm

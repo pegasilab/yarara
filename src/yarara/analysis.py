@@ -12,8 +12,10 @@ from wpca import EMPCA
 from wpca import PCA as PCA_BACK
 from wpca import WPCA
 
-from . import my_functions as myf
-from .my_functions import rm_outliers as rm_out
+from .mathfun import gaussian, sinus
+from .stats import local_max, mad
+from .stats import rm_outliers as rm_out
+from .stats import smooth
 
 
 class table(object):
@@ -211,7 +213,7 @@ class tableXY(object):
                 self.yerr = np.array(yerr[1])
         else:
             if sum(~np.isnan(self.y.astype("float"))):
-                self.yerr = np.ones(len(self.x)) * myf.mad(
+                self.yerr = np.ones(len(self.x)) * mad(
                     rm_out(self.y.astype("float"), m=2, kind="sigma")[1]
                 )
                 if not np.sum(abs(self.yerr)):
@@ -476,20 +478,20 @@ class tableXY(object):
             plt.show()
 
     def find_max(self, vicinity=3):
-        self.index_max, self.y_max = myf.local_max(self.y, vicinity=vicinity)
+        self.index_max, self.y_max = local_max(self.y, vicinity=vicinity)
         self.index_max = self.index_max.astype("int")
         self.x_max = self.x[self.index_max.astype("int")]
         self.max_extremum = tableXY(self.x_max, self.y_max)
 
     def find_min(self, vicinity=3):
-        self.index_min, self.y_min = myf.local_max(-self.y, vicinity=vicinity)
+        self.index_min, self.y_min = local_max(-self.y, vicinity=vicinity)
         self.index_min = self.index_min.astype("int")
         self.y_min *= -1
         self.x_min = self.x[self.index_min.astype("int")]
         self.min_extremum = tableXY(self.x_min, self.y_min)
 
     def smooth(self, box_pts=5, shape="rectangular", replace=True):
-        self.y_smoothed = myf.smooth(self.y, box_pts, shape=shape)
+        self.y_smoothed = smooth(self.y, box_pts, shape=shape)
 
         self.smoothed = tableXY(self.x, self.y_smoothed, self.xerr, self.yerr)
 
@@ -589,7 +591,7 @@ class tableXY(object):
             # plt.fill_between(new_x,np.polyval(coeff, new_x)-uncertainty/2,np.polyval(coeff, new_x)+uncertainty/2,alpha=0.4,color=color)
 
     def fit_sinus(self, Draw=False, d=0, guess=[0, 1, 0, 0, 0, 0], p_max=500, report=False, c="r"):
-        gmodel = Model(myf.sinus)
+        gmodel = Model(sinus)
         fit_params = Parameters()
         fit_params.add("amp", value=guess[0])
         fit_params.add("period", value=guess[1], min=0, max=p_max)
@@ -662,7 +664,7 @@ class tableXY(object):
         if guess is None:
             guess = [-0.5, 0, 3, 1]
 
-        gmodel = Model(myf.gaussian)
+        gmodel = Model(gaussian)
         fit_params = Parameters()
         fit_params.add("amp", value=guess[0], min=-1, max=0)
         fit_params.add("cen", value=guess[1])

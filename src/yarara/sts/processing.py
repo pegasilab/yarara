@@ -10,22 +10,25 @@ import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from astropy.io import fits
+from colorama import Fore
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
 from .. import io
-from .. import my_classes as myc
-from .. import my_functions as myf
+from ..analysis import table, tableXY
 from ..paths import root
-from ..tables import tableXY
+from ..plots import auto_axis, my_colormesh
+from ..stats import IQ, find_nearest, identify_nearest, match_nearest, smooth2d
+from ..util import doppler_r, flux_norm_std, get_phase, print_box
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
 
 
 # =============================================================================
-# COMPUTE ALLTHE TEMPERATURE SENSITIVE RATIO
+# COMPUTE ALL THE TEMPERATURE SENSITIVE RATIO
 # =============================================================================
+
 
 def yarara_activity_index(
     self: spec_time_series,
@@ -54,7 +57,7 @@ def yarara_activity_index(
     calib_std : std error due to flat-field photon noise (5.34e-4 or 10.00e-4 Cretignier+20)
     """
 
-    myf.print_box("\n---- RECIPE : ACTIVITY PROXIES EXTRACTION ----\n")
+    print_box("\n---- RECIPE : ACTIVITY PROXIES EXTRACTION ----\n")
 
     directory = self.directory
     rv_sys = self.rv_sys
@@ -157,8 +160,8 @@ def yarara_activity_index(
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
 
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
-        dustbin, f_norm_std = myf.flux_norm_std(
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
+        dustbin, f_norm_std = flux_norm_std(
             f, f_std, file["matching_diff"]["continuum_" + continuum], c_std
         )
 
@@ -207,25 +210,25 @@ def yarara_activity_index(
         rv_sys *= 1000
 
     def find_proxy(vec):
-        center = myf.doppler_r(vec[0], rv_sys)[0]
-        left = myf.doppler_r(vec[0] - vec[1], rv_sys)[0]
-        right = myf.doppler_r(vec[0] + vec[1], rv_sys)[0]
+        center = doppler_r(vec[0], rv_sys)[0]
+        left = doppler_r(vec[0] - vec[1], rv_sys)[0]
+        right = doppler_r(vec[0] + vec[1], rv_sys)[0]
 
-        center_idx_proxy = myf.find_nearest(wave, center)[0]
-        left_idx_proxy = myf.find_nearest(wave, left)[0]
-        right_idx_proxy = myf.find_nearest(wave, right)[0]
+        center_idx_proxy = find_nearest(wave, center)[0]
+        left_idx_proxy = find_nearest(wave, left)[0]
+        right_idx_proxy = find_nearest(wave, right)[0]
 
-        left = myf.doppler_r(vec[0] - vec[2], rv_sys)[0]
-        right = myf.doppler_r(vec[0] + vec[2], rv_sys)[0]
+        left = doppler_r(vec[0] - vec[2], rv_sys)[0]
+        right = doppler_r(vec[0] + vec[2], rv_sys)[0]
 
-        left_idx_hole = myf.find_nearest(wave, left)[0]
-        right_idx_hole = myf.find_nearest(wave, right)[0]
+        left_idx_hole = find_nearest(wave, left)[0]
+        right_idx_hole = find_nearest(wave, right)[0]
 
-        left = myf.doppler_r(vec[0] - vec[3], rv_sys)[0]
-        right = myf.doppler_r(vec[0] + vec[3], rv_sys)[0]
+        left = doppler_r(vec[0] - vec[3], rv_sys)[0]
+        right = doppler_r(vec[0] + vec[3], rv_sys)[0]
 
-        left_idx_cont = myf.find_nearest(wave, left)[0]
-        right_idx_cont = myf.find_nearest(wave, right)[0]
+        left_idx_cont = find_nearest(wave, left)[0]
+        right_idx_cont = find_nearest(wave, right)[0]
 
         return (
             int(center_idx_proxy),
@@ -266,7 +269,7 @@ def yarara_activity_index(
             proxy_std = np.sqrt(proxy_std)
             norm_proxy = 1
 
-        prox = myc.tableXY(jdb, proxy, proxy_std)
+        prox = tableXY(jdb, proxy, proxy_std)
         prox.rms_w()
         proxy_rms = prox.rms
         windex = int(1 / dgrid)
@@ -277,12 +280,12 @@ def yarara_activity_index(
             axis=0,
         )
 
-        s = myc.tableXY(wave[mask_proxy], slope)
+        s = tableXY(wave[mask_proxy], slope)
         s.smooth(box_pts=7, shape="savgol")
-        s.center_symmetrise(myf.doppler_r(vec[0], rv_sys)[0], replace=True)
+        s.center_symmetrise(doppler_r(vec[0], rv_sys)[0], replace=True)
         slope = s.y
 
-        t = myc.table(flux[:, mask_proxy] - np.mean(flux[:, mask_proxy], axis=0))
+        t = table(flux[:, mask_proxy] - np.mean(flux[:, mask_proxy], axis=0))
         t.rms_w(1 / err_flux[:, mask_proxy] ** 2, axis=0)
         rslope = np.zeros(len(flux.T))
         rslope[mask_proxy] = slope
@@ -351,7 +354,7 @@ def yarara_activity_index(
         plt.subplot(3, 1, 3, sharex=ax)
         plt.plot(wave_ref, flux_ref, color="k")
         for p in all_proxies:
-            center = myf.doppler_r(p[0], rv_sys)[0]
+            center = doppler_r(p[0], rv_sys)[0]
             hw = p[1]
             plt.axvspan(xmin=center - hw, xmax=center + hw, alpha=0.5, color="r")
             plt.axvline(x=center, color="r")
@@ -430,29 +433,29 @@ def yarara_activity_index(
         else:
             self.yarara_obs_info(kw=pd.DataFrame(save))
 
-    self.ca2k = myc.tableXY(jdb, save["CaIIK"], save["CaIIK_std"] + calib_std)
-    self.ca2h = myc.tableXY(jdb, save["CaIIH"], save["CaIIH_std"] + calib_std)
-    self.ca2 = myc.tableXY(jdb, save["CaII"], save["CaII_std"] + calib_std)
-    self.rhk = myc.tableXY(jdb, save["RHK"], save["RHK_std"])
-    self.mg1 = myc.tableXY(jdb, save["MgI"], save["MgI_std"] + calib_std)
-    self.mga = myc.tableXY(jdb, save["MgIa"], save["MgIa_std"] + calib_std)
-    self.mgb = myc.tableXY(jdb, save["MgIb"], save["MgIb_std"] + calib_std)
-    self.mgc = myc.tableXY(jdb, save["MgIc"], save["MgIc_std"] + calib_std)
-    self.nad = myc.tableXY(jdb, save["NaD"], save["NaD_std"] + calib_std)
-    self.nad1 = myc.tableXY(jdb, save["NaD1"], save["NaD1_std"] + calib_std)
-    self.nad2 = myc.tableXY(jdb, save["NaD2"], save["NaD2_std"] + calib_std)
-    self.ha = myc.tableXY(jdb, save["Ha"], save["Ha_std"] + calib_std)
-    self.hb = myc.tableXY(jdb, save["Hb"], save["Hb_std"] + calib_std)
-    self.hc = myc.tableXY(jdb, save["Hc"], save["Hc_std"] + calib_std)
-    self.hd = myc.tableXY(jdb, save["Hd"], save["Hd_std"] + calib_std)
-    self.heps = myc.tableXY(jdb, save["Heps"], save["Heps_std"] + calib_std)
-    self.hed3 = myc.tableXY(jdb, save["HeID3"], save["HeID3_std"] + calib_std)
-    self.ca1 = myc.tableXY(jdb, save["CaI"], save["CaI_std"] + calib_std)
+    self.ca2k = tableXY(jdb, save["CaIIK"], save["CaIIK_std"] + calib_std)
+    self.ca2h = tableXY(jdb, save["CaIIH"], save["CaIIH_std"] + calib_std)
+    self.ca2 = tableXY(jdb, save["CaII"], save["CaII_std"] + calib_std)
+    self.rhk = tableXY(jdb, save["RHK"], save["RHK_std"])
+    self.mg1 = tableXY(jdb, save["MgI"], save["MgI_std"] + calib_std)
+    self.mga = tableXY(jdb, save["MgIa"], save["MgIa_std"] + calib_std)
+    self.mgb = tableXY(jdb, save["MgIb"], save["MgIb_std"] + calib_std)
+    self.mgc = tableXY(jdb, save["MgIc"], save["MgIc_std"] + calib_std)
+    self.nad = tableXY(jdb, save["NaD"], save["NaD_std"] + calib_std)
+    self.nad1 = tableXY(jdb, save["NaD1"], save["NaD1_std"] + calib_std)
+    self.nad2 = tableXY(jdb, save["NaD2"], save["NaD2_std"] + calib_std)
+    self.ha = tableXY(jdb, save["Ha"], save["Ha_std"] + calib_std)
+    self.hb = tableXY(jdb, save["Hb"], save["Hb_std"] + calib_std)
+    self.hc = tableXY(jdb, save["Hc"], save["Hc_std"] + calib_std)
+    self.hd = tableXY(jdb, save["Hd"], save["Hd_std"] + calib_std)
+    self.heps = tableXY(jdb, save["Heps"], save["Heps_std"] + calib_std)
+    self.hed3 = tableXY(jdb, save["HeID3"], save["HeID3_std"] + calib_std)
+    self.ca1 = tableXY(jdb, save["CaI"], save["CaI_std"] + calib_std)
 
     self.infos["latest_dico_activity"] = sub_dico
 
     if plot:
-        phase = myf.get_phase(np.array(self.table.jdb), 365.25)
+        phase = get_phase(np.array(self.table.jdb), 365.25)
         for name, modulo, phase_mod in zip(["", "_1year"], [None, 365.25], [None, phase]):
             titles = [
                 "CaII H&K",
@@ -477,7 +480,7 @@ def yarara_activity_index(
                     plt.subplot(3, 4, num, sharex=ax)
                     plt.title(titles[num - 1])
 
-                    vec = myc.tableXY(
+                    vec = tableXY(
                         jdb,
                         save_backup[p[4]],
                         save_backup[p[4] + "_std"] + calib_std,
@@ -491,7 +494,7 @@ def yarara_activity_index(
                     )
 
                     if optimize:
-                        vec2 = myc.tableXY(jdb, save[p[4]], save[p[4] + "_std"] + calib_std)
+                        vec2 = tableXY(jdb, save[p[4]], save[p[4] + "_std"] + calib_std)
                         vec2.y -= np.mean(vec2.y)
                         vec2.y += np.mean(vec.y)
                         vec2.plot(
@@ -502,7 +505,7 @@ def yarara_activity_index(
                             phase_mod=phase,
                         )
 
-                    myf.auto_axis(vec.y, m=5)
+                    auto_axis(vec.y, m=5)
                     plt.xlabel("Time")
                     plt.ylabel("Proxy [unit arb.]")
             plt.subplots_adjust(
@@ -514,6 +517,7 @@ def yarara_activity_index(
                 hspace=0.35,
             )
             plt.savefig(self.dir_root + "IMAGES/all_proxies" + name + ".pdf")
+
 
 # =============================================================================
 # COMPUTE THE CCF OF THE RASSINE SPECTRUM
@@ -673,7 +677,7 @@ def yarara_ccf(
 
     print("\n [INFO] RV sys : %.2f [km/s] \n" % (rv_sys / 1000))
 
-    mask[:, 0] = myf.doppler_r(mask[:, 0], rv_sys)[0]
+    mask[:, 0] = doppler_r(mask[:, 0], rv_sys)[0]
 
     for i, j in enumerate(files):
         file = pd.read_pickle(j)
@@ -694,7 +698,7 @@ def yarara_ccf(
         c = file[sub_dico]["continuum_" + continuum] + epsilon
         c_std = file["continuum_err"]
 
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
 
         flux.append(f_norm)
         flux_err.append(f_norm_std)
@@ -757,7 +761,7 @@ def yarara_ccf(
     if sub_dico == "matching_brute":
         force_brute = True
 
-    mask_shifted = myf.doppler_r(mask[:, 0], (rv_range + 5) * 1000)
+    mask_shifted = doppler_r(mask[:, 0], (rv_range + 5) * 1000)
 
     if force_brute:
         brute_mask = np.array(load["mask_brute"])
@@ -766,11 +770,11 @@ def yarara_ccf(
         )
         line_killed = np.sum(brute_mask * used_region, axis=1) == 0
         mask = mask[line_killed]
-        mask_shifted = myf.doppler_r(mask[:, 0], (rv_range + 5) * 1000)
+        mask_shifted = doppler_r(mask[:, 0], (rv_range + 5) * 1000)
 
     mask = mask[
-        (myf.doppler_r(mask[:, 0], 30000)[0] < grid.max())
-        & (myf.doppler_r(mask[:, 0], 30000)[1] > grid.min()),
+        (doppler_r(mask[:, 0], 30000)[0] < grid.max())
+        & (doppler_r(mask[:, 0], 30000)[1] > grid.min()),
         :,
     ]  # supres line farther than 30kms
     if wave_min is not None:
@@ -784,8 +788,8 @@ def yarara_ccf(
     mask_max = np.max(mask[:, 0])
 
     # supress useless part of the spectra to speed up the CCF
-    grid_min = int(myf.find_nearest(grid, myf.doppler_r(mask_min, -100000)[0])[0])
-    grid_max = int(myf.find_nearest(grid, myf.doppler_r(mask_max, 100000)[0])[0])
+    grid_min = int(find_nearest(grid, doppler_r(mask_min, -100000)[0])[0])
+    grid_max = int(find_nearest(grid, doppler_r(mask_max, 100000)[0])[0])
     grid = grid[grid_min:grid_max]
 
     log_grid = np.linspace(np.log10(grid).min(), np.log10(grid).max(), len(grid))
@@ -817,9 +821,9 @@ def yarara_ccf(
         mask_wave = np.log10(mask[:, 0])
         mask_contrast = mask[:, 1] * weighted + (1 - weighted)
 
-        mask_hole = (
-            mask[:, 0] > myf.doppler_r(file_random["parameters"]["hole_left"], -30000)[0]
-        ) & (mask[:, 0] < myf.doppler_r(file_random["parameters"]["hole_right"], 30000)[0])
+        mask_hole = (mask[:, 0] > doppler_r(file_random["parameters"]["hole_left"], -30000)[0]) & (
+            mask[:, 0] < doppler_r(file_random["parameters"]["hole_right"], 30000)[0]
+        )
         mask_contrast[mask_hole] = 0
 
         log_grid_mask = np.arange(
@@ -831,7 +835,7 @@ def yarara_ccf(
 
         # mask_contrast /= np.sqrt(np.nansum(mask_contrast**2)) #UPDATE 04.05.21 (DOES NOT WORK)
 
-        match = myf.identify_nearest(mask_wave, log_grid_mask)
+        match = identify_nearest(mask_wave, log_grid_mask)
         for j in np.arange(-delta_window, delta_window + 1, 1):
             log_mask[match + j] = (mask_contrast) ** (1 + int(squared))
 
@@ -898,7 +902,7 @@ def yarara_ccf(
     for j, i in enumerate(files):
         all_flux.append(
             interp1d(
-                np.log10(myf.doppler_r(grid, rv_shift[j])[0]),
+                np.log10(doppler_r(grid, rv_shift[j])[0]),
                 flux[j],
                 kind="cubic",
                 bounds_error=False,
@@ -911,7 +915,7 @@ def yarara_ccf(
     for j, i in enumerate(files):
         all_flux_err.append(
             interp1d(
-                np.log10(myf.doppler_r(grid, rv_shift[j])[0]),
+                np.log10(doppler_r(grid, rv_shift[j])[0]),
                 flux_err[j],
                 kind="linear",
                 bounds_error=False,
@@ -920,7 +924,7 @@ def yarara_ccf(
         )
     all_flux_err = np.array(all_flux_err)
 
-    vrad, ccf_power, ccf_power_std = myf.ccf(
+    vrad, ccf_power, ccf_power_std = ccf(
         log_grid[used_region],
         all_flux[:, used_region],
         log_template[used_region],
@@ -1009,8 +1013,8 @@ def yarara_ccf(
             print("File (%.0f/%.0f) %s SNR %.0f reduced" % (j + 1, len(files), i, snr[j]))
         file = pd.read_pickle(i)
         # log_spectrum = interp1d(np.log10(grid), flux[j], kind='cubic', bounds_error=False, fill_value='extrapolate')(log_grid)
-        # vrad, ccf_power_old = myf.ccf2(log_grid, log_spectrum,  log_grid_mask, log_mask)
-        # vrad, ccf_power_old = myf.ccf(log_grid, log_spectrum, log_template, rv_range=45, oversampling=ccf_oversampling)
+        # vrad, ccf_power_old = ccf2(log_grid, log_spectrum,  log_grid_mask, log_mask)
+        # vrad, ccf_power_old = ccf(log_grid, log_spectrum, log_template, rv_range=45, oversampling=ccf_oversampling)
         ccf_power_old = ccf_power[:, j]
         ccf_power_old_std = ccf_power_std[:, j]
         ccf = tableXY(vrad / 1000, ccf_power_old, ccf_power_old_std)
@@ -1220,7 +1224,7 @@ def yarara_ccf(
             file["ccf_gaussian"] = save_gauss
             #
             #                    ccf.my_bisector(between_max=True,oversampling=50)
-            #                    bis = myc.tableXY(ccf.bisector[5::50,1],ccf.bisector[5::50,0]+center,ccf.bisector[5::50,2])
+            #                    bis = tableXY(ccf.bisector[5::50,1],ccf.bisector[5::50,0]+center,ccf.bisector[5::50,2])
             #
             #                    save_bis = {'bis_flux':bis.x,'bis_rv':bis.y,'bis_rv_std':bis.yerr}
             #                    file['ccf_bis'] = save_bis
@@ -1244,14 +1248,14 @@ def yarara_ccf(
         print("[WARNING] The CCF is larger than the RV borders for the fit")
         self.warning_rv_borders = True
 
-    self.ccf_rv = myc.tableXY(jdb, np.array(rvs) * 1000, np.array(rvs_std) * 1000)
-    self.ccf_centers = myc.tableXY(jdb, np.array(centers) * 1000, np.array(centers_std) * 1000)
-    self.ccf_contrast = myc.tableXY(jdb, amplitudes, amplitudes_std)
-    self.ccf_depth = myc.tableXY(jdb, depths, depths_std)
-    self.ccf_fwhm = myc.tableXY(jdb, fwhms, fwhms_std)
-    self.ccf_vspan = myc.tableXY(jdb, np.array(bisspan) * 1000, np.array(bisspan_std) * 1000)
-    self.ccf_ew = myc.tableXY(jdb, np.array(ew), np.array(ew_std))
-    self.ccf_bis0 = myc.tableXY(jdb, b0s, np.sqrt(2) * np.array(rvs_std) * 1000)
+    self.ccf_rv = tableXY(jdb, np.array(rvs) * 1000, np.array(rvs_std) * 1000)
+    self.ccf_centers = tableXY(jdb, np.array(centers) * 1000, np.array(centers_std) * 1000)
+    self.ccf_contrast = tableXY(jdb, amplitudes, amplitudes_std)
+    self.ccf_depth = tableXY(jdb, depths, depths_std)
+    self.ccf_fwhm = tableXY(jdb, fwhms, fwhms_std)
+    self.ccf_vspan = tableXY(jdb, np.array(bisspan) * 1000, np.array(bisspan_std) * 1000)
+    self.ccf_ew = tableXY(jdb, np.array(ew), np.array(ew_std))
+    self.ccf_bis0 = tableXY(jdb, b0s, np.sqrt(2) * np.array(rvs_std) * 1000)
     self.ccf_timeseries = np.array(
         [
             ew,
@@ -1342,32 +1346,32 @@ def yarara_ccf(
         self.ccf_ew.plot()
         plt.title("EW", fontsize=14)
         plt.ylim(
-            np.nanpercentile(ew, 25) - 1.5 * myf.IQ(ew),
-            np.nanpercentile(ew, 75) + 1.5 * myf.IQ(ew),
+            np.nanpercentile(ew, 25) - 1.5 * IQ(ew),
+            np.nanpercentile(ew, 75) + 1.5 * IQ(ew),
         )
 
         plt.subplot(4, 2, 5, sharex=ax)  # .scatter(jdb,amplitudes,color='k')
         self.ccf_contrast.plot()
         plt.title("Contrast", fontsize=14)
         plt.ylim(
-            np.nanpercentile(amplitudes, 25) - 1.5 * myf.IQ(amplitudes),
-            np.nanpercentile(amplitudes, 75) + 1.5 * myf.IQ(amplitudes),
+            np.nanpercentile(amplitudes, 25) - 1.5 * IQ(amplitudes),
+            np.nanpercentile(amplitudes, 75) + 1.5 * IQ(amplitudes),
         )
 
         plt.subplot(4, 2, 4, sharex=ax)  # .scatter(jdb,fwhms,color='k')
         self.ccf_fwhm.plot()
         plt.title("FWHM", fontsize=14)
         plt.ylim(
-            np.nanpercentile(fwhms, 25) - 1.5 * myf.IQ(fwhms),
-            np.nanpercentile(fwhms, 75) + 1.5 * myf.IQ(fwhms),
+            np.nanpercentile(fwhms, 25) - 1.5 * IQ(fwhms),
+            np.nanpercentile(fwhms, 75) + 1.5 * IQ(fwhms),
         )
 
         plt.subplot(4, 2, 6, sharex=ax)  # .scatter(jdb,depths,color='k')
         self.ccf_depth.plot()
         plt.title("Depth", fontsize=14)
         plt.ylim(
-            np.nanpercentile(depths, 25) - 1.5 * myf.IQ(depths),
-            np.nanpercentile(depths, 75) + 1.5 * myf.IQ(depths),
+            np.nanpercentile(depths, 25) - 1.5 * IQ(depths),
+            np.nanpercentile(depths, 75) + 1.5 * IQ(depths),
         )
 
         plt.subplot(4, 2, 2, sharex=ax, sharey=ax)
@@ -1382,8 +1386,8 @@ def yarara_ccf(
         self.ccf_vspan.plot()
         plt.title(r"RV $-$ Center (VSPAN)", fontsize=14)
         plt.ylim(
-            np.nanpercentile(self.ccf_vspan.y, 25) - 1.5 * myf.IQ(self.ccf_vspan.y),
-            np.nanpercentile(self.ccf_vspan.y, 75) + 1.5 * myf.IQ(self.ccf_vspan.y),
+            np.nanpercentile(self.ccf_vspan.y, 25) - 1.5 * IQ(self.ccf_vspan.y),
+            np.nanpercentile(self.ccf_vspan.y, 75) + 1.5 * IQ(self.ccf_vspan.y),
         )
         plt.subplots_adjust(left=0.07, right=0.93, top=0.95, bottom=0.08, wspace=0.3, hspace=0.3)
 
@@ -1505,7 +1509,7 @@ def yarara_map(
         f_std = file["flux_err"]
         c = file[sub_dico]["continuum_" + continuum] + epsilon
         c_std = file["continuum_err"]
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
 
         snr.append(file["parameters"]["SNR_5500"])
         flux.append(f_norm)
@@ -1559,11 +1563,11 @@ def yarara_map(
     idx2_max = len(flux)
 
     if wave_min is not None:
-        idx_min, val, dist = myf.find_nearest(wave, wave_min)
+        idx_min, val, dist = find_nearest(wave, wave_min)
         if val < wave_min:
             idx_min += 1
     if wave_max is not None:
-        idx_max, val, dist = myf.find_nearest(wave, wave_max)
+        idx_max, val, dist = find_nearest(wave, wave_max)
         idx_max += 1
         if val > wave_max:
             idx_max -= 1
@@ -1574,7 +1578,7 @@ def yarara_map(
         idx2_max = time_max + 1
 
     if (idx_min == 0) & (idx_max == 0):
-        idx_max = myf.find_nearest(wave, np.min(wave) + (wave_max - wave_min))[0]
+        idx_max = find_nearest(wave, np.min(wave) + (wave_max - wave_min))[0]
 
     noise_matrix, noise_values = self.yarara_poissonian_noise(
         noise_wanted=p_noise, wave_ref=None, flat_snr=True
@@ -1593,8 +1597,8 @@ def yarara_map(
 
     if np.sum(abs(rv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, flux[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, rv[j])[1]
+            test = tableXY(wave, flux[j], 0 * wave)
+            test.x = doppler_r(test.x, rv[j])[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True)
             flux[j] = test.y
 
@@ -1623,19 +1627,19 @@ def yarara_map(
         high_cmap = np.percentile(flux - ref, 97.5)
 
     if ratio:
-        diff = myf.smooth2d(flux / (ref + epsilon), smooth_map)
+        diff = smooth2d(flux / (ref + epsilon), smooth_map)
         low_cmap = 1 - 0.005
         high_cmap = 1 + 0.005
     else:
-        diff = myf.smooth2d(flux - ref, smooth_map)
+        diff = smooth2d(flux - ref, smooth_map)
 
     if modulo is not None:
         diff = self.yarara_map_folded(diff, modulo=modulo, jdb=jdb)[0]
 
     if np.sum(abs(berv)) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, diff[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, berv[j] * 1000)[1]
+            test = tableXY(wave, diff[j], 0 * wave)
+            test.x = doppler_r(test.x, berv[j] * 1000)[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True)
             diff[j] = test.y
 
@@ -1644,7 +1648,7 @@ def yarara_map(
     if index != "index":
         dtime = np.median(np.diff(jdb))
         liste_time = np.arange(jdb.min(), jdb.max() + dtime, dtime)
-        match_time = myf.match_nearest(liste_time, jdb)
+        match_time = match_nearest(liste_time, jdb)
 
         snr2 = np.nan * np.ones(len(liste_time))
         jdb2 = np.nan * np.ones(len(liste_time))
@@ -1661,7 +1665,7 @@ def yarara_map(
         if new:
             fig = plt.figure(figsize=(24, 6))
             plt.axes([0.1, 0.1, 0.8, 0.8])
-        myf.my_colormesh(
+        my_colormesh(
             wave,
             np.arange(len(diff)),
             diff * unit,
@@ -1695,7 +1699,7 @@ def yarara_retropropagation_correction(
     # rurunning the cosmics recipes will kill this correction, therefore a sphinx warning is included in the recipes
     # when a loop is rerun (beginning at fourier correction or water correction), make sure to finish completely the loop
 
-    myf.print_box("\n---- RECIPE : RETROPROPAGATION CORRECTION MAP ----\n")
+    print_box("\n---- RECIPE : RETROPROPAGATION CORRECTION MAP ----\n")
 
     directory = self.directory
 
@@ -1716,8 +1720,8 @@ def yarara_retropropagation_correction(
 
     wave = np.array(self.material["wave"])
     if hl is not None:
-        i1 = int(myf.find_nearest(wave, hl)[0])
-        i2 = int(myf.find_nearest(wave, hr)[0])
+        i1 = int(find_nearest(wave, hl)[0])
+        i2 = int(find_nearest(wave, hr)[0])
 
     epsilon = 1e-12
 
@@ -1771,8 +1775,8 @@ def uncorrect_hole(self: spec_time_series, conti, conti_ref, values_forbidden=[0
     hr = file_test["parameters"]["hole_right"]
 
     if hl != -99.9:
-        i1 = int(myf.find_nearest(wave, hl)[0])
-        i2 = int(myf.find_nearest(wave, hr)[0])
+        i1 = int(find_nearest(wave, hl)[0])
+        i2 = int(find_nearest(wave, hr)[0])
         conti[:, i1 - 1 : i2 + 2] = conti_ref[:, i1 - 1 : i2 + 2].copy()
 
     for l in values_forbidden:

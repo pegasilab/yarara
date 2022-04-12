@@ -4,18 +4,16 @@ import glob as glob
 import time
 from typing import TYPE_CHECKING
 
-import matplotlib.cm as cmx
-import matplotlib.colors as mplcolors
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
 from .. import io
-from .. import my_classes as myc
-from .. import my_functions as myf
-from ..paths import root
-from ..util import yarara_artefact_suppressed
+from ..analysis import table, tableXY
+from ..plots import my_colormesh
+from ..stats import find_nearest, smooth, smooth2d
+from ..util import doppler_r, print_box
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -36,8 +34,7 @@ def yarara_correct_activity(
     reference="median",
     rv_shift="none",
     proxy_corr=["CaII"],
-):
-
+) -> None:
     """
     Display the time-series spectra with proxies and its correlation
 
@@ -61,7 +58,7 @@ def yarara_correct_activity(
 
     """
 
-    myf.print_box("\n---- RECIPE : CORRECTION ACTIVITY (CCF MOMENTS) ----\n")
+    print_box("\n---- RECIPE : CORRECTION ACTIVITY (CCF MOMENTS) ----\n")
 
     directory = self.directory
 
@@ -127,7 +124,7 @@ def yarara_correct_activity(
     mean_rv = np.mean(rv)
     rv = rv - mean_rv
 
-    #        proxy = myc.tableXY(jdb,proxy)
+    #        proxy = tableXY(jdb,proxy)
     #        proxy.substract_polyfit(proxy_detrending)
     #        proxy = proxy.detrend_poly.y
 
@@ -150,21 +147,21 @@ def yarara_correct_activity(
     if high_cmap is None:
         high_cmap = np.percentile(flux - ref, 97.5)
 
-    diff = myf.smooth2d(flux - ref, smooth_map)
+    diff = smooth2d(flux - ref, smooth_map)
     diff_backup = diff.copy()
 
     if np.sum(rv) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, diff[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, rv[j] * 1000)[1]
+            test = tableXY(wave, diff[j], 0 * wave)
+            test.x = doppler_r(test.x, rv[j] * 1000)[1]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             diff[j] = test.y
 
-    collection = myc.table(diff.T)
+    collection = table(diff.T)
     base_vec = np.vstack([np.ones(len(flux)), proxy])
     collection.fit_base(base_vec, num_sim=1)
 
-    collection.coeff_fitted[:, 1] = myf.smooth(
+    collection.coeff_fitted[:, 1] = smooth(
         collection.coeff_fitted[:, 1], smooth_corr, shape="savgol"
     )
 
@@ -174,13 +171,13 @@ def yarara_correct_activity(
     correction_backup = correction.copy()
     if np.sum(rv) != 0:
         for j in tqdm(np.arange(len(flux))):
-            test = myc.tableXY(wave, correction[j], 0 * wave)
-            test.x = myf.doppler_r(test.x, rv[j] * 1000)[0]
+            test = tableXY(wave, correction[j], 0 * wave)
+            test.x = doppler_r(test.x, rv[j] * 1000)[0]
             test.interpolate(new_grid=wave, method="cubic", replace=True, interpolate_x=False)
             correction_backup[j] = test.y
 
-    index_min_backup = int(myf.find_nearest(wave, myf.doppler_r(wave[0], rv.max() * 1000)[0])[0])
-    index_max_backup = int(myf.find_nearest(wave, myf.doppler_r(wave[-1], rv.min() * 1000)[0])[0])
+    index_min_backup = int(find_nearest(wave, doppler_r(wave[0], rv.max() * 1000)[0])[0])
+    index_max_backup = int(find_nearest(wave, doppler_r(wave[-1], rv.min() * 1000)[0])[0])
     correction_backup[:, 0:index_min_backup] = 0
     correction_backup[:, index_max_backup:] = 0
 
@@ -197,19 +194,19 @@ def yarara_correct_activity(
     idx_max = len(wave)
 
     if wave_min is not None:
-        idx_min = myf.find_nearest(wave, wave_min)[0]
+        idx_min = find_nearest(wave, wave_min)[0]
     if wave_max is not None:
-        idx_max = myf.find_nearest(wave, wave_max)[0] + 1
+        idx_max = find_nearest(wave, wave_max)[0] + 1
 
     if (idx_min == 0) & (idx_max == 1):
-        idx_max = myf.find_nearest(wave, np.min(wave) + 500)[0] + 1
+        idx_max = find_nearest(wave, np.min(wave) + 500)[0] + 1
 
     new_wave = wave[int(idx_min) : int(idx_max)]
 
     fig = plt.figure(figsize=(21, 9))
 
     plt.axes([0.05, 0.66, 0.90, 0.25])
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff)),
         100 * diff_backup[:, int(idx_min) : int(idx_max)],
@@ -227,7 +224,7 @@ def yarara_correct_activity(
     ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
     plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff)),
         100 * diff2_backup[:, int(idx_min) : int(idx_max)],
@@ -245,7 +242,7 @@ def yarara_correct_activity(
     ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
     plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
-    myf.my_colormesh(
+    my_colormesh(
         new_wave,
         np.arange(len(diff)),
         100 * correction_backup[:, int(idx_min) : int(idx_max)],

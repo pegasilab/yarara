@@ -1,14 +1,22 @@
 from __future__ import annotations
 
 import glob as glob
+import logging
+import time
 from typing import TYPE_CHECKING
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from colorama import Fore
+from tqdm import tqdm
 
-from .. import my_classes as myc
-from .. import my_functions as myf
+from .. import io
+from ..analysis import tableXY
+from ..paths import root
+from ..plots import my_colormesh
+from ..stats import IQ, find_nearest, flat_clustering, smooth
+from ..util import doppler_r, flux_norm_std, print_box
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -17,6 +25,7 @@ if TYPE_CHECKING:
 # =============================================================================
 # YARARA NONE ZERO FLUX
 # =============================================================================
+
 
 def yarara_non_zero_flux(self: spec_time_series, spectrum=None, min_value=None):
     file_test = self.import_spectrum()
@@ -46,6 +55,7 @@ def yarara_non_zero_flux(self: spec_time_series, spectrum=None, min_value=None):
             min_value = np.min(spectrum[spectrum > 0])
         spectrum[mask & zero] = min_value
         return spectrum
+
 
 # =============================================================================
 #     CREATE MEDIAN SPECTRUM TELLURIC SUPRESSED
@@ -82,7 +92,7 @@ def yarara_median_master_backup(
 
     mask_percentile = [None, 50]
 
-    myf.print_box("\n---- RECIPE : PRODUCE MASTER MEDIAN SPECTRUM ----\n")
+    print_box("\n---- RECIPE : PRODUCE MASTER MEDIAN SPECTRUM ----\n")
 
     self.import_table()
     self.import_material()
@@ -139,7 +149,7 @@ def yarara_median_master_backup(
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
 
-        f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
 
         all_flux.append(f)
         all_conti.append(c)
@@ -183,7 +193,7 @@ def yarara_median_master_backup(
     model = pd.read_pickle(root + "/Python/Material/model_telluric.p")
     grid = model["wave"]
     spectre = model["flux_norm"]
-    telluric = myc.tableXY(grid, spectre)
+    telluric = tableXY(grid, spectre)
     telluric.find_min()
 
     all_min = np.array([telluric.x_min, telluric.y_min, telluric.index_min]).T
@@ -196,10 +206,10 @@ def yarara_median_master_backup(
 
     if supress_telluric:
         borders = np.array([all_min[:, 2] - all_width, all_min[:, 2] + all_width]).T
-        telluric_mask = myf.flat_clustering(len(grid), borders) != 0
+        telluric_mask = flat_clustering(len(grid), borders) != 0
         all_mask2 = []
         for j in tqdm(berv):
-            mask = myc.tableXY(myf.doppler_r(grid, j * 1000)[0], telluric_mask, 0 * grid)
+            mask = tableXY(doppler_r(grid, j * 1000)[0], telluric_mask, 0 * grid)
             mask.interpolate(new_grid=wavelength, method="linear", interpolate_x=False)
             all_mask2.append(mask.y != 0)
         all_mask2 = np.array(all_mask2).astype("float")
@@ -210,8 +220,8 @@ def yarara_median_master_backup(
     #        for j in tqdm(berv):
     #            i+=1
     #            borders = np.array([all_min[:,2]-all_width[i],all_min[:,2]+all_width[i]]).T
-    #            telluric_mask = myf.flat_clustering(len(grid),borders)!=0
-    #            mask = myc.tableXY(myf.doppler_r(grid,j*1000)[0],telluric_mask)
+    #            telluric_mask = flat_clustering(len(grid),borders)!=0
+    #            mask = tableXY(doppler_r(grid,j*1000)[0],telluric_mask)
     #            mask.interpolate(new_grid=wavelength,method='linear')
     #            all_mask2.append(mask.y!=0)
     #         all_mask2 = np.array(all_mask2).astype('float')
@@ -220,7 +230,7 @@ def yarara_median_master_backup(
         telluric_mask = telluric.y < (1 - telluric_tresh)
         all_mask = []
         for j in tqdm(berv):
-            mask = myc.tableXY(myf.doppler_r(grid, j * 1000)[0], telluric_mask, 0 * grid)
+            mask = tableXY(doppler_r(grid, j * 1000)[0], telluric_mask, 0 * grid)
             mask.interpolate(new_grid=wavelength, method="linear", interpolate_x=False)
             all_mask.append(mask.y != 0)
         all_mask = np.array(all_mask).astype("float")
@@ -235,8 +245,8 @@ def yarara_median_master_backup(
         if method == "median":
             for j in tqdm(rv_star):
                 i += 1
-                mask = myc.tableXY(
-                    myf.doppler_r(wavelength, j * 1000)[1],
+                mask = tableXY(
+                    doppler_r(wavelength, j * 1000)[1],
                     all_flux_norm[i],
                     0 * wavelength,
                 )
@@ -247,15 +257,15 @@ def yarara_median_master_backup(
             # print(np.shape(all_flux))
             for j in tqdm(rv_star):
                 i += 1
-                mask = myc.tableXY(
-                    myf.doppler_r(wavelength, j * 1000)[1],
+                mask = tableXY(
+                    doppler_r(wavelength, j * 1000)[1],
                     all_flux[i],
                     0 * wavelength,
                 )
                 mask.interpolate(new_grid=wavelength, method="linear", interpolate_x=False)
                 all_flux[i] = mask.y.copy()
-                mask = myc.tableXY(
-                    myf.doppler_r(wavelength, j * 1000)[1],
+                mask = tableXY(
+                    doppler_r(wavelength, j * 1000)[1],
                     all_conti[i],
                     0 * wavelength,
                 )
@@ -316,7 +326,7 @@ def yarara_median_master_backup(
     # med1[med1!=med1] = mean1[med1!=med1]
     # med2[med2!=med2] = mean1[med2!=med2]
     all_flux_diff_med = all_flux_norm - med
-    tresh = 1.5 * myf.IQ(np.ravel(all_flux_diff_med)) + np.nanpercentile(all_flux_diff_med, 75)
+    tresh = 1.5 * IQ(np.ravel(all_flux_diff_med)) + np.nanpercentile(all_flux_diff_med, 75)
 
     mean1[mean1 > (1 + tresh)] = 1
 
@@ -341,8 +351,8 @@ def yarara_median_master_backup(
     # all_flux_diff2_mean = all_flux_norm - mean2
     # all_flux_diff2_med = all_flux_norm - med2
 
-    idx_min = int(myf.find_nearest(wavelength, wave_min)[0])
-    idx_max = int(myf.find_nearest(wavelength, wave_max)[0])
+    idx_min = int(find_nearest(wavelength, wave_min)[0])
+    idx_max = int(find_nearest(wavelength, wave_max)[0])
 
     plt.figure(figsize=(16, 8))
     plt.subplot(2, 1, 2)
@@ -370,7 +380,7 @@ def yarara_median_master_backup(
         plt.subplot(2, 1, 1)
 
         plt.title("Median")
-        myf.my_colormesh(
+        my_colormesh(
             wavelength[idx_min : idx_max + 1],
             np.arange(len(all_mask)),
             all_flux_diff_med[:, idx_min : idx_max + 1],
@@ -382,7 +392,7 @@ def yarara_median_master_backup(
 
         plt.subplot(2, 1, 2, sharex=ax, sharey=ax)
         plt.title("Masked mean")
-        myf.my_colormesh(
+        my_colormesh(
             wavelength[idx_min : idx_max + 1],
             np.arange(len(all_mask)),
             all_flux_diff1_mean[:, idx_min : idx_max + 1],
@@ -455,7 +465,7 @@ def yarara_median_master(
         )
 
     if method == "max":
-        myf.print_box("\n---- RECIPE : PRODUCE MASTER MAX SPECTRUM ----\n")
+        print_box("\n---- RECIPE : PRODUCE MASTER MAX SPECTRUM ----\n")
 
         self.import_table()
         self.import_material()
@@ -487,7 +497,7 @@ def yarara_median_master(
             c = file[sub_dico]["continuum_" + continuum]
             c_std = file["continuum_err"]
 
-            f_norm, f_norm_std = myf.flux_norm_std(f, f_std, c, c_std)
+            f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
 
             all_flux.append(f_norm)
             all_conti.append(file["matching_diff"]["continuum_" + continuum])
@@ -520,7 +530,7 @@ def yarara_median_master(
 
         # plt.plot(np.sqrt(np.cumsum(snr_sorted**2)))
         snr_lim = np.linspace(0, np.sum(snr_sorted**2), bin_berv + 1)
-        berv_bin = berv[sort][myf.find_nearest(np.cumsum(snr_sorted**2), snr_lim)[0]]
+        berv_bin = berv[sort][find_nearest(np.cumsum(snr_sorted**2), snr_lim)[0]]
         berv_bin[0] -= 1  # to ensure the first point to be selected
 
         mask_bin = (berv > berv_bin[0:-1][:, np.newaxis]) & (berv <= berv_bin[1:][:, np.newaxis])
@@ -554,7 +564,7 @@ def yarara_median_master(
         plt.axhline(y=0, color="k", ls=":")
 
         plt.plot(snr_stacked, berv_bin, "bo-", alpha=0.3)
-        curve = myc.tableXY(snr_stacked, berv_bin)
+        curve = tableXY(snr_stacked, berv_bin)
         curve.myscatter(
             num=False,
             liste=[len(all_snr[j]) for j in range(len(all_snr))],
@@ -567,7 +577,7 @@ def yarara_median_master(
         print("SNR of binned spetcra around %.0f" % (np.mean(snr_stacked)))
 
         for j in range(len(all_flux_norm)):
-            all_flux_norm[j] = myf.smooth(all_flux_norm[j], shape="savgol", box_pts=smooth_box)
+            all_flux_norm[j] = smooth(all_flux_norm[j], shape="savgol", box_pts=smooth_box)
 
         mean1 = np.max(all_flux_norm, axis=0)
 
@@ -579,14 +589,14 @@ def yarara_median_master(
         all_flux_diff_med = all_flux_backup - med
         all_flux_diff1_mean = all_flux_backup - self.reference[1]
 
-        idx_min = int(myf.find_nearest(wavelength, wave_min)[0])
-        idx_max = int(myf.find_nearest(wavelength, wave_max)[0])
+        idx_min = int(find_nearest(wavelength, wave_min)[0])
+        idx_max = int(find_nearest(wavelength, wave_max)[0])
 
         plt.figure(figsize=(16, 8))
         plt.subplot(3, 1, 1)
 
         plt.title("Median")
-        myf.my_colormesh(
+        my_colormesh(
             wavelength[idx_min : idx_max + 1],
             np.arange(len(berv)),
             all_flux_diff_med[sort][:, idx_min : idx_max + 1],
@@ -598,7 +608,7 @@ def yarara_median_master(
 
         plt.subplot(3, 1, 2, sharex=ax, sharey=ax)
         plt.title("Max")
-        myf.my_colormesh(
+        my_colormesh(
             wavelength[idx_min : idx_max + 1],
             np.arange(len(berv)),
             all_flux_diff_mean[sort][:, idx_min : idx_max + 1],
@@ -609,7 +619,7 @@ def yarara_median_master(
 
         plt.subplot(3, 1, 3, sharex=ax, sharey=ax)
         plt.title("Masked weighted mean")
-        myf.my_colormesh(
+        my_colormesh(
             wavelength[idx_min : idx_max + 1],
             np.arange(len(berv)),
             all_flux_diff1_mean[sort][:, idx_min : idx_max + 1],
@@ -632,7 +642,7 @@ def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
     """Cut the spectrum time-series borders to reach the specified wavelength limits (included)
     There is no way to cancel this step ! Use it wisely."""
 
-    myf.print_box("\n---- RECIPE : SPECTRA CROPING ----\n")
+    print_box("\n---- RECIPE : SPECTRA CROPING ----\n")
 
     directory = self.directory
     self.import_material()
@@ -651,9 +661,7 @@ def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
 
         if len(a):
             t = np.nanmean(np.cumsum(a < 1e-5, axis=1).T / np.sum(a < 1e-5, axis=1), axis=1)
-            i0 = myf.find_nearest(t, 0.99)[0][
-                0
-            ]  # supress wavelength range until 99% of nan values
+            i0 = find_nearest(t, 0.99)[0][0]  # supress wavelength range until 99% of nan values
             if i0:
                 wave_min = load["wave"][i0]
                 print(
@@ -674,9 +682,9 @@ def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
             idx_min = 0
             idx_max = len(old_wave)
             if wave_min is not None:
-                idx_min = int(myf.find_nearest(old_wave, wave_min)[0])
+                idx_min = int(find_nearest(old_wave, wave_min)[0])
             if wave_max is not None:
-                idx_max = int(myf.find_nearest(old_wave, wave_max)[0] + 1)
+                idx_max = int(find_nearest(old_wave, wave_max)[0] + 1)
             correction_map["wave"] = old_wave[idx_min:idx_max]
             correction_map["correction_map"] = correction_map["correction_map"][:, idx_min:idx_max]
             io.pickle_dump(correction_map, open(name, "wb"))
@@ -689,9 +697,9 @@ def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
     idx_min = 0
     idx_max = len(old_wave)
     if wave_min is not None:
-        idx_min = int(myf.find_nearest(old_wave, wave_min)[0])
+        idx_min = int(find_nearest(old_wave, wave_min)[0])
     if wave_max is not None:
-        idx_max = int(myf.find_nearest(old_wave, wave_max)[0] + 1)
+        idx_max = int(find_nearest(old_wave, wave_max)[0] + 1)
 
     new_wave = old_wave[idx_min:idx_max]
     wave_min = np.min(new_wave)
@@ -707,9 +715,9 @@ def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
         idx_min = 0
         idx_max = len(wave_kit)
         if wave_min is not None:
-            idx_min = int(myf.find_nearest(wave_kit, wave_min)[0])
+            idx_min = int(find_nearest(wave_kit, wave_min)[0])
         if wave_max is not None:
-            idx_max = int(myf.find_nearest(wave_kit, wave_max)[0] + 1)
+            idx_max = int(find_nearest(wave_kit, wave_max)[0] + 1)
         for kw in [
             "wave",
             "flux",
@@ -732,9 +740,9 @@ def yarara_cut_spectrum(self: spec_time_series, wave_min=None, wave_max=None):
     idx_min = 0
     idx_max = len(old_wave)
     if wave_min is not None:
-        idx_min = int(myf.find_nearest(old_wave, wave_min)[0])
+        idx_min = int(find_nearest(old_wave, wave_min)[0])
     if wave_max is not None:
-        idx_max = int(myf.find_nearest(old_wave, wave_max)[0] + 1)
+        idx_max = int(find_nearest(old_wave, wave_max)[0] + 1)
 
     new_wave = old_wave[idx_min:idx_max]
     wave_min = np.min(new_wave)
@@ -789,7 +797,7 @@ def yarara_poissonian_noise(
             if wave_ref is None:
                 current_snr = np.array(self.table.snr_computed)
             else:
-                i = myf.find_nearest(snrs["wave"], wave_ref)[0]
+                i = find_nearest(snrs["wave"], wave_ref)[0]
                 current_snr = snrs["snr_curve"][:, i]
 
             curves = current_snr * np.ones(len(master))[:, np.newaxis]
