@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 
 from .. import io
-from .. import my_classes as myc
-from .. import my_functions as myf
+from ..analysis import tableXY
+from ..stats import find_nearest
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -27,7 +27,7 @@ def yarara_master_ccf(self: spec_time_series, sub_dico="matching_diff", name_ext
 
     new_ccf = []
     for j in range(len(ccfs.T)):
-        ccf = myc.tableXY(vrad - rvs[j], ccfs[:, j])
+        ccf = tableXY(vrad - rvs[j], ccfs[:, j])
         ccf.interpolate(new_grid=vrad, method="linear", fill_value=np.nan)
         new_ccf.append(ccf.y)
     new_ccf = np.array(new_ccf)
@@ -36,15 +36,15 @@ def yarara_master_ccf(self: spec_time_series, sub_dico="matching_diff", name_ext
     stack /= np.nanpercentile(stack, 95)
     half = 0.5 * (1 + np.nanmin(stack))
 
-    master_ccf = myc.tableXY(new_vrad, stack)
+    master_ccf = tableXY(new_vrad, stack)
     master_ccf.supress_nan()
     master_ccf.interpolate(replace=True, method="cubic")
 
     new_vrad = master_ccf.x
     stack = master_ccf.y
 
-    v1 = new_vrad[new_vrad < 0][myf.find_nearest(stack[new_vrad < 0], half)[0][0]]
-    v2 = new_vrad[new_vrad > 0][myf.find_nearest(stack[new_vrad > 0], half)[0][0]]
+    v1 = new_vrad[new_vrad < 0][find_nearest(stack[new_vrad < 0], half)[0][0]]
+    v2 = new_vrad[new_vrad > 0][find_nearest(stack[new_vrad > 0], half)[0][0]]
 
     vmin = np.nanmin(new_vrad[~np.isnan(stack)])
     vmax = np.nanmax(new_vrad[~np.isnan(stack)])

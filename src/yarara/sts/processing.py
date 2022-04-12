@@ -19,6 +19,7 @@ from ..analysis import table, tableXY
 from ..paths import root
 from ..plots import auto_axis, my_colormesh
 from ..stats import IQ, find_nearest, identify_nearest, match_nearest, smooth2d
+from ..util import ccf as ccf_fun
 from ..util import doppler_r, flux_norm_std, get_phase, print_box
 
 if TYPE_CHECKING:
@@ -924,7 +925,7 @@ def yarara_ccf(
         )
     all_flux_err = np.array(all_flux_err)
 
-    vrad, ccf_power, ccf_power_std = ccf(
+    vrad, ccf_power, ccf_power_std = ccf_fun(
         log_grid[used_region],
         all_flux[:, used_region],
         log_template[used_region],
@@ -1014,7 +1015,7 @@ def yarara_ccf(
         file = pd.read_pickle(i)
         # log_spectrum = interp1d(np.log10(grid), flux[j], kind='cubic', bounds_error=False, fill_value='extrapolate')(log_grid)
         # vrad, ccf_power_old = ccf2(log_grid, log_spectrum,  log_grid_mask, log_mask)
-        # vrad, ccf_power_old = ccf(log_grid, log_spectrum, log_template, rv_range=45, oversampling=ccf_oversampling)
+        # vrad, ccf_power_old = ccf_fun(log_grid, log_spectrum, log_template, rv_range=45, oversampling=ccf_oversampling)
         ccf_power_old = ccf_power[:, j]
         ccf_power_old_std = ccf_power_std[:, j]
         ccf = tableXY(vrad / 1000, ccf_power_old, ccf_power_old_std)

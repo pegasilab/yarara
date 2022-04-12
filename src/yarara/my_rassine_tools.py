@@ -195,7 +195,7 @@ class spec_time_series(object):
             os.system("mkdir " + self.dir_root + "CORRECTION_MAP/")
 
     def import_rassine_output(self: spec_time_series, return_name=False, kw1=None, kw2=None):
-        return sts.io.import_rassine_output(return_name, kw1, kw2)
+        return sts.io.import_rassine_output(self, return_name, kw1, kw2)
 
     def import_star_info(self: spec_time_series):
         return sts.io.import_star_info(self)
