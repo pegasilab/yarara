@@ -7,9 +7,9 @@ import pandas as pd
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
 
-    # =============================================================================
-    # IMPORT ALL RASSINE DICTIONNARY
-    # =============================================================================
+# =============================================================================
+# IMPORT ALL RASSINE DICTIONNARY
+# =============================================================================
 
 
 def import_rassine_output(self: spec_time_series, return_name=False, kw1=None, kw2=None):
