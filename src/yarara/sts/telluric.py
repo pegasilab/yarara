@@ -15,6 +15,7 @@ from .. import io
 from ..analysis import table, tableXY
 from ..paths import root
 from ..plots import my_colormesh, plot_color_box
+from ..stats import IQ as IQ_fun
 from ..stats import clustering, find_nearest, flat_clustering, mad, merge_borders, smooth, smooth2d
 from ..util import doppler_r, flux_norm_std, print_box
 
@@ -419,7 +420,7 @@ def yarara_correct_telluric_proxy(
         wave_max_correction = np.max(wave)
 
     if min_r_corr is None:
-        min_r_corr = np.percentile(rcorr[wave < 5400], 75) + 1.5 * IQ(rcorr[wave < 5400])
+        min_r_corr = np.percentile(rcorr[wave < 5400], 75) + 1.5 * IQ_fun(rcorr[wave < 5400])
         print(
             "\n [INFO] Significative R Pearson detected as %.2f based on wavelength smaller than 5400 \AA"
             % (min_r_corr)
@@ -464,7 +465,7 @@ def yarara_correct_telluric_proxy(
         )
         # rm outliers and define weight for the fit
         weights = (1 / (err_flux / (ref + 1e-6)) ** 2).T[second_guess_position]
-        IQ = IQ(collection.table, axis=1)
+        IQ = IQ_fun(collection.table, axis=1)
         Q1 = np.nanpercentile(collection.table, 25, axis=1)
         Q3 = np.nanpercentile(collection.table, 75, axis=1)
         sup = Q3 + 1.5 * IQ
@@ -778,7 +779,7 @@ def yarara_correct_oxygen(
 
     weights = 1 / (flux_err) ** 2
     weights = weights.T[inside_oxygene]
-    IQ = IQ(collection.table, axis=1)
+    IQ = IQ_fun(collection.table, axis=1)
     Q1 = np.nanpercentile(collection.table, 25, axis=1)
     Q3 = np.nanpercentile(collection.table, 75, axis=1)
     sup = Q3 + 1.5 * IQ
@@ -1599,7 +1600,7 @@ def yarara_correct_telluric_gradient(
 
     weights = 1 / (flux_err) ** 2
     weights = weights.T[telluric_location.astype("bool")]
-    IQ = IQ(collection.table, axis=1)
+    IQ = IQ_fun(collection.table, axis=1)
     Q1 = np.nanpercentile(collection.table, 25, axis=1)
     Q3 = np.nanpercentile(collection.table, 75, axis=1)
     sup = Q3 + 1.5 * IQ
