@@ -32,6 +32,7 @@ from . import Rassine_functions as ras
 from . import io
 from . import my_classes as myc
 from . import my_functions as myf
+from . import sts
 from .util import print_iter, yarara_artefact_suppressed
 
 warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
@@ -43,8 +44,6 @@ warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 
 cwd = os.getcwd()
 root = "/".join(cwd.split("/")[:-1])
-
-
 
 
 class spec_time_series(object):
@@ -222,69 +221,17 @@ class spec_time_series(object):
         if not os.path.exists(self.dir_root + "CORRECTION_MAP/"):
             os.system("mkdir " + self.dir_root + "CORRECTION_MAP/")
 
-    # =============================================================================
-    # IMPORT ALL RASSINE DICTIONNARY
-    # =============================================================================
-
-    # io
     def import_rassine_output(self, return_name=False, kw1=None, kw2=None):
-        """
-        Import all the RASSINE dictionnaries in a list
+        return sts.io.import_rassine_output(return_name, kw1, kw2)
 
-        Parameters
-        ----------
-        return_name : True/False to also return the filenames
-
-        Returns
-        -------
-        Return the list containing all thedictionnary
-
-        """
-
-        directory = self.directory
-
-        files = glob.glob(directory + "RASSI*.p")
-        if len(files) <= 1:  # 1 when merged directory
-            print("No RASSINE file found in the directory : %s" % (directory))
-            if return_name:
-                return [], []
-            else:
-                return []
-        else:
-            files = np.sort(files)
-            file = []
-            for i, j in enumerate(files):
-                self.debug = j
-                file.append(pd.read_pickle(j))
-
-                if kw1 is not None:
-                    file[-1] = file[-1][kw1]
-
-                if kw2 is not None:
-                    file[-1] = file[-1][kw2]
-
-            if return_name:
-                return file, files
-            else:
-                return file
-
-    # =============================================================================
-    # IMPORT SUMMARY TABLE
-    # =============================================================================
-
-    # io
     def import_star_info(self):
-        self.star_info = pd.read_pickle(
-            self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p"
-        )
+        sts.io.import_star_info(self)
 
-    # io
     def import_table(self):
-        self.table = pd.read_pickle(self.directory + "Analyse_summary.p")
+        sts.io.import_table(self)
 
-    # io
     def import_material(self):
-        self.material = pd.read_pickle(self.directory + "Analyse_material.p")
+        sts.io.import_material(self)
 
     # =============================================================================
     # IMPORT THE FULL DICO CHAIN
