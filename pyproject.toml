@@ -57,13 +57,18 @@ black = "^22.1.0"
 commitizen = "^2.21.2"
 coverage = "^6.3.2"
 doc8 = "^0.10.1"
-esbonio = {version = "^0.10.2", optional = true}
+esbonio = "^0.10.2"
 isort = "^5.10.1"
 mypy = "^0.941"
 pandas-stubs = "^1.2.0.43"
 pylint = "^2.13.5"
 pytest = "^7.0.1"
 rstcheck = "^3.3.1"
+
+# [tool.pyright]
+# exclude = [
+#   "reafctor/",
+# ]
 
 [tool.mypy]
 plugins = ["numpy.typing.mypy_plugin"]
