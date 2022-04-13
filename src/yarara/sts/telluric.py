@@ -30,19 +30,19 @@ if TYPE_CHECKING:
 
 def yarara_telluric(
     self: spec_time_series,
-    sub_dico: str="matching_anchors",
-    continuum: str="linear",
-    suppress_broad: bool=True,
-    delta_window: int=5,
-    mask: Optional[str]=None,
-    weighted: bool=False,
-    reference: str=True,
-    display_ccf: bool=False,
-    ratio: bool=False,
-    normalisation: str="slope",
-    ccf_oversampling: int=3,
-    wave_max: None=None,
-    wave_min: None=None,
+    sub_dico: str = "matching_anchors",
+    continuum: str = "linear",
+    suppress_broad: bool = True,
+    delta_window: int = 5,
+    mask: Optional[str] = None,
+    weighted: bool = False,
+    reference: str = True,
+    display_ccf: bool = False,
+    ratio: bool = False,
+    normalisation: str = "slope",
+    ccf_oversampling: int = 3,
+    wave_max: None = None,
+    wave_min: None = None,
 ) -> None:
 
     """
@@ -87,12 +87,12 @@ def yarara_telluric(
         sub_dico = self.dico_actif
     print("---- DICO %s used ----" % (sub_dico))
 
-    one_file = pd.read_pickle(files[0])
-    grid = one_file["wave"]
-    flux = one_file["flux" + kw] / one_file[sub_dico]["continuum_linear"]
+    test = self.spectrum(num=0, sub_dico=sub_dico, norm=True)
+    grid = test.x
+    flux = test.y
     dg = grid[1] - grid[0]
-    ccf_sigma = int(one_file["parameters"]["fwhm_ccf"] * 10 / 3e5 * 6000 / dg)
-    test = tableXY(grid, flux)
+    file_ref = self.import_spectrum()
+    ccf_sigma = int(file_ref["parameters"]["fwhm_ccf"] * 10 / 3e5 * 6000 / dg)
 
     telluric_tag = "telluric"
     if mask is None:
@@ -199,6 +199,7 @@ def yarara_telluric(
         file["parameters"][telluric_tag + "_ew"] = output[0][i]
         file["parameters"][telluric_tag + "_contrast"] = output[1][i]
         file["parameters"][telluric_tag + "_rv"] = output[2][i]
+        # warning: ccf_timeseries convention has changed during YARARA lifetime
         file["parameters"][telluric_tag + "_fwhm"] = output[5][i]
         file["parameters"][telluric_tag + "_center"] = output[6][i]
         file["parameters"][telluric_tag + "_depth"] = output[7][i]
@@ -214,20 +215,20 @@ def yarara_telluric(
 # telluric
 def yarara_correct_telluric_proxy(
     self: spec_time_series,
-    sub_dico: str="matching_fourier",
-    sub_dico_output: str="telluric",
-    continuum: str="linear",
-    wave_min: int=5700,
-    wave_max: int=5900,
-    reference: str="master",
-    berv_shift: str="berv",
-    smooth_corr: int=1,
-    proxies_corr: List[str]=["h2o_depth", "h2o_fwhm"],
-    proxies_detrending: None=None,
-    wave_min_correction: int=4400,
-    wave_max_correction: None=None,
-    min_r_corr: float=0.40,
-    sigma_ext: int=2,
+    sub_dico: str = "matching_fourier",
+    sub_dico_output: str = "telluric",
+    continuum: str = "linear",
+    wave_min: int = 5700,
+    wave_max: int = 5900,
+    reference: str = "master",
+    berv_shift: str = "berv",
+    smooth_corr: int = 1,
+    proxies_corr: List[str] = ["h2o_depth", "h2o_fwhm"],
+    proxies_detrending: None = None,
+    wave_min_correction: int = 4400,
+    wave_max_correction: None = None,
+    min_r_corr: float = 0.40,
+    sigma_ext: int = 2,
 ) -> None:
 
     """
@@ -500,7 +501,7 @@ def yarara_correct_telluric_proxy(
         find_nearest(wave, hole_left - 1)[0]
     )  # correct 1 angstrom band due to stange artefact at the border of the gap
     correction_backup[:, index_hole_left : index_hole_right + 1] = 1
-  
+
     #        if positive_coeff:
     #            correction_backup[correction_backup>0] = 0
 
@@ -630,13 +631,13 @@ def yarara_correct_telluric_proxy(
 # telluric
 def yarara_correct_oxygen(
     self: spec_time_series,
-    sub_dico: str="matching_telluric",
-    continuum: str="linear",
-    berv_shift: str="berv",
-    reference: str="master",
-    wave_min: int=5760,
-    wave_max: int=5850,
-    oxygene_bands: List[List[int]]=[[5787, 5835], [6275, 6340], [6800, 6950]],
+    sub_dico: str = "matching_telluric",
+    continuum: str = "linear",
+    berv_shift: str = "berv",
+    reference: str = "master",
+    wave_min: int = 5760,
+    wave_max: int = 5850,
+    oxygene_bands: List[List[int]] = [[5787, 5835], [6275, 6340], [6800, 6950]],
 ) -> None:
 
     """
@@ -945,23 +946,23 @@ def yarara_correct_oxygen(
 
 def yarara_correct_telluric_gradient(
     self: spec_time_series,
-    sub_dico_detection: str="matching_fourier",
-    sub_dico_correction: None="matching_oxygen",
-    continuum: str="linear",
-    wave_min_train: int=4200,
-    wave_max_train: int=5000,
-    wave_min_correction: int=4400,
-    wave_max_correction: int=6600,
-    smooth_map: int=1,
-    berv_shift: str="berv",
-    reference: str="master",
-    inst_resolution: int=110000,
-    debug: bool=False,
-    equal_weight: bool=True,
-    nb_pca_comp: int=20,
-    nb_pca_comp_kept: None=None,
-    nb_pca_max_kept: int=5,
-    calib_std: float=1e-3,
+    sub_dico_detection: str = "matching_fourier",
+    sub_dico_correction: None = "matching_oxygen",
+    continuum: str = "linear",
+    wave_min_train: int = 4200,
+    wave_max_train: int = 5000,
+    wave_min_correction: int = 4400,
+    wave_max_correction: int = 6600,
+    smooth_map: int = 1,
+    berv_shift: str = "berv",
+    reference: str = "master",
+    inst_resolution: int = 110000,
+    debug: bool = False,
+    equal_weight: bool = True,
+    nb_pca_comp: int = 20,
+    nb_pca_comp_kept: None = None,
+    nb_pca_max_kept: int = 5,
+    calib_std: float = 1e-3,
 ) -> None:
 
     """

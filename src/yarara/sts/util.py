@@ -77,6 +77,7 @@ def yarara_median_master_backup(
     wave_max: int = 5900,
     jdb_range: List[int] = [-100000, 100000, 1],
     mask_percentile: List[Optional[int]] = [None, 50],
+    rhk_percentile: int = 100,
     save: bool = True,
 ) -> None:
     """
@@ -101,6 +102,9 @@ def yarara_median_master_backup(
     self.import_material()
     load = self.material
     epsilon = 1e-6
+
+    wavelength = np.array(load["wave"])
+    self.wave = wavelength
 
     planet = self.planet
 
@@ -138,27 +142,7 @@ def yarara_median_master_backup(
 
     print("\n [INFO] FWHM of tellurics : %.1f km/s" % (np.percentile(fwhm, 95)))
 
-    all_flux = []
-    all_conti = []
-    for i, name in enumerate(np.array(self.table["filename"])):
-        file = pd.read_pickle(name)
-        self.debug = name
-        if not i:
-            wavelength = file["wave"]
-            self.wave = wavelength
-
-        f = file["flux" + kw]
-        f_std = file["flux_err"]
-        c = file[sub_dico]["continuum_" + continuum]
-        c_std = file["continuum_err"]
-
-        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-
-        all_flux.append(f)
-        all_conti.append(c)
-
-    all_flux = np.array(all_flux)
-    all_conti = np.array(all_conti)
+    all_flux, all_conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
     all_flux_norm = all_flux / all_conti
 
     mask = np.ones(len(self.table.jdb)).astype("bool")
@@ -277,11 +261,11 @@ def yarara_median_master_backup(
 
     # plt.plot(wavelength,np.product(all_mask,axis=0))
     # plt.plot(wavelength,np.product(all_mask2,axis=0))
-    print(
+    logging.info(
         "Percent always contaminated metric1 : %.3f %%"
         % (np.sum(np.product(all_mask, axis=0)) / len(wavelength) * 100)
     )
-    print(
+    logging.info(
         "Percent always contaminated metric2 : %.3f %%"
         % (np.sum(np.product(all_mask2, axis=0)) / len(wavelength) * 100)
     )
@@ -292,11 +276,12 @@ def yarara_median_master_backup(
     all_mask_nan2 = 1 - all_mask2
     all_mask_nan2[all_mask_nan2 == 0] = np.nan
 
-    print(mask_percentile)
+    print(" ", mask_percentile)
     if mask_percentile[0] is None:
         mask_percentile[0] = np.ones(len(wavelength)).astype("bool")
 
     print(
+        " ",
         np.shape(wavelength),
         np.shape(all_flux_norm),
         np.shape(mask_percentile[0]),

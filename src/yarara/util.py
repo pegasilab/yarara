@@ -1,13 +1,34 @@
 """
 This modules does XXX
 """
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from colorama import Fore
 from numpy import float32, float64, ndarray
 from scipy.interpolate import interp1d
 from tqdm import tqdm
+
+
+def string_contained_in(
+    array: Union[np.ndarray, Sequence[str]], string: str, inv=False
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+
+    Args:
+        array: of strings
+        string:
+        inv:
+
+    Returns:
+        of bool, of strings
+    """
+    array = np.array(array)
+    split = np.array([len(i.split(string)) - 1 for i in array])
+    mask = split.astype("bool")
+    if inv:
+        mask = ~mask
+    return mask, array[mask]
 
 
 def sphinx(sentence: str, rep: Optional[Iterable[str]] = None, s2: str = ""):

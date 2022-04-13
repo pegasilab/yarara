@@ -180,118 +180,28 @@ def break_func(stage):
             return stage
 
 
-if stage == -2 and False:
-
-    # =============================================================================
-    # EXTRACT INFORMATION IF IMPORTED FROM DACE
-    # =============================================================================
-
-    move_extract_dace(directory_to_dace, instrument=instrument)
-
-    extract_table_dace(
-        star,
-        instrument=[instrument],
-        update_table=False,
-        auto_trend=True,
-        degree_max=None,
-        m=m_clipping,
-        prefit_planet=prefit_planet,
-        drs_version=drs_version,
-    )
-    if os.path.exists(
-        "/".join(directory_to_dace.split("/")[0:-1])
-        + "/"
-        + instrument
-        + "/DACE_TABLE/Dace_extracted_table.csv"
-    ):
-        if not os.path.exists(
-            pd.read_csv(
-                "/".join(directory_to_dace.split("/")[0:-1])
-                + "/"
-                + instrument
-                + "/DACE_TABLE/Dace_extracted_table.csv"
-            )["fileroot"][0]
-        ):
-            error = sys.exit("[ERROR] No file found according to the dace table fileroot")
-    else:
-        error = sys.exit()
-
-    plt.close("all")
-    get_time_step("dace_extraction")
-    stage = break_func(stage)
-
-
-if stage == -1 and False:
-
-    # =============================================================================
-    # RUN RASSINE TRIGGER
-    # =============================================================================
-
-    # in topython terminal, change the Trigger file
-    print(
-        " python Rassine_trigger.py -s %s -i %s -a %s -b %s -d %s -l 0.01 -o %s"
-        % (
-            star,
-            [instrument, "ESPRESSO"][drs_version != "old"],
-            str(rassine_full_auto),
-            str(bin_length),
-            ins,
-            directory_rassine + "/",
-        )
-    )
-    os.system(
-        "python Rassine_trigger.py -s %s -i %s -a %s -b %s -d %s -l 0.01 -o %s"
-        % (
-            star,
-            [instrument, "ESPRESSO"][drs_version != "old"],
-            str(rassine_full_auto),
-            str(bin_length),
-            ins,
-            directory_rassine + "/",
-        )
-    )
-
-    reduced_files = glob.glob(directory_reduced_rassine + "RASSINE*.p")
-
-    if len(reduced_files):
-        if not os.path.exists(directory_workspace):
-            os.system("mkdir " + directory_workspace)
-
-        for k in reduced_files:
-            os.system("cp " + k + " " + directory_workspace)
-
-    stage = break_func(stage)
-
 # =============================================================================
 # RUN YARARA
 # =============================================================================
 
-try:
-    sts = spec_time_series(directory_workspace)
-    # file_test = sts.import_spectrum()
-    sts.planet = planet_activated
-    sts.instrument = ins
+sts = spec_time_series(directory_workspace)
+# file_test = sts.import_spectrum()
+sts.planet = planet_activated
+sts.instrument = ins
 
+print("------------------------\n STAR LOADED : %s \n------------------------" % (sts.starname))
+
+if fast:
     print(
-        "------------------------\n STAR LOADED : %s \n------------------------" % (sts.starname)
+        "\n [INFO] Fast analysis %s %s reference spectrum launched...\n"
+        % (ins, ["with", "without"][int(reference is None)])
+    )
+else:
+    print(
+        "\n [INFO] Complete analysis %s %s reference spectrum launched...\n"
+        % (ins, ["with", "without"][int(reference is None)])
     )
 
-    if fast:
-        print(
-            "\n [INFO] Fast analysis %s %s reference spectrum launched...\n"
-            % (ins, ["with", "without"][int(reference is None)])
-        )
-    else:
-        print(
-            "\n [INFO] Complete analysis %s %s reference spectrum launched...\n"
-            % (ins, ["with", "without"][int(reference is None)])
-        )
-
-
-except:
-    print("\n [ERROR] No files found")
-    if stage >= 0:
-        stage = 9999
 
 if stage == 999:
     sts.yarara_recreate_dico("matching_fourier")
@@ -338,64 +248,14 @@ if (
 # LOAD DATA IN YARARA
 # =============================================================================
 
-if stage == 0:
-    # sts.yarara_inject_planet()
-    sts.yarara_simbad_query()
-
-    bin_length = sts.yarara_get_bin_length()
-
-    sts.import_dace_table_rv(bin_length=bin_length, dbin=0)
-    sts.import_table()
-
-    snr = tableXY(sts.table.jdb, sts.table.snr)
-    plt.figure()
-    snr.myscatter()
-    plt.axhline(y=np.nanpercentile(snr.y, 25), color="k")
-    plt.axhline(y=np.nanpercentile(snr.y, 50), color="k")
-    plt.axhline(y=np.nanpercentile(snr.y, 75), color="k")
-
-    sts.flux_error(ron=11)
-    sts.continuum_error()
-
-    sts.yarara_check_rv_sys()
-    sts.yarara_check_fwhm()
-    plt.close("all")
-
-    sts.yarara_ccf(mask=sts.mask_harps, ccf_oversampling=1, plot=True, save=True, rv_range=None)
-
-    sts.yarara_correct_secular_acc(update_rv=True)
-
-    lim_inf = np.nanpercentile(snr.y, 50) - 1.5 * IQ(snr.y)
-
-    for lim in [100, 75, 50, 35, 20]:
-        if (lim_inf < lim) & (np.nanpercentile(snr.y, 16) > lim):
-            lim_inf = lim
-            break
-
-    if lim_inf < 0:
-        lim_inf = 35
-
-    print("Spectra under SNR %.0f supressed" % (lim_inf))
-
-    sts.scale_cmap()
-
-    sts.supress_low_snr_spectra(snr_cutoff=lim_inf, supress=False)
-
-    sts.yarara_supress_doubtful_spectra(supress=False)
-
-    # sts.supress_time_spectra(num_min=None, num_max=None)
-    # sts.split_instrument(instrument=ins)
-
-    if close_figure:
-        plt.close("all")
-
-    get_time_step("preprocessing")
-    stage = break_func(stage)
 
 if stage == 1:
-    # STATISTICS
+    # ADAPT INPUT DATA
     sts.yarara_analyse_summary(rm_old=True)
+    sts.yarara_add_step_dico("matching_diff", 0, sub_dico_used="matching_anchors")
+    sts.yarara_exploding_pickle()
     stage = break_func(stage)
+
 # =============================================================================
 # COSMICS
 # =============================================================================
@@ -427,6 +287,8 @@ if stage == 2:
             reference="norm",
             ratio=True,
         )
+
+        ## Works until there
 
         sts.yarara_master_ccf(sub_dico="matching_cosmics", name_ext="_telluric")
 
@@ -956,9 +818,8 @@ if stage == 14:
 # =============================================================================
 # UPDATE PATH
 # =============================================================================
-  
- 
-    
+
+
 # =============================================================================
 # KITCAT
 # =============================================================================

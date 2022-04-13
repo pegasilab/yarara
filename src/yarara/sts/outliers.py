@@ -297,6 +297,9 @@ def yarara_correct_cosmics(
     directory = self.directory
     planet = self.planet
     self.import_dico_tree()
+    self.import_info_reduction()
+    self.import_material()
+    self.import_table()
     epsilon = 1e-12
 
     reduction_accepted = True
@@ -311,6 +314,11 @@ def yarara_correct_cosmics(
                 reduction_accepted = False
 
     if reduction_accepted:
+        grid = np.array(self.material["wave"])
+        jdb = np.array(self.table["jdb"])
+        all_snr = np.array(self.table["snr"])
+        files = np.array(self.table["filename"])
+        files = np.sort(files)
         kw = "_planet" * planet
         if kw != "":
             print("\n---- PLANET ACTIVATED ----")
@@ -319,31 +327,10 @@ def yarara_correct_cosmics(
             sub_dico = self.dico_actif
         print("---- DICO %s used ----" % (sub_dico))
 
-        files = glob.glob(directory + "RASSI*.p")
-        files = np.sort(files)
+        all_flux, conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
+        all_flux_norm = all_flux / conti
 
-        all_flux = []
-        conti = []
-        all_flux_norm = []
-        all_snr = []
-        jdb = []
-
-        for i, j in enumerate(files):
-            file = pd.read_pickle(j)
-            if not i:
-                grid = file["wave"]
-            all_flux.append(file["flux" + kw])
-            conti.append(file[sub_dico]["continuum_" + continuum])
-            all_flux_norm.append(file["flux" + kw] / file[sub_dico]["continuum_" + continuum])
-            all_snr.append(file["parameters"]["SNR_5500"])
-            jdb.append(file["parameters"]["jdb"])
-
-        step = file[sub_dico]["parameters"]["step"]
-        all_flux = np.array(all_flux)
-        conti = np.array(conti)
-        all_flux_norm = np.array(all_flux_norm)
-        all_snr = np.array(all_snr)
-        jdb = np.array(jdb)
+        step = self.info_reduction[sub_dico]["step"]
 
         med = np.median(all_flux_norm, axis=0)
         mad = 1.48 * np.median(abs(all_flux_norm - med), axis=0)
@@ -386,9 +373,9 @@ def yarara_correct_cosmics(
 
         correction_cosmics = all_flux_norm - all_flux_corrected
         to_be_saved = {"wave": grid, "correction_map": correction_cosmics}
-        io.pickle_dump(
-            to_be_saved,
-            open(self.dir_root + "CORRECTION_MAP/map_matching_cosmics.p", "wb"),
+        np.save(
+            self.dir_root + "CORRECTION_MAP/map_matching_cosmics.npy",
+            to_be_saved["correction_map"],
         )
 
         new_continuum = all_flux / (all_flux_corrected + epsilon)
@@ -397,20 +384,16 @@ def yarara_correct_cosmics(
             new_continuum != new_continuum
         ]  # to supress mystic nan appearing
 
-        print("\nComputation of the new continua, wait ... \n")
-        time.sleep(0.5)
-        count_file = -1
-        for j in tqdm(files):
-            count_file += 1
-            file = pd.read_pickle(j)
-            output = {"continuum_" + continuum: new_continuum[count_file]}
-            file["matching_cosmics"] = output
-            file["matching_cosmics"]["parameters"] = {
-                "sub_dico_used": sub_dico,
-                "k_sigma": k_sigma,
-                "step": step + 1,
-            }
-            io.save_pickle(j, file)
+        self.info_reduction["matching_cosmics"] = {
+            "sub_dico_used": sub_dico,
+            "k_sigma": k_sigma,
+            "step": step + 1,
+            "valid": True,
+        }
+        self.update_info_reduction()
+
+        fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_cosmics")
+        np.save(fname, new_continuum)
 
         self.dico_actif = "matching_cosmics"
 

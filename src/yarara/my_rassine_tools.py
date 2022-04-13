@@ -4,7 +4,7 @@ import glob as glob
 import os
 import time
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -49,6 +49,29 @@ class spec_time_series(object):
         self.wave = None
         self.infos = {}
         self.ram = []
+
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.table_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.material_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.info_reduction_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.star_info_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.table_snr_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.table_ccf_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.table_ccf_saved_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.lbl_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.dbd_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.lbl_iter_ut = 0
+        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.wbw_ut = 0
 
         self.dico_actif = "matching_diff"
 
@@ -111,6 +134,12 @@ class spec_time_series(object):
                 + "ras_Master_spectrum.p "
             )
 
+        if not os.path.exists(self.directory + "/CONTINUUM"):
+            os.system("mkdir " + self.directory + "/CONTINUUM")
+
+        if not os.path.exists(self.directory + "/FLUX"):
+            os.system("mkdir " + self.directory + "/FLUX")
+
         if not os.path.exists(self.dir_root + "IMAGES/"):
             os.system("mkdir " + self.dir_root + "IMAGES/")
 
@@ -122,6 +151,10 @@ class spec_time_series(object):
 
         if not os.path.exists(self.dir_root + "REDUCTION_INFO/"):
             os.system("mkdir " + self.dir_root + "REDUCTION_INFO/")
+
+        if not os.path.exists(self.dir_root + "REDUCTION_INFO/Info_reduction.p"):
+            info = {}
+            io.pickle_dump(info, open(self.dir_root + "REDUCTION_INFO/Info_reduction.p", "wb"))
 
         if not os.path.exists(self.dir_root + "STAR_INFO/"):
             os.system("mkdir " + self.dir_root + "STAR_INFO/")
@@ -198,25 +231,57 @@ class spec_time_series(object):
         if not os.path.exists(self.dir_root + "CORRECTION_MAP/"):
             os.system("mkdir " + self.dir_root + "CORRECTION_MAP/")
 
+        #: warning, indexing convention has changed during YARARA lifetime
+        self.ccf_timeseries = None
+
     def import_rassine_output(
         self: spec_time_series, return_name: bool = False, kw1: None = None, kw2: None = None
     ) -> Any:
         return sts.io.import_rassine_output(self, return_name, kw1, kw2)
 
+    def import_sts_flux(
+        self: spec_time_series,
+        load: Sequence[str] = ["flux", "flux_err", "matching_diff"],
+        num: Optional[int] = None,
+    ) -> Sequence[np.ndarray]:
+        return sts.io.import_sts_flux(self, load, num)
+
     def import_star_info(self: spec_time_series) -> None:
-        return sts.io.import_star_info(self)
+        sts.io.import_star_info(self)
+
+    def import_info_reduction(self) -> None:
+        sts.io.import_info_reduction(self)
+
+    def update_info_reduction(self) -> None:
+        sts.io.update_info_reduction(self)
 
     def import_table(self: spec_time_series) -> None:
-        return sts.io.import_table(self)
+        sts.io.import_table(self)
 
     def import_material(self: spec_time_series) -> None:
-        return sts.io.import_material(self)
+        sts.io.import_material(self)
 
     def import_dico_tree(self: spec_time_series) -> None:
-        return sts.io.import_dico_tree(self)
+        sts.io.import_dico_tree(self)
 
     def import_spectrum(self: spec_time_series, num: Optional[int64] = None) -> Dict[str, Any]:
         return sts.io.import_spectrum(self, num)
+
+    def spectrum(
+        self: spec_time_series,
+        num: int = 0,
+        sub_dico: str = "matching_diff",
+        continuum: str = "linear",
+        norm: bool = False,
+        planet: bool = False,
+        color_correction: bool = False,
+    ):
+        return sts.io.spectrum(self, num, sub_dico, continuum, norm, planet, color_correction)
+
+    def yarara_add_step_dico(
+        self: spec_time_series, sub_dico: str, step: int, sub_dico_used=None, chain=False
+    ) -> None:
+        sts.io.yarara_add_step_dico(self, sub_dico, step, sub_dico_used, chain)
 
     def yarara_star_info(
         self: spec_time_series,
@@ -266,6 +331,9 @@ class spec_time_series(object):
             Pmag,
             stellar_template,
         )
+
+    def yarara_exploding_pickle(self: spec_time_series) -> None:
+        sts.io.yarara_exploding_pickle(self)
 
     def yarara_master_ccf(
         self: spec_time_series,

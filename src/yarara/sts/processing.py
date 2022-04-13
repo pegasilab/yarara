@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import glob as glob
+import logging
 import os
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
@@ -17,13 +18,13 @@ from tqdm import tqdm
 
 from yarara.analysis import tableXY
 
-from .. import io
+from .. import io, util
 from ..analysis import table, tableXY
 from ..paths import root
 from ..plots import auto_axis, my_colormesh
 from ..stats import IQ, find_nearest, identify_nearest, match_nearest, smooth2d
 from ..util import ccf as ccf_fun
-from ..util import doppler_r, flux_norm_std, get_phase, print_box
+from ..util import doppler_r, get_phase, print_box
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
@@ -164,8 +165,8 @@ def yarara_activity_index(
         c = file[sub_dico]["continuum_" + continuum]
         c_std = file["continuum_err"]
 
-        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-        dustbin, f_norm_std = flux_norm_std(
+        f_norm, f_norm_std = util.flux_norm_std(f, f_std, c, c_std)
+        dustbin, f_norm_std = util.flux_norm_std(
             f, f_std, file["matching_diff"]["continuum_" + continuum], c_std
         )
 
@@ -614,11 +615,8 @@ def yarara_ccf(
     files = np.sort(files)
 
     flux = []
-    snr = []
     conti = []
     flux_err = []
-    jdb = []
-    berv = []
 
     epsilon = 1e-12
 
@@ -626,6 +624,11 @@ def yarara_ccf(
     self.import_table()
     self.import_material()
     load = self.material
+
+    wave = np.array(load["wave"])
+    berv = np.array(self.table["berv"])
+    jdb = np.array(self.table["jdb"])
+    snr = np.array(self.table["snr"])
 
     mask_loc = mask_name
     if mask_name is None:
@@ -676,45 +679,20 @@ def yarara_ccf(
     else:
         rv_sys *= 1000
 
-    if rv_shift is None:
-        rv_shift = np.zeros(len(files))
+    if not isinstance(rv_shift, np.ndarray):
+        if (rv_shift is None) | (rv_shift == False):
+            rv_shift = np.zeros(len(files))
+        elif rv_shift == True:
+            rv_shift = np.array(self.table["rv_shift"])
 
     print("\n [INFO] RV sys : %.2f [km/s] \n" % (rv_sys / 1000))
 
     mask[:, 0] = doppler_r(mask[:, 0], rv_sys)[0]
 
-    for i, j in enumerate(files):
-        file = pd.read_pickle(j)
-        if not i:
-            wave = file["wave"]
-        snr.append(file["parameters"]["SNR_5500"])
-        try:
-            jdb.append(file["parameters"]["jdb"])
-        except:
-            jdb.append(i)
-        try:
-            berv.append(file["parameters"]["berv"])
-        except:
-            berv.append(0)
-
-        f = file["flux" + kw]
-        f_std = file["flux_err"]
-        c = file[sub_dico]["continuum_" + continuum] + epsilon
-        c_std = file["continuum_err"]
-
-        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-
-        flux.append(f_norm)
-        flux_err.append(f_norm_std)
-        conti.append(c - epsilon)
-
-    wave = np.array(wave)
-    flux = np.array(flux)
-    flux_err = np.array(flux_err)
-    snr = np.array(snr)
-    conti = np.array(conti)
-    jdb = np.array(jdb)
-    berv = np.array(berv)
+    all_flux, all_flux_err, conti, conti_err = self.import_sts_flux(
+        load=["flux" + kw, "flux_err", sub_dico, "continuum_err"]
+    )
+    flux, flux_err = util.flux_norm_std(all_flux, all_flux_err, conti + epsilon, conti_err)
     grid = wave
 
     flux, flux_err, wave = self.yarara_map(
@@ -1193,9 +1171,9 @@ def yarara_ccf(
             svrad_phot2["depth"][j]
         )  # abs(1-para_depth)*factor*scaling_noise['depth'])
 
-        save_ccf["ew_std"] = ew_std
-        para_ccf["para_rv_std"] = centers_std
-        para_ccf["para_depth_std"] = depths_std
+        save_ccf["ew_std"] = svrad_phot2["ew"][j]
+        para_ccf["para_rv_std"] = svrad_phot2["center"][j]
+        para_ccf["para_depth_std"] = svrad_phot2["depth"][j]
 
         file["ccf"] = save_ccf
         file["ccf_parabola"] = para_ccf
@@ -1217,7 +1195,7 @@ def yarara_ccf(
                 "offset": offset_ccf,
                 "offset_std": offset_ccf_std,
                 "vspan": rv_ccf - para_center,
-                "vspan_std": bisspan_std,
+                "vspan_std": bisspan_ccf_std,
                 "b0": moments[0],
                 "b1": moments[1],
                 "b2": moments[2],
@@ -1249,7 +1227,7 @@ def yarara_ccf(
 
     self.warning_rv_borders = False
     if np.median(fwhms) > (rv_borders / 1.5):
-        print("[WARNING] The CCF is larger than the RV borders for the fit")
+        logging.warn("The CCF is larger than the RV borders for the fit")
         self.warning_rv_borders = True
 
     self.ccf_rv = tableXY(jdb, np.array(rvs) * 1000, np.array(rvs_std) * 1000)
@@ -1477,8 +1455,29 @@ def yarara_map(
     directory = self.directory
     self.import_material()
     load = self.material
-
+    wave = np.array(load["wave"])
     self.import_table()
+
+    jdb = np.array(self.table["jdb"])
+    snr = np.array(self.table["snr"])
+
+    if type(berv_shift) != np.ndarray:
+        try:
+            berv = np.array(self.table[berv_shift])
+        except:
+            berv = 0 * jdb
+    else:
+        berv = berv_shift
+
+    if type(rv_shift) != np.ndarray:
+        try:
+            rv = np.array(self.table[rv_shift])
+        except:
+            rv = 0 * jdb
+    else:
+        rv = rv_shift
+
+    rv = rv - np.median(rv)
 
     kw = "_planet" * planet
     if kw != "":
@@ -1492,64 +1491,14 @@ def yarara_map(
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.array(self.table["filename"])  # updated 29.10.21 to allow ins_merged
-
     files = np.sort(files)
-
-    flux = []
-    err_flux = []
-    snr = []
-    jdb = []
-    berv = []
-    rv = []
 
     epsilon = 1e-12
 
-    for i, j in enumerate(files):
-        self.current_file = j
-        file = pd.read_pickle(j)
-        if not i:
-            wave = file["wave"]
-        f = file["flux" + kw]
-        f_std = file["flux_err"]
-        c = file[sub_dico]["continuum_" + continuum] + epsilon
-        c_std = file["continuum_err"]
-        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-
-        snr.append(file["parameters"]["SNR_5500"])
-        flux.append(f_norm)
-        err_flux.append(f_norm_std)
-
-        try:
-            jdb.append(file["parameters"]["jdb"])
-        except:
-            jdb.append(i)
-        if type(berv_shift) != np.ndarray:
-            try:
-                berv.append(file["parameters"][berv_shift])
-            except:
-                berv.append(0)
-        else:
-            berv = berv_shift
-        if type(rv_shift) != np.ndarray:
-            try:
-                rv.append(file["parameters"][rv_shift])
-            except:
-                rv.append(0)
-        else:
-            rv = rv_shift
-
-    del self.current_file
-
-    wave = np.array(wave)
-    flux = np.array(flux)
-    err_flux = np.array(err_flux)
-    snr = np.array(snr)
-    jdb = np.array(jdb)
-    berv = np.array(berv)
-    rv = np.array(rv)
-    rv = rv - np.median(rv)
-
-    self.debug = flux
+    all_flux, all_flux_err, conti, conti_err = self.import_sts_flux(
+        load=["flux" + kw, "flux_err", sub_dico, "continuum_err"]
+    )
+    flux, err_flux = util.flux_norm_std(all_flux, all_flux_err, conti + epsilon, conti_err)
 
     if correction_factor:
         flux *= np.array(load["correction_factor"])
@@ -1590,8 +1539,13 @@ def yarara_map(
     flux += noise_matrix
     err_flux = np.sqrt(err_flux**2 + noise_values**2)
 
+    reverse = 1
+    if idx_min > idx_max:
+        idx_min, idx_max = idx_max, idx_min
+        reverse = -1
+
     old_length = len(wave)
-    wave = wave[int(idx_min) : int(idx_max)]
+    wave = wave[int(idx_min) : int(idx_max)][::reverse]
     flux = flux[int(idx2_min) : int(idx2_max), int(idx_min) : int(idx_max)]
     err_flux = err_flux[int(idx2_min) : int(idx2_max), int(idx_min) : int(idx_max)]
 

@@ -1,18 +1,72 @@
 from __future__ import annotations
 
 import glob as glob
+import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
 from numpy import float64, int64, ndarray
 from pandas.core.frame import DataFrame
+from tqdm import tqdm
 
-from .. import io
+from .. import analysis, io, util
 
 if TYPE_CHECKING:
     from ..my_rassine_tools import spec_time_series
+
+
+def spectrum(
+    self: spec_time_series,
+    num: int = 0,
+    sub_dico: str = "matching_diff",
+    continuum: str = "linear",
+    norm: bool = False,
+    planet: bool = False,
+    color_correction: bool = False,
+):
+    """
+    Produce a tableXY spectrum by specifying its index number
+
+    Parameters
+    ----------
+    num : index of the spectrum to extract
+    sub_dico : The sub_dictionnary used to  select the continuum
+    continuum : The continuum to select (either linear or cubic)
+    norm : True/False button to normalise the spectrum
+
+    Returns
+    -------
+    Return the tableXY spectrum object
+
+    """
+
+    if color_correction:
+        self.import_material()
+        color_corr = np.array(self.material.correction_factor)
+    else:
+        color_corr = 1
+
+    array = self.import_spectrum(num=num)
+    kw = "_planet" * planet
+
+    flux = array["flux" + kw]
+    flux_std = array["flux_err"]
+    wave = array["wave"]
+    conti1, continuum = self.import_sts_flux(load=["matching_diff", sub_dico], num=num)
+
+    correction = conti1 / continuum
+    spectrum = analysis.tableXY(
+        wave, flux * correction * color_corr, flux_std * correction * color_corr
+    )
+    if norm:
+        continuum_std = array["continuum_err"]
+        flux_norm, flux_norm_std = util.flux_norm_std(flux, flux_std, continuum, continuum_std)
+        spectrum_norm = analysis.tableXY(wave, flux_norm * color_corr, flux_norm_std * color_corr)
+        return spectrum_norm
+    else:
+        return spectrum
 
 
 # =============================================================================
@@ -20,7 +74,9 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-def import_rassine_output(self: spec_time_series, return_name: bool=False, kw1: None=None, kw2: None=None) -> Any:
+def import_rassine_output(
+    self: spec_time_series, return_name: bool = False, kw1: None = None, kw2: None = None
+) -> Any:
     """
     Import all the RASSINE dictionnaries in a list
 
@@ -62,9 +118,81 @@ def import_rassine_output(self: spec_time_series, return_name: bool=False, kw1: 
             return file
 
 
-# =============================================================================
-# IMPORT SUMMARY TABLE
-# =============================================================================
+# region INFO REDUCTION
+
+
+def import_info_reduction(self: spec_time_series) -> None:
+    if self.info_reduction_ut != os.path.getmtime(
+        self.dir_root + "REDUCTION_INFO/Info_reduction.p"
+    ):
+        self.info_reduction = pd.read_pickle(self.dir_root + "REDUCTION_INFO/Info_reduction.p")
+        self.info_reduction_ut = os.path.getmtime(
+            self.dir_root + "REDUCTION_INFO/Info_reduction.p"
+        )
+
+
+def update_info_reduction(self: spec_time_series) -> None:
+    io.pickle_dump(
+        self.info_reduction, open(self.dir_root + "REDUCTION_INFO/Info_reduction.p", "wb")
+    )
+
+
+# endregion
+
+
+def import_sts_flux(
+    self: spec_time_series,
+    load: Sequence[str] = ["flux", "flux_err", "matching_diff"],
+    num: Optional[int] = None,
+) -> Sequence[np.ndarray]:
+    all_elements = []
+    for l in load:
+        if len(l.split("matching_")) > 1:
+            all_elements.append(np.load(self.directory + "CONTINUUM/Continuum_%s.npy" % (l)))
+        else:
+            all_elements.append(np.load(self.directory + "FLUX/Flux_%s.npy" % (l)))
+
+    if num is not None:
+        all_elements = [elem[num] for elem in all_elements]
+    return all_elements
+
+
+def yarara_add_step_dico(
+    self: spec_time_series,
+    sub_dico: str,
+    step: int,
+    sub_dico_used: Optional[str] = None,
+    chain: bool = False,
+) -> None:
+    """Add the step kw for the dico chain, if chain is set to True numbered the full chain"""
+    self.import_table()
+    self.import_info_reduction()
+
+    table = self.table
+    if chain:
+        self.import_dico_chain(sub_dico)
+        sub_dico = self.dico_chain[::-1]
+        step = np.arange(len(sub_dico))
+    else:
+        sub_dico = [sub_dico]
+        step = [step]
+        sub_dico_used = [sub_dico_used]
+
+    for sub, s, sb in zip(sub_dico, step, sub_dico_used):
+        self.info_reduction[sub] = {"sub_dico_used": sb, "step": s, "valid": True}
+    self.update_info_reduction()
+
+
+def yarara_add_ccf_entry(self, kw, default_value=1):
+    self.import_ccf()
+    for mask in list(self.table_ccf.keys()):
+        if mask != "star_info":
+            for sb in list(self.table_ccf[mask].keys()):
+                self.table_ccf[mask][sb]["table"][kw] = default_value
+    io.pickle_dump(self.table_ccf, open(self.directory + "Analyse_ccf.p", "wb"))
+
+
+# region IMPORT SUMMARY TABLE
 
 
 def import_star_info(self: spec_time_series) -> None:
@@ -74,19 +202,25 @@ def import_star_info(self: spec_time_series) -> None:
 
 
 def import_table(self: spec_time_series) -> None:
-    self.table = pd.read_pickle(self.directory + "Analyse_summary.p")
+    if self.table_ut != os.path.getmtime(self.directory + "Analyse_summary.p"):
+        self.table = pd.read_pickle(self.directory + "Analyse_summary.p")
+        self.table_ut = os.path.getmtime(self.directory + "Analyse_summary.p")
 
 
 def import_material(self: spec_time_series) -> None:
-    self.material = pd.read_pickle(self.directory + "Analyse_material.p")
+    if self.material_ut != os.path.getmtime(self.directory + "Analyse_material.p"):
+        self.material = pd.read_pickle(self.directory + "Analyse_material.p")
+        self.material_ut = os.path.getmtime(self.directory + "Analyse_material.p")
 
 
-# =============================================================================
-# IMPORT THE FULL DICO CHAIN
-# =============================================================================
+# endregion
+
+# region IMPORT THE FULL DICO CHAIN
+
 
 def import_dico_tree(self: spec_time_series) -> None:
-    file_test = self.import_spectrum()
+    self.import_info_reduction()
+    file_test = self.info_reduction
     kw = list(file_test.keys())
     kw_kept = []
     kw_chain = []
@@ -97,10 +231,9 @@ def import_dico_tree(self: spec_time_series) -> None:
 
     info = []
     for n in kw_kept:
-
         try:
-            s = file_test[n]["parameters"]["step"]
-            dico = file_test[n]["parameters"]["sub_dico_used"]
+            s = file_test[n]["step"]
+            dico = file_test[n]["sub_dico_used"]
             info.append([n, s, dico])
         except:
             pass
@@ -108,12 +241,14 @@ def import_dico_tree(self: spec_time_series) -> None:
     self.dico_tree = info.sort_values(by="step")
 
 
+# endregion
+
 # =============================================================================
 # IMPORT a RANDOM SPECTRUM
 # =============================================================================
 
 
-def import_spectrum(self: spec_time_series, num: Optional[int64]=None) -> Dict[str, Any]:
+def import_spectrum(self: spec_time_series, num: Optional[int64] = None) -> Dict[str, Any]:
     """
     Import a pickle file of a spectrum to get fast common information shared by all spectra
 
@@ -150,27 +285,27 @@ def import_spectrum(self: spec_time_series, num: Optional[int64]=None) -> Dict[s
 
 def yarara_star_info(
     self: spec_time_series,
-    Rv_sys: None=None,
-    simbad_name: None=None,
-    magB: None=None,
-    magV: None=None,
-    magR: None=None,
-    BV: None=None,
-    VR: None=None,
-    sp_type: None=None,
-    Mstar: None=None,
-    Rstar: None=None,
-    Vsini: None=None,
-    Vmicro: None=None,
-    Teff: None=None,
-    log_g: None=None,
-    FeH: None=None,
-    Prot: None=None,
-    Fwhm: Optional[List[Union[str, float64]]]=None,
-    Contrast: Optional[List[Union[str, float64]]]=None,
-    CCF_delta: None=None,
-    Pmag: None=None,
-    stellar_template: None=None,
+    Rv_sys: None = None,
+    simbad_name: None = None,
+    magB: None = None,
+    magV: None = None,
+    magR: None = None,
+    BV: None = None,
+    VR: None = None,
+    sp_type: None = None,
+    Mstar: None = None,
+    Rstar: None = None,
+    Vsini: None = None,
+    Vmicro: None = None,
+    Teff: None = None,
+    log_g: None = None,
+    FeH: None = None,
+    Prot: None = None,
+    Fwhm: Optional[List[Union[str, float64]]] = None,
+    Contrast: Optional[List[Union[str, float64]]] = None,
+    CCF_delta: None = None,
+    Pmag: None = None,
+    stellar_template: None = None,
 ) -> None:
 
     kw = [
@@ -252,7 +387,7 @@ def yarara_star_info(
 # =============================================================================
 
 # io
-def yarara_analyse_summary(self: spec_time_series, rm_old: bool=False) -> None:
+def yarara_analyse_summary(self: spec_time_series, rm_old: bool = False) -> None:
     """
     Produce a summary table with the RASSINE files of the specified directory
 
@@ -655,14 +790,14 @@ def yarara_analyse_summary(self: spec_time_series, rm_old: bool=False) -> None:
 
 def yarara_obs_info(
     self: spec_time_series,
-    kw: DataFrame=[None, None],
-    jdb: None=None,
-    berv: None=None,
-    rv: None=None,
-    airmass: None=None,
-    texp: None=None,
-    seeing: None=None,
-    humidity: None=None,
+    kw: DataFrame = [None, None],
+    jdb: None = None,
+    berv: None = None,
+    rv: None = None,
+    airmass: None = None,
+    texp: None = None,
+    seeing: None = None,
+    humidity: None = None,
 ) -> None:
     """
     Add some observationnal information in the RASSINE files and produce a summary table
@@ -728,13 +863,13 @@ def yarara_obs_info(
 
 def supress_time_spectra(
     self: spec_time_series,
-    liste: Optional[ndarray]=None,
-    jdb_min: None=None,
-    jdb_max: None=None,
-    num_min: None=None,
-    num_max: None=None,
-    supress: bool=False,
-    name_ext: str="temp",
+    liste: Optional[ndarray] = None,
+    jdb_min: None = None,
+    jdb_max: None = None,
+    num_min: None = None,
+    num_max: None = None,
+    supress: bool = False,
+    name_ext: str = "temp",
 ) -> None:
     """
     Supress spectra according to time
@@ -808,3 +943,72 @@ def supress_time_spectra(
         self.yarara_analyse_summary()
 
         self.supress_time_RV(mask)
+
+
+# region new_database_format
+
+
+def yarara_exploding_pickle(self: spec_time_series) -> None:
+    self.import_table()
+    file_test = self.import_spectrum()
+
+    sub_dico = util.string_contained_in(list(file_test.keys()), "matching")[1]
+
+    sub_dico_to_ventile = []
+    sub_dico_to_delete = []
+    for sb in sub_dico:
+        if "continuum_linear" in file_test[sb].keys():
+            sub_dico_to_ventile.append(sb)
+        else:
+            sub_dico_to_delete.append(sb)
+
+    files = np.array(self.table["filename"])
+
+    c = -1
+    for sb in sub_dico_to_ventile:
+        c += 1
+        print(
+            "\n [INFO] Venting sub_dico %s, number of dico remaining : %.0f \n"
+            % (sb, len(sub_dico_to_ventile) - c)
+        )
+        continua = []
+        for f in tqdm(files):
+            file = pd.read_pickle(f)
+            continua.append(file[sb]["continuum_linear"])
+            if (sb != "matching_anchors") & (sb != "matching_diff"):
+                del file[sb]
+            io.pickle_dump(file, open(f, "wb"))
+        continua = np.array(continua)
+        fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % (sb)
+        np.save(fname, continua)
+
+    c = -1
+    for sb in sub_dico_to_delete:
+        c += 1
+        print(
+            "\n [INFO] Deleting sub_dico %s, number of dico remaining : %.0f \n"
+            % (sb, len(sub_dico_to_delete) - c)
+        )
+        for f in tqdm(files):
+            file = pd.read_pickle(f)
+            del file[sb]
+            io.pickle_dump(file, open(f, "wb"))
+
+    kw = list(util.string_contained_in(list(file_test.keys()), "flux")[1])
+    kw2 = list(util.string_contained_in(list(file_test.keys()), "continuum")[1])
+
+    c = -1
+    for sb in kw + kw2:
+        c += 1
+        print("\n [INFO] Venting key word %s \n" % (sb))
+        flux = []
+        for f in tqdm(files):
+            file = pd.read_pickle(f)
+            flux.append(file[sb])
+            io.pickle_dump(file, open(f, "wb"))
+        flux = np.array(flux)
+        fname = self.dir_root + "WORKSPACE/FLUX/Flux_%s.npy" % (sb)
+        np.save(fname, flux)
+
+
+# endregion
