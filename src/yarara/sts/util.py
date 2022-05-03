@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -20,12 +20,7 @@ from ..stats import IQ, find_nearest, flat_clustering, smooth
 from ..util import doppler_r, flux_norm_std, print_box
 
 if TYPE_CHECKING:
-    from ..my_rassine_tools import spec_time_series
-
-
-# =============================================================================
-# YARARA NONE ZERO FLUX
-# =============================================================================
+    from . import spec_time_series
 
 
 def yarara_non_zero_flux(
@@ -60,24 +55,18 @@ def yarara_non_zero_flux(
         return spectrum
 
 
-# =============================================================================
-#     CREATE MEDIAN SPECTRUM TELLURIC SUPRESSED
-# =============================================================================
-
-
-def yarara_median_master_backup(
+def yarara_median_master(
     self: spec_time_series,
+    *,
     sub_dico: Optional[str] = "matching_diff",
-    method: str = "mean",
-    continuum: str = "linear",
-    supress_telluric: bool = True,
+    method: Union[Literal["mean"], Literal["median"]] = "mean",
+    suppress_telluric: bool = True,
     shift_spectrum: bool = False,
     telluric_tresh: float = 0.001,
     wave_min: int = 5750,
     wave_max: int = 5900,
     jdb_range: List[int] = [-100000, 100000, 1],
     mask_percentile: List[Optional[int]] = [None, 50],
-    rhk_percentile: int = 100,
     save: bool = True,
 ) -> None:
     """
@@ -87,7 +76,6 @@ def yarara_median_master_backup(
     ----------
 
     sub_dico : The sub_dictionnary used to  select the continuum
-    continuum : The continuum to select (either linear or cubic)
     telluric_tresh : Treshold used to cover the position of the contaminated wavelength
     wave_min : The minimum xlim axis
     wave_max : The maximum xlim axis
@@ -191,7 +179,7 @@ def yarara_median_master_backup(
     )
     all_width = np.nanpercentile(all_width, 95, axis=0)
 
-    if supress_telluric:
+    if suppress_telluric:
         borders = np.array([all_min[:, 2] - all_width, all_min[:, 2] + all_width]).T
         telluric_mask = flat_clustering(len(grid), borders) != 0
         all_mask2 = []
@@ -213,7 +201,7 @@ def yarara_median_master_backup(
     #            all_mask2.append(mask.y!=0)
     #         all_mask2 = np.array(all_mask2).astype('float')
 
-    if supress_telluric:
+    if suppress_telluric:
         telluric_mask = telluric.y < (1 - telluric_tresh)
         all_mask = []
         for j in tqdm(berv):
@@ -407,229 +395,11 @@ def yarara_median_master_backup(
         return np.array(load["reference_spectrum"])
 
 
-def yarara_median_master(
-    self: spec_time_series,
-    sub_dico: Optional[str] = "matching_diff",
-    continuum: str = "linear",
-    method: str = "max",
-    smooth_box: int = 7,
-    supress_telluric: bool = True,
-    shift_spectrum: bool = False,
-    wave_min: int = 5750,
-    wave_max: int = 5900,
-    bin_berv: int = 10,
-    bin_snr: Optional[int] = None,
-    telluric_tresh: float = 0.001,
-    jdb_range: List[int] = [-100000, 100000, 1],
-    mask_percentile: List[Optional[int]] = [None, 50],
-    save: bool = True,
-) -> None:
-    """
-    Produce a median master by masking region of the spectrum
-
-    Parameters
-    ----------
-
-    sub_dico : The sub_dictionnary used to  select the continuum
-    continuum : The continuum to select (either linear or cubic)
-    telluric_tresh : Treshold used to cover the position of the contaminated wavelength
-    wave_min : The minimum xlim axis
-    wave_max : The maximum xlim axis
-
-    """
-    if method:
-        self.yarara_median_master_backup(
-            sub_dico=sub_dico,
-            method=method,
-            continuum=continuum,
-            telluric_tresh=telluric_tresh,
-            wave_min=wave_min,
-            wave_max=wave_max,
-            jdb_range=jdb_range,
-            supress_telluric=supress_telluric,
-            shift_spectrum=shift_spectrum,
-            mask_percentile=mask_percentile,
-            save=save,
-        )
-
-    if method == "max":
-        print_box("\n---- RECIPE : PRODUCE MASTER MAX SPECTRUM ----\n")
-
-        self.import_table()
-        self.import_material()
-        load = self.material
-        tab = self.table
-        planet = self.planet
-
-        epsilon = 1e-12
-
-        kw = "_planet" * planet
-        if kw != "":
-            print("\n---- PLANET ACTIVATED ----")
-
-        if sub_dico is None:
-            sub_dico = self.dico_actif
-        print("---- DICO %s used ----" % (sub_dico))
-
-        all_flux = []
-        all_conti = []
-        snr = np.array(tab["snr"])
-        for i, name in enumerate(np.array(tab["filename"])):
-            file = pd.read_pickle(name)
-            if not i:
-                wavelength = file["wave"]
-                self.wave = wavelength
-
-            f = file["flux" + kw]
-            f_std = file["flux_err"]
-            c = file[sub_dico]["continuum_" + continuum]
-            c_std = file["continuum_err"]
-
-            f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-
-            all_flux.append(f_norm)
-            all_conti.append(file["matching_diff"]["continuum_" + continuum])
-
-        all_conti = np.array(all_conti)
-        all_flux = np.array(all_flux) * all_conti.copy()
-        all_flux_backup = all_flux / all_conti
-        med = np.nanmedian(all_flux_backup, axis=0)
-
-        berv = np.array(tab["berv"])
-        rv_shift = np.array(tab["rv_shift"])
-        berv = berv - rv_shift
-
-        sort = np.argsort(berv)
-        snr = np.array(tab["snr"])
-        snr_sorted = snr[sort]
-
-        if bin_snr is not None:
-            val = int(np.sum(snr_sorted**2) // (bin_snr**2))
-            if val > 4:
-                bin_berv = val
-            else:
-                print(
-                    "The expected SNR cannot be reached since the total SNR is about : %.0f"
-                    % (np.sqrt(np.sum(snr_sorted**2)))
-                )
-                print("The maximum value allowed : %.0f" % (np.sqrt(np.sum(snr_sorted**2) / 5)))
-                bin_snr = np.sqrt(np.sum(snr_sorted**2) / 5) - 50
-                bin_berv = int(np.sum(snr_sorted**2) // (bin_snr**2))
-
-        # plt.plot(np.sqrt(np.cumsum(snr_sorted**2)))
-        snr_lim = np.linspace(0, np.sum(snr_sorted**2), bin_berv + 1)
-        berv_bin = berv[sort][find_nearest(np.cumsum(snr_sorted**2), snr_lim)[0]]
-        berv_bin[0] -= 1  # to ensure the first point to be selected
-
-        mask_bin = (berv > berv_bin[0:-1][:, np.newaxis]) & (berv <= berv_bin[1:][:, np.newaxis])
-        berv_bin = (
-            berv_bin[:-1][np.sum(mask_bin, axis=1) != 0]
-            + np.diff(berv_bin)[np.sum(mask_bin, axis=1) != 0] / 2
-        )
-        mask_bin = mask_bin[np.sum(mask_bin, axis=1) != 0]
-
-        snr_stacked = []
-        all_flux_norm = []
-        all_snr = []
-        for j in range(len(mask_bin)):
-            all_flux_norm.append(
-                np.sum(all_flux[mask_bin[j]], axis=0)
-                / (np.sum(all_conti[mask_bin[j]], axis=0) + epsilon)
-            )
-            snr_stacked.append(np.sqrt(np.sum((snr[mask_bin[j]]) ** 2)))
-            all_snr.append(snr[mask_bin[j]])
-        all_flux_norm = np.array(all_flux_norm)
-
-        plt.figure(figsize=(12, 6))
-        plt.subplot(1, 2, 1)
-        self.yarara_get_berv_value(0, Draw=True, new=False, save_fig=False, light_graphic=True)
-        ax = plt.gca()
-        for j in berv_bin:
-            plt.axhline(y=j, color="k", alpha=0.2)
-        plt.axhline(y=0, color="k", ls=":")
-
-        plt.subplot(1, 2, 2, sharey=ax)
-        plt.axhline(y=0, color="k", ls=":")
-
-        plt.plot(snr_stacked, berv_bin, "bo-", alpha=0.3)
-        curve = tableXY(snr_stacked, berv_bin)
-        curve.myscatter(
-            num=False,
-            liste=[len(all_snr[j]) for j in range(len(all_snr))],
-            color="k",
-            factor=50,
-        )
-        plt.xlabel("SNR stacked", fontsize=13)
-        plt.ylabel("BERV [km/s]", fontsize=13)
-
-        print("SNR of binned spetcra around %.0f" % (np.mean(snr_stacked)))
-
-        for j in range(len(all_flux_norm)):
-            all_flux_norm[j] = smooth(all_flux_norm[j], shape="savgol", box_pts=smooth_box)
-
-        mean1 = np.max(all_flux_norm, axis=0)
-
-        self.reference_max = (wavelength, mean1)
-
-        mean1 -= np.median(mean1 - self.reference[1])
-
-        all_flux_diff_mean = all_flux_backup - mean1
-        all_flux_diff_med = all_flux_backup - med
-        all_flux_diff1_mean = all_flux_backup - self.reference[1]
-
-        idx_min = int(find_nearest(wavelength, wave_min)[0])
-        idx_max = int(find_nearest(wavelength, wave_max)[0])
-
-        plt.figure(figsize=(16, 8))
-        plt.subplot(3, 1, 1)
-
-        plt.title("Median")
-        my_colormesh(
-            wavelength[idx_min : idx_max + 1],
-            np.arange(len(berv)),
-            all_flux_diff_med[sort][:, idx_min : idx_max + 1],
-            vmin=-0.005,
-            vmax=0.005,
-            cmap="plasma",
-        )
-        ax = plt.gca()
-
-        plt.subplot(3, 1, 2, sharex=ax, sharey=ax)
-        plt.title("Max")
-        my_colormesh(
-            wavelength[idx_min : idx_max + 1],
-            np.arange(len(berv)),
-            all_flux_diff_mean[sort][:, idx_min : idx_max + 1],
-            vmin=-0.005,
-            vmax=0.005,
-            cmap="plasma",
-        )
-
-        plt.subplot(3, 1, 3, sharex=ax, sharey=ax)
-        plt.title("Masked weighted mean")
-        my_colormesh(
-            wavelength[idx_min : idx_max + 1],
-            np.arange(len(berv)),
-            all_flux_diff1_mean[sort][:, idx_min : idx_max + 1],
-            vmin=-0.005,
-            vmax=0.005,
-            cmap="plasma",
-        )
-
-        load["wave"] = wavelength
-        load["reference_spectrum"] = mean1
-        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
-
-
-# =============================================================================
-# CUT SPECTRUM
-# =============================================================================
-
-
 def yarara_cut_spectrum(
     self: spec_time_series, wave_min: None = None, wave_max: Optional[int] = None
 ) -> None:
     """Cut the spectrum time-series borders to reach the specified wavelength limits (included)
+
     There is no way to cancel this step ! Use it wisely."""
 
     print_box("\n---- RECIPE : SPECTRA CROPING ----\n")

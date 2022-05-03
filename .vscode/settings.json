@@ -6,6 +6,27 @@
             "source.organizeImports": true
         }
     },
+    "python.analysis.indexing": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportTypedDictNotRequiredAccess": "none",
+        "reportUnboundVariable": "none", // TODO: reenable
+        "reportGeneralTypeIssues": "warning",
+        "reportOptionalSubscript": "none",
+        "reportOptionalOperand": "none",
+    },
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    //    "python.linting.mypyEnabled": true,
+    "files.exclude": {
+        ".venv/": true,
+        "**/__pycache__": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true,
+        "**/build": true,
+        "**/dist": true,
+        "docs/source/_autosummary": true
+    },
+    "esbonio.server.enabled": false,
     "cSpell.words": [
         "arange",
         "astropy",

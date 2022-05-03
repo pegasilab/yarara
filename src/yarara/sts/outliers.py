@@ -4,12 +4,14 @@ import glob as glob
 import logging
 import time
 from typing import TYPE_CHECKING
+from typing import Literal as Shape
 
 import matplotlib.cm as cmx
 import matplotlib.colors as mplcolors
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from nptyping import Float, NDArray
 from tqdm import tqdm
 
 from .. import io
@@ -20,7 +22,7 @@ from ..stats import clustering, find_nearest, flat_clustering, smooth
 from ..util import flux_norm_std, print_box, sphinx, yarara_artefact_suppressed
 
 if TYPE_CHECKING:
-    from ..my_rassine_tools import spec_time_series
+    from . import spec_time_series
 
 
 def yarara_correct_smooth(
@@ -411,7 +413,7 @@ def yarara_correct_mad(
     k_mad: int = 2,
     n_iter: int = 1,
     ext: str = "0",
-) -> None:
+) -> np.ndarray:
 
     """
     Supress flux value outside k-sigma mad clipping
@@ -532,9 +534,9 @@ def yarara_correct_mad(
             counter_removed.append(100 * np.sum(mask * (ref < 0.9)) / np.sum(ref < 0.9))
             cum_curve.append(100 * np.cumsum(mask * (ref < 0.9)) / np.sum(ref < 0.9))
 
-        self.counter_mad_removed = np.array(counter_removed)
-        self.cum_curves = np.array(cum_curve)
-        self.cum_curves[self.cum_curves[:, -1] == 0, -1] = 1
+        counter_mad_removed = np.array(counter_removed)
+        cum_curves = np.array(cum_curve)
+        cum_curves[cum_curves[:, -1] == 0, -1] = 1
 
         med2 = np.median(all_flux2, axis=0)
         mean2 = np.mean(all_flux2, axis=0)
@@ -584,10 +586,10 @@ def yarara_correct_mad(
             y=0.15,
             color="k",
             ls=":",
-            label="rejection criterion  (%.0f)" % (sum(self.counter_mad_removed > 0.15)),
+            label="rejection criterion  (%.0f)" % (sum(counter_mad_removed > 0.15)),
         )
         plt.legend()
-        plt.scatter(jdb, self.counter_mad_removed, c=jdb, cmap="jet")
+        plt.scatter(jdb, counter_mad_removed, c=jdb, cmap="jet")
         plt.xlabel("Time", fontsize=13)
         plt.ylabel("Percent of the spectrum removed [%]", fontsize=13)
         ax = plt.colorbar()
@@ -597,9 +599,9 @@ def yarara_correct_mad(
             y=0.15,
             color="k",
             ls=":",
-            label="rejection criterion (%.0f)" % (sum(self.counter_mad_removed > 0.15)),
+            label="rejection criterion (%.0f)" % (sum(counter_mad_removed > 0.15)),
         )
-        plt.scatter(all_snr, self.counter_mad_removed, c=jdb, cmap="jet")
+        plt.scatter(all_snr, counter_mad_removed, c=jdb, cmap="jet")
         plt.xlabel("SNR", fontsize=13)
         plt.ylabel("Percent of the spectrum removed [%]", fontsize=13)
         ax = plt.colorbar()
@@ -615,7 +617,7 @@ def yarara_correct_mad(
         plt.subplot(2, 3, 2)
         for j in range(len(jdb)):
             colorVal = scalarMap.to_rgba(jdb[j])
-            plt.plot(grid[::500], self.cum_curves[j][::500], color=colorVal, alpha=0.5)
+            plt.plot(grid[::500], cum_curves[j][::500], color=colorVal, alpha=0.5)
         plt.xlabel("Wavelength", fontsize=13)
         plt.ylabel("Cumulative of spectrum removed [%]", fontsize=13)
 
@@ -624,7 +626,7 @@ def yarara_correct_mad(
             colorVal = scalarMap.to_rgba(jdb[j])
             plt.plot(
                 grid[::500],
-                self.cum_curves[j][::500] / self.cum_curves[j][-1] * 100,
+                cum_curves[j][::500] / cum_curves[j][-1] * 100,
                 color=colorVal,
                 alpha=0.3,
             )
@@ -633,7 +635,7 @@ def yarara_correct_mad(
 
         plt.subplot(2, 3, 3)
         for j in range(len(jdb)):
-            plt.plot(grid[::500], self.cum_curves[j][::500], color="k", alpha=0.3)
+            plt.plot(grid[::500], cum_curves[j][::500], color="k", alpha=0.3)
         plt.xlabel("Wavelength", fontsize=13)
         plt.ylabel("Cumulative of spectrum removed [%]", fontsize=13)
 
@@ -642,7 +644,7 @@ def yarara_correct_mad(
             colorVal = scalarMap.to_rgba(jdb[j])
             plt.plot(
                 grid[::500],
-                self.cum_curves[j][::500] / self.cum_curves[j][-1] * 100,
+                cum_curves[j][::500] / cum_curves[j][-1] * 100,
                 color="k",
                 alpha=0.3,
             )
@@ -661,7 +663,6 @@ def yarara_correct_mad(
         print("\nComputation of the new continua, wait ... \n")
         time.sleep(0.5)
         count_file = -1
-        self.debug = (all_flux, all_flux2)
 
         for j in tqdm(files):
             count_file += 1
@@ -689,6 +690,7 @@ def yarara_correct_mad(
             io.save_pickle(j, file)
 
         self.dico_actif = "matching_mad"
+    return counter_mad_removed
 
 
 def yarara_correct_brute(
@@ -868,7 +870,6 @@ def yarara_correct_brute(
     io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
 
     final_mask = final_mask | ghost_brute_mask | borders_pxl_mask
-    self.brute_mask = final_mask
 
     load["mask_brute"] = final_mask
     io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))

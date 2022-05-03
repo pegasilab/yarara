@@ -14,7 +14,7 @@ from tqdm import tqdm
 from .. import analysis, io, util
 
 if TYPE_CHECKING:
-    from ..my_rassine_tools import spec_time_series
+    from . import spec_time_series
 
 
 def spectrum(
@@ -25,7 +25,7 @@ def spectrum(
     norm: bool = False,
     planet: bool = False,
     color_correction: bool = False,
-):
+) -> tableXY:
     """
     Produce a tableXY spectrum by specifying its index number
 
@@ -103,7 +103,6 @@ def import_rassine_output(
         files = np.sort(files)
         file = []
         for i, j in enumerate(files):
-            self.debug = j
             file.append(pd.read_pickle(j))
 
             if kw1 is not None:

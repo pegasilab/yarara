@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -21,7 +21,7 @@ from ..stats import clustering, find_nearest, flat_clustering, mad, merge_border
 from ..util import doppler_r, flux_norm_std, print_box
 
 if TYPE_CHECKING:
-    from ..my_rassine_tools import spec_time_series
+    from . import spec_time_series
 
 # =============================================================================
 # COMPUTE THE TELLURIC CCF
@@ -31,12 +31,11 @@ if TYPE_CHECKING:
 def yarara_telluric(
     self: spec_time_series,
     sub_dico: str = "matching_anchors",
-    continuum: str = "linear",
     suppress_broad: bool = True,
     delta_window: int = 5,
-    mask: Optional[str] = None,
+    mask: Union[str, np.ndarray, None] = None,
     weighted: bool = False,
-    reference: str = True,
+    reference: Union[bool, str] = True,
     display_ccf: bool = False,
     ratio: bool = False,
     normalisation: str = "slope",
@@ -61,9 +60,9 @@ def yarara_telluric(
 
     kw = "_planet" * self.planet
     if kw != "":
-        print("\n---- PLANET ACTIVATED ----")
+        logging.info("PLANET ACTIVATED")
 
-    print_box("\n---- RECIPE : COMPUTE TELLURIC CCF MOMENT ----\n")
+    logging.info("RECIPE : COMPUTE TELLURIC CCF MOMENT")
 
     self.import_table()
 
@@ -85,7 +84,7 @@ def yarara_telluric(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    print("---- DICO %s used ----" % (sub_dico))
+    logging.info(f"DICO {sub_dico} used")
 
     test = self.spectrum(num=0, sub_dico=sub_dico, norm=True)
     grid = test.x
@@ -98,15 +97,16 @@ def yarara_telluric(
     if mask is None:
         mask = "telluric"
 
-    if type(mask) == str:
+    if isinstance(mask, str):
         if mask == "h2o":
             telluric_tag = "h2o"
         elif mask == "o2":
             telluric_tag = "o2"
         mask = np.genfromtxt(root + "/Python/MASK_CCF/mask_telluric_" + mask + ".txt")
+        assert isinstance(mask, np.ndarray)
         mask = mask[mask[:, 0].argsort()]
         # mask = mask[(mask[:,0]>6200)&(mask[:,0]<6400)]
-
+    assert isinstance(mask, np.ndarray)
     wave_tel = 0.5 * (mask[:, 0] + mask[:, 1])
     mask = mask[(wave_tel < np.max(grid)) & (wave_tel > np.min(grid))]
     wave_tel = wave_tel[(wave_tel < np.max(grid)) & (wave_tel > np.min(grid))]
@@ -140,7 +140,6 @@ def yarara_telluric(
 
     self.yarara_ccf(
         sub_dico=sub_dico,
-        continuum=continuum,
         mask=mask,
         weighted=weighted,
         delta_window=delta_window,
@@ -151,9 +150,9 @@ def yarara_telluric(
         display_ccf=display_ccf,
         normalisation=normalisation,
         ratio=ratio,
-        rv_borders=10,
-        rv_range=int(berv_max + 7),
-        rv_sys=0,
+        rv_borders=10.0,
+        rv_range=float(berv_max + 7),
+        rv_sys=0.0,
         rv_shift=rv_shift,
         wave_max=wave_max,
         wave_min=wave_min,
@@ -200,9 +199,9 @@ def yarara_telluric(
         file["parameters"][telluric_tag + "_contrast"] = output[1][i]
         file["parameters"][telluric_tag + "_rv"] = output[2][i]
         # warning: ccf_timeseries convention has changed during YARARA lifetime
-        file["parameters"][telluric_tag + "_fwhm"] = output[5][i]
-        file["parameters"][telluric_tag + "_center"] = output[6][i]
-        file["parameters"][telluric_tag + "_depth"] = output[7][i]
+        file["parameters"][telluric_tag + "_fwhm"] = output[7][i]
+        file["parameters"][telluric_tag + "_center"] = output[9][i]
+        file["parameters"][telluric_tag + "_depth"] = output[11][i]
         io.pickle_dump(file, open(j, "wb"))
 
     self.yarara_analyse_summary()
@@ -434,7 +433,7 @@ def yarara_correct_telluric_proxy(
     second_guess_position = first_guess_position
 
     # fwhm_telluric = np.median(self.table['telluric_fwhm'])
-    fwhm_telluric = self.star_info["FWHM"][""]  # 09.08.21
+    fwhm_telluric = self.star_info["FWHM"]["telluric"]  # 09.08.21
     val, borders = clustering(first_guess_position, 0.5, 1)
     val = np.array([np.product(v) for v in val]).astype("bool")
     borders = borders[val]

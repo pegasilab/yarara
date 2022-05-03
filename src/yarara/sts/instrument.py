@@ -26,7 +26,7 @@ from ..stats import (
 from ..util import doppler_r, flux_norm_std, print_box, sphinx
 
 if TYPE_CHECKING:
-    from ..my_rassine_tools import spec_time_series
+    from . import spec_time_series
 
 
 # =============================================================================

@@ -16,9 +16,9 @@ from ..stats import find_nearest, smooth, smooth2d
 from ..util import doppler_r, print_box
 
 if TYPE_CHECKING:
-    from ..my_rassine_tools import spec_time_series
+    from . import spec_time_series
 
- 
+
 # =============================================================================
 #  ACTIVITY CORRECTION
 # =============================================================================
@@ -65,7 +65,7 @@ def yarara_correct_activity(
     zoom = self.zoom
     smooth_map = self.smooth_map
     cmap = self.cmap
-    planet = self.planet
+    planet: bool = self.planet
     low_cmap = self.low_cmap * 100
     high_cmap = self.high_cmap * 100
     self.import_material()

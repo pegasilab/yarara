@@ -1,34 +1,72 @@
 from __future__ import annotations
 
-import os
-
-from . import activity, extract, instrument, io, limbo, outliers, processing, telluric, util
-
-__all__ = [
-    "activity",
-    "extract",
-    "instrument",
-    "io",
-    "limbo",
-    "outliers",
-    "processing",
-    "spec_time_series",
-    "telluric",
-    "util",
-]
-
 import glob as glob
 import os
+from typing import Any, Dict, TypedDict
 
 import numpy as np
 import pandas as pd
 
-from .. import io
+from ..io import pickle_dump
 from ..paths import root
+
+
+class SIF_float_telluric(TypedDict, total=False):
+    fixed: float  #: Generic value
+    YARARA: float  #: YARARA value
+    telluric: float
+
+
+class SIF_float(TypedDict, total=False):
+    fixed: float  #: Generic value
+    YARARA: float  #: YARARA value
+
+
+class SIF_str(TypedDict, total=False):
+    fixed: str  #: Generic value
+    YARARA: str  #: YARARA value
+
+
+class SIF_int(TypedDict, total=False):
+    fixed: int  #: Generic value
+    YARARA: int  #: YARARA value
+
+
+class StarInfo(TypedDict, total=False):
+    Name: str
+    Simbad_name: SIF_str
+    Sp_type: SIF_str
+    Ra: SIF_str
+    Dec: SIF_str
+    Pma: SIF_float
+    Pmd: SIF_float
+    Rv_sys: SIF_float
+    Mstar: SIF_float
+    Rstar: SIF_float
+    magU: SIF_float
+    magB: SIF_float
+    magV: SIF_float
+    magR: SIF_float
+    UB: SIF_float
+    BV: SIF_float
+    VR: SIF_float
+    Dist_pc: SIF_float
+    Teff: SIF_float
+    Log_g: SIF_float
+    FeH: SIF_float
+    Vsini: SIF_float
+    Vmicro: SIF_float
+    Prot: SIF_float
+    Pmag: SIF_float
+    FWHM: SIF_float_telluric
+    Contrast: SIF_float_telluric
+    CCF_delta: SIF_float
+    stellar_template: SIF_str
 
 
 class spec_time_series(object):
     from .activity import yarara_correct_activity
+    from .ccf import yarara_ccf, yarara_master_ccf
     from .extract import yarara_get_berv_value, yarara_get_orders, yarara_get_pixels
     from .instrument import (
         yarara_correct_borders_pxl,
@@ -55,7 +93,6 @@ class spec_time_series(object):
         yarara_obs_info,
         yarara_star_info,
     )
-    from .limbo import yarara_master_ccf
     from .outliers import (
         yarara_correct_brute,
         yarara_correct_cosmics,
@@ -65,7 +102,6 @@ class spec_time_series(object):
     from .processing import (
         uncorrect_hole,
         yarara_activity_index,
-        yarara_ccf,
         yarara_map,
         yarara_retropropagation_correction,
     )
@@ -78,7 +114,6 @@ class spec_time_series(object):
     from .util import (
         yarara_cut_spectrum,
         yarara_median_master,
-        yarara_median_master_backup,
         yarara_non_zero_flux,
         yarara_poissonian_noise,
     )
@@ -98,7 +133,7 @@ class spec_time_series(object):
         self.high_cmap = 0.005
         self.zoom = 1
         self.smooth_map = 1
-        self.planet = False
+        self.planet: bool = False  #: If a planet has been injected
         self.sp_type = None
         self.rv_sys = None
         self.teff = None
@@ -109,28 +144,48 @@ class spec_time_series(object):
         self.infos = {}
         self.ram = []
 
+        self.info_reduction: Dict[str, Any] = None  # type: ignore
+
+        #: If info_reduction has been loaded, modification time of the loaded file
+        self.info_reduction_ut: float = 0.0
+
+        self.instrument = ""  #: Instrument used for the measurements
+
+        # TODO: document the columns
+        #: Table of relations between outputs produced at different stages of the pipeline
+        self.dico_tree: pd.DataFrame = None  # type: ignore
+
+        # TODO: document the columns
+        #: Table with elements having a spectral wavelength dimension
+        self.material: pd.DataFrame = None  # type: ignore
+
+        # TODO: document the columns
+        self.table: pd.DataFrame = None  # type: ignore
+
+        self.star_info: StarInfo = {}  #: Information about the star
+
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.table_ut = 0
+        self.table_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.material_ut = 0
+        self.material_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.info_reduction_ut = 0
+        self.info_reduction_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.star_info_ut = 0
+        self.star_info_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.table_snr_ut = 0
+        self.table_snr_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.table_ccf_ut = 0
+        self.table_ccf_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.table_ccf_saved_ut = 0
+        self.table_ccf_saved_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.lbl_ut = 0
+        self.lbl_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.dbd_ut = 0
+        self.dbd_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.lbl_iter_ut = 0
+        self.lbl_iter_ut = 0.0
         #: Datetime of corresponding info read from file, to avoid reading twice
-        self.wbw_ut = 0
+        self.wbw_ut = 0.0
 
         self.dico_actif = "matching_diff"
 
@@ -166,12 +221,12 @@ class spec_time_series(object):
 
         if not os.path.exists(self.directory + "Analyse_ccf.p"):
             ccf_summary = {"star_info": {"name": self.starname}}
-            io.pickle_dump(ccf_summary, open(self.directory + "Analyse_ccf.p", "wb"))
+            pickle_dump(ccf_summary, open(self.directory + "Analyse_ccf.p", "wb"))
 
         if not os.path.exists(self.directory + "Analyse_material.p"):
             file = pd.read_pickle(glob.glob(self.directory + "RASSI*.p")[0])
             wave = file["wave"]
-            dico = {
+            dico_material = {
                 "wave": wave,
                 "correction_factor": np.ones(len(wave)),
                 "reference_spectrum": np.ones(len(wave)),
@@ -179,8 +234,8 @@ class spec_time_series(object):
                 "blaze_correction": np.ones(len(wave)),
                 "rejected": np.zeros(len(wave)),
             }
-            dico = pd.DataFrame(dico)
-            io.pickle_dump(dico, open(self.directory + "Analyse_material.p", "wb"))
+            dico_material = pd.DataFrame(dico_material)
+            pickle_dump(dico_material, open(self.directory + "Analyse_material.p", "wb"))
 
         if os.path.exists(self.directory + "/RASSINE_Master_spectrum.p"):
             master = pd.read_pickle(self.directory + "/RASSINE_Master_spectrum.p")
@@ -213,13 +268,13 @@ class spec_time_series(object):
 
         if not os.path.exists(self.dir_root + "REDUCTION_INFO/Info_reduction.p"):
             info = {}
-            io.pickle_dump(info, open(self.dir_root + "REDUCTION_INFO/Info_reduction.p", "wb"))
+            pickle_dump(info, open(self.dir_root + "REDUCTION_INFO/Info_reduction.p", "wb"))
 
         if not os.path.exists(self.dir_root + "STAR_INFO/"):
             os.system("mkdir " + self.dir_root + "STAR_INFO/")
 
         if not os.path.exists(self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p"):
-            dico = {
+            dico: StarInfo = {
                 "Name": self.starname,
                 "Simbad_name": {"fixed": "-"},
                 "Sp_type": {"fixed": "G2V"},
@@ -251,7 +306,7 @@ class spec_time_series(object):
                 "stellar_template": {"fixed": "MARCS_T5750_g4.5"},
             }
 
-            io.pickle_dump(
+            pickle_dump(
                 dico,
                 open(
                     self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p",
@@ -262,14 +317,14 @@ class spec_time_series(object):
         self.import_star_info()
         sp = self.star_info["Sp_type"]["fixed"][0]
         self.mask_harps = ["G2", "K5", "M2"][int((sp == "K") | (sp == "M")) + int(sp == "M")]
-        try:
+        if "YARARA" in self.star_info["FWHM"]:
             self.fwhm = self.star_info["FWHM"]["YARARA"]
-        except:
+        else:
             self.fwhm = self.star_info["FWHM"]["fixed"]
 
-        try:
+        if "YARARA" in self.star_info["Contrast"]:
             self.contrast = self.star_info["Contrast"]["YARARA"]
-        except:
+        else:
             self.contrast = self.star_info["Contrast"]["fixed"]
 
         if not os.path.exists(self.dir_root + "KEPLERIAN/"):

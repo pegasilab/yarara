@@ -10,7 +10,7 @@ from ..analysis import tableXY
 from ..util import map_rnr
 
 if TYPE_CHECKING:
-    from ..my_rassine_tools import spec_time_series
+    from . import spec_time_series
 
 
 # =============================================================================
