@@ -20,10 +20,8 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 
-from yarara.analysis import tableXY
 from yarara.io import pickle_dump
-from yarara.my_rassine_tools import spec_time_series
-from yarara.stats import IQ
+from yarara.sts import spec_time_series
 from yarara.util import print_iter
 
 # =============================================================================
