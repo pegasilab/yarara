@@ -131,13 +131,13 @@ def yarara_correct_activity(
     if reference == "snr":
         ref = flux[snr.argmax()]
     elif reference == "median":
-        print("[INFO] Reference spectrum : median")
+        logging.info("Reference spectrum : median")
         ref = np.median(flux, axis=0)
     elif reference == "master":
-        print("[INFO] Reference spectrum : master")
+        logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
     elif type(reference) == int:
-        print("[INFO] Reference spectrum : spectrum %.0f" % (reference))
+        logging.info("Reference spectrum : spectrum %.0f" % (reference))
         ref = flux[reference]
     else:
         ref = 0 * np.median(flux, axis=0)

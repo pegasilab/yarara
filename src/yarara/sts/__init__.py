@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import glob as glob
 import os
-from typing import Any, Dict, TypedDict
+from typing import Any, Dict, Optional, Tuple, TypedDict
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from ..io import pickle_dump
 from ..paths import root
@@ -66,16 +67,15 @@ class StarInfo(TypedDict, total=False):
 
 class spec_time_series(object):
     from .activity import yarara_correct_activity
-    from .ccf import yarara_ccf, yarara_master_ccf
+    from .ccf import yarara_ccf, yarara_ccf_save, yarara_master_ccf
     from .extract import yarara_get_berv_value, yarara_get_orders, yarara_get_pixels
-    from .instrument import (
-        yarara_correct_borders_pxl,
-        yarara_correct_frog,
-        yarara_correct_pattern,
-        yarara_produce_mask_contam,
-        yarara_produce_mask_frog,
-    )
+    from .instrument.correct_borders_pxl import yarara_correct_borders_pxl
+    from .instrument.correct_frog import yarara_correct_frog
+    from .instrument.correct_pattern import yarara_correct_pattern
+    from .instrument.produce_mask_contam import yarara_produce_mask_contam
+    from .instrument.produce_mask_frog import yarara_produce_mask_frog
     from .io import (
+        import_ccf,
         import_dico_tree,
         import_info_reduction,
         import_material,
@@ -105,12 +105,10 @@ class spec_time_series(object):
         yarara_map,
         yarara_retropropagation_correction,
     )
-    from .telluric import (
-        yarara_correct_oxygen,
-        yarara_correct_telluric_gradient,
-        yarara_correct_telluric_proxy,
-        yarara_telluric,
-    )
+    from .telluric.analysis import yarara_telluric
+    from .telluric.correct import yarara_correct_telluric_proxy
+    from .telluric.gradient import yarara_correct_telluric_gradient
+    from .telluric.oxygen import yarara_correct_oxygen
     from .util import (
         yarara_cut_spectrum,
         yarara_median_master,
@@ -139,10 +137,12 @@ class spec_time_series(object):
         self.teff = None
         self.log_g = None
         self.bv = None
-        self.fwhm = None
         self.wave = None
         self.infos = {}
         self.ram = []
+
+        #: Full width half maximum of the CCF
+        self.fwhm: float = np.NaN
 
         self.info_reduction: Dict[str, Any] = None  # type: ignore
 
@@ -160,31 +160,26 @@ class spec_time_series(object):
         self.material: pd.DataFrame = None  # type: ignore
 
         # TODO: document the columns
+        # table["filename"] is the spectrum file <- RASSINE
+        # table["rv_shift"] is in km/s
+        # berv
         self.table: pd.DataFrame = None  # type: ignore
 
         self.star_info: StarInfo = {}  #: Information about the star
 
-        #: Datetime of corresponding info read from file, to avoid reading twice
+        self.table_ccf: Dict[str, Any] = {}
+
+        # All of these fields are timestamps of file read
         self.table_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.material_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.info_reduction_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.star_info_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.table_snr_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.table_ccf_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.table_ccf_saved_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.lbl_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.dbd_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.lbl_iter_ut = 0.0
-        #: Datetime of corresponding info read from file, to avoid reading twice
         self.wbw_ut = 0.0
 
         self.dico_actif = "matching_diff"
@@ -346,4 +341,52 @@ class spec_time_series(object):
             os.system("mkdir " + self.dir_root + "CORRECTION_MAP/")
 
         #: warning, indexing convention has changed during YARARA lifetime
-        self.ccf_timeseries = None
+
+        # this is assigned by yarara_ccf
+        self.ccf_timeseries: Any = None
+        self.all_ccf_saved: Dict[
+            Any, Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]
+        ] = {}
+        self.svrad_phot: Any = None
+        self.ccf_rv: Any = None
+        self.ccf_centers: Any = None
+        self.ccf_contrast: Any = None
+        self.ccf_depth: Any = None
+        self.ccf_fwhm: Any = None
+        self.ccf_vspan: Any = None
+        self.ccf_ew: Any = None
+        self.ccf_rv_shift: Any = None
+
+        # this is assigned by yarara_telluric
+        self.berv_offset: Any = None
+
+        # this is assigned by yarara_correct_frog
+        self.stitching: Any = None
+        self.stitching_extracted: Any = None
+        self.ghost_a: Any = None
+        self.ghost_a_extracted: Any = None
+        self.ghost_b: Any = None
+        self.ghost_b_extracted: Any = None
+        self.thar: Any = None
+        self.thar_extracted: Any = None
+        self.contam: Any = None
+        self.contam_extracted: Any = None
+        self.vec_pca_stitching: Any = None
+        self.vec_pca_ghost_a: Any = None
+        self.vec_pca_ghost_b: Any = None
+        self.vec_pca_thar: Any = None
+        self.vec_pca_contam: Any = None
+
+        # this is assigned by yarara_correct_pattern
+        self.fft_output: Any = None
+        self.index_corrected_pattern_red: Any = None
+        self.index_corrected_pattern_blue: Any = None
+
+        # this is assigned by yarara_produce_mask_frog
+        self.stitching_zones: Any = None
+
+        # this is assigned by get_orders
+        self.orders: Any = None
+
+        # this is assigned by get_pixels
+        self.pixels: Any = None

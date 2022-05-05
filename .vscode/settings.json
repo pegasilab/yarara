@@ -10,12 +10,12 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.diagnosticSeverityOverrides": {
         "reportTypedDictNotRequiredAccess": "none",
-        "reportUnboundVariable": "none", // TODO: reenable
-        "reportGeneralTypeIssues": "warning",
-        "reportOptionalSubscript": "none",
-        "reportOptionalOperand": "none",
+        "reportUnboundVariable": "error", // TODO: reenable
+        "reportGeneralTypeIssues": "error",
     },
     "python.analysis.diagnosticMode": "openFilesOnly",
+    "autoDocstring.guessTypes": false,
+    "autoDocstring.docstringFormat": "google-notypes",
     //    "python.linting.mypyEnabled": true,
     "files.exclude": {
         ".venv/": true,

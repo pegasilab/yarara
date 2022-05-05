@@ -1,127 +1,67 @@
 from __future__ import annotations
 
 import datetime
-import glob as glob
 import logging
 import os
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from astropy.io import fits
-from colorama import Fore
 from numpy import ndarray
+from numpy.typing import NDArray
 from scipy.interpolate import interp1d
-from tqdm import tqdm
 
 from yarara.analysis import tableXY
 
 from .. import io, util
 from ..analysis import tableXY
-from ..paths import root
-from ..stats import IQ, find_nearest, identify_nearest, match_nearest, smooth2d
+from ..io import pickle_dump
+from ..paths import paths, root
+from ..stats import IQ, find_nearest, identify_nearest
+from ..util import assert_never
 from ..util import ccf as ccf_fun
-from ..util import doppler_r, get_phase, print_box
+from ..util import doppler_r
 
 if TYPE_CHECKING:
     from . import spec_time_series
 
 
-@dataclass(frozen=True)
-class CCFResult:
-    rv: tableXY
-    centers: tableXY
-    contrast: tableXY
-    depth: tableXY
-    fwhm: tableXY
-    vspan: tableXY
-    ew: tableXY
-    bis0: tableXY
-    jdb: np.ndarray
-    rv_photon_noise: np.ndarray
-    rv_shift: float
-
-    def timeseries(self) -> np.ndarray:
-        return np.array(
-            [
-                self.ew.y,
-                self.ew.yerr,
-                self.contrast.y,
-                self.contrast.yerr,
-                self.rv.y / 1000,
-                self.rv.yerr / 1000,
-                self.rv_photon_noise,
-                self.fwhm.y,
-                self.fwhm.yerr,
-                self.centers.y / 1000,
-                self.centers.yerr / 1000,
-                self.depth.y,
-                self.depth.yerr,
-                self.bis0.y,
-                self.vspan.y / 1000,
-                self.vspan.yerr / 1000,
-            ]
-        )
-
-    def infos(self) -> pd.DataFrame:
-        res = pd.DataFrame(
-            self.timeseries().T,
-            columns=[
-                "ew",
-                "ew_std",
-                "contrast",
-                "contrast_std",
-                "rv",
-                "rv_std",
-                "rv_std_phot",
-                "fwhm",
-                "fwhm_std",
-                "center",
-                "center_std",
-                "depth",
-                "depth_std",
-                "b0",
-                "bisspan",
-                "bisspan_std",
-            ],
-        )
-        res["jdb"] = self.jdb
+def read_ccf_mask(self: spec_time_series, mask_name: str) -> NDArray[np.float64]:
+    logging.info("Reading CCF mask : %s \n" % (mask_name))
+    mask_path = root + "/Python/MASK_CCF/" + mask_name + ".txt"
+    mask = np.genfromtxt(mask_path)
+    mask = np.array([0.5 * (mask[:, 0] + mask[:, 1]), mask[:, 2]]).T
+    return mask
 
 
 def yarara_ccf(
     self: spec_time_series,
+    mask: NDArray[np.float64],
+    mask_name: str,
     sub_dico: str = "matching_diff",
-    mask: Union[ndarray, str, None] = None,
-    mask_name: None = None,
-    ccf_name: None = None,
-    mask_col: str = "weight_rv",
-    treshold_telluric: int = 1,
+    ccf_name: Optional[str] = None,  # was always None
     ratio: bool = False,
-    element: None = None,
-    reference: Union[bool, str] = True,
+    reference: Union[bool, Literal["norm"], Literal["master_snr"]] = True,
     weighted: bool = True,
     plot: bool = False,
-    display_ccf: bool = False,
     save: bool = True,
     save_ccf_profile: bool = False,
-    normalisation: str = "left",
+    normalisation: Union[Literal["left"], Literal["slope"]] = "left",
     del_outside_max: bool = False,
-    bis_analysis: bool = False,
     ccf_oversampling: int = 1,
     rv_range: Optional[float] = None,
     rv_borders: Optional[float] = None,
     delta_window: int = 5,
-    rv_sys: Optional[float] = None,
-    rv_shift: Optional[ndarray] = None,
+    rv_sys_: Union[
+        float, Literal["parameters_or_zero"], Literal["parameters"]
+    ] = "parameters_or_zero",
+    rv_shift_: Union[np.ndarray, Literal["zeros"], Literal["table"]] = "zeros",
     speed_up: bool = True,
     force_brute: bool = False,
-    wave_min: None = None,
-    wave_max: None = None,
-    time_min: Optional[float] = None,
-    time_max: Optional[float] = None,
     squared: bool = True,
     p_noise: float = 1 / np.inf,
     substract_map: List[Any] = [],
@@ -131,22 +71,25 @@ def yarara_ccf(
     Compute the CCF of a spectrum, reference to use always the same continuum (matching_anchors highest SNR).
     Display_ccf to plot all the individual CCF. Plot to plot the FWHM, contrast and RV.
 
-    Parameters
-    ----------
-    sub_dico : The sub_dictionnary used to  select the continuum
-    mask : The line mask used to cross correlate with the spectrum (mask should be located in MASK_CCF otherwise KITCAT dico)
-    mask_col : Column of the KitCat column to use for the weight
-    threshold_telluric : Maximum telluric contamination to keep a stellar line in the mask
-    reference : True/False or 'norm', True use the matching anchors of reference, False use the continuum of each spectrum, norm use the continuum normalised spectrum (not )
-    plot : True/False to plot the RV time-series
-    display_ccf : display all the ccf subproduct
-    save : True/False to save the informations iun summary table
-    normalisation : 'left' or 'slope'. if left normalise the CCF by the most left value, otherwise fit a line between the two highest point
-    del_outside maximam : True/False to delete the CCF outside the two bump in personal mask
-    speed_up : remove region from the CCF not crossed by a line in the mask to speed up the code
-    force_brute : force to remove the region excluded by the brute mask
-    """
+    mask: if was used previously as None, use sts.read_ccf_mask(sts.mask_harps) and set mask_name to sts.mask_harps
 
+    Args:
+        sub_dico: The sub_dictionary used to  select the continuum
+        mask: The line mask used to cross correlate with the spectrum (mask should be located in MASK_CCF otherwise KITCAT dico)
+        threshold_telluric : Maximum telluric contamination to keep a stellar line in the mask
+        reference : True/False or 'norm', True use the matching anchors of reference, False use the continuum of each spectrum, norm use the continuum normalised spectrum (not )
+        plot : True/False to plot the RV time-series
+        display_ccf : display all the ccf subproduct
+        save : True/False to save the informations iun summary table
+        normalisation : 'left' or 'slope'. if left normalise the CCF by the most left value, otherwise fit a line between the two highest point
+        del_outside maximam : True/False to delete the CCF outside the two bump in personal mask
+        speed_up : remove region from the CCF not crossed by a line in the mask to speed up the code
+        force_brute : force to remove the region excluded by the brute mask
+        rv_sys: km/s
+        rv_shift: if nd_array, in m/s
+
+        mask_name: Name used to save the mask in ANAL
+    """
     directory = self.directory
     planet = self.planet
 
@@ -170,9 +113,7 @@ def yarara_ccf(
 
     self.import_table()
 
-    files = glob.glob(directory + "RASSI*.p")
-    files = np.array(self.table["filename"])  # updated 29.10.21 to allow ins_merged
-    files = np.sort(files)
+    files: Sequence[str] = list(np.sort(np.array(self.table["filename"])))
 
     flux = []
     conti = []
@@ -180,7 +121,32 @@ def yarara_ccf(
 
     epsilon = 1e-12
 
-    file_random = self.import_spectrum()
+    def read_defaults() -> Tuple[Optional[float], float, float]:
+        file_random = self.import_spectrum()
+        params = file_random["parameters"]
+        return (params["RV_sys"], params["hole_left"], params["hole_right"])
+
+    default_rv_sys, hole_left, hole_right = read_defaults()
+    if rv_sys_ == "parameters_or_zero":
+        if default_rv_sys is not None:
+            rv_sys: float = 1000.0 * default_rv_sys
+        else:
+            rv_sys = 0.0
+    elif rv_sys_ == "parameters":
+        assert default_rv_sys is not None
+        rv_sys = default_rv_sys
+    elif isinstance(rv_sys_, float):
+        rv_sys = rv_sys_ * 1000.0
+    else:
+        assert_never(rv_sys_)
+
+    if rv_shift_ == "zeros":
+        rv_shift: NDArray[np.float64] = np.zeros(len(files))
+    elif rv_shift_ == "table":
+        rv_shift = np.array(self.table["rv_shift"]) * 1000.0
+    elif isinstance(rv_shift_, np.ndarray):
+        rv_shift = rv_shift_
+
     self.import_table()
     self.import_material()
     load = self.material
@@ -189,65 +155,10 @@ def yarara_ccf(
     jdb = np.array(self.table["jdb"])
     snr = np.array(self.table["snr"])
 
-    mask_loc = mask_name
-    if mask_name is None:
-        mask_name = "No name"
-        mask_loc = "No name"
-
-    if mask is None:
-        mask = self.mask_harps
-        mask_name = self.mask_harps
-
-    if isinstance(mask, str):
-        if mask.split(".")[-1] == "p":
-            loc_mask = self.dir_root + "KITCAT/"
-            mask_name = mask
-            mask_loc = loc_mask + mask
-            dico = pd.read_pickle(mask_loc)["catalogue"]
-            dico = dico.loc[dico["rel_contam"] < treshold_telluric]
-            if "valid" in dico.keys():
-                dico = dico.loc[dico["valid"]]
-            if element is not None:
-                dico = dico.loc[dico["element"] == element]
-            mask = np.array([np.array(dico["freq_mask0"]), np.array(dico[mask_col])]).T
-            mask = mask[mask[:, 1] != 0]
-            print("\n [INFO] Nb lines in the CCF mask : %.0f" % (len(dico)))
-        else:
-            mask_name = mask
-            mask_loc = root + "/Python/MASK_CCF/" + mask + ".txt"
-            mask = np.genfromtxt(mask_loc)
-            mask = np.array([0.5 * (mask[:, 0] + mask[:, 1]), mask[:, 2]]).T
-
-    if mask is not None and isinstance(mask, pd.core.frame.DataFrame):
-        dico = mask
-        mask = np.array(
-            [
-                np.array(mask["freq_mask0"]).astype("float"),
-                np.array(mask[mask_col]).astype("float"),
-            ]
-        ).T
-
     assert isinstance(mask, np.ndarray)
-    logging.info("CCF mask selected : %s \n" % (mask_loc))
 
     if ccf_name is None:
         ccf_name = sub_dico
-
-    if rv_sys is None:
-        if file_random["parameters"]["RV_sys"] is not None:
-            rv_sys = 1000.0 * file_random["parameters"]["RV_sys"]
-        else:
-            rv_sys = 0.0
-    else:
-        rv_sys *= 1000
-
-    assert isinstance(rv_sys, float)
-
-    if not isinstance(rv_shift, np.ndarray):
-        if (rv_shift is None) | (rv_shift == False):
-            rv_shift = np.zeros(len(files))
-        elif rv_shift == True:
-            rv_shift = np.array(self.table["rv_shift"]) * 1000
 
     logging.info("RV sys : %.2f [km/s] \n" % (rv_sys / 1000))
 
@@ -281,34 +192,35 @@ def yarara_ccf(
     flux_err = np.sqrt(flux_err**2 + noise_values**2)
 
     if reference == True:
-        norm_factor = np.array(load["color_template"])
+        norm_factor: NDArray[np.float64] = np.array(load["color_template"])
         flux *= norm_factor
         flux_err *= norm_factor
     elif reference == "norm":
         if ratio:
             norm_factor = np.array(load["reference_spectrum"]) * np.array(
                 load["correction_factor"]
-            )
-            norm_factor[norm_factor == 0] = 1
-            flux /= norm_factor
+            )  # type: ignore
+            norm_factor[norm_factor == 0] = 1.0
+            flux /= norm_factor  # type: ignore
             flux_err /= norm_factor
         else:
             pass
     elif reference == "master_snr":
-        norm_factor = np.array(load["master_snr_curve"] * load["ratio_factor_snr"]) ** 2
+        norm_factor = np.array(load["master_snr_curve"] * load["ratio_factor_snr"]) ** 2  # type: ignore
         norm_factor[np.isnan(norm_factor)] = 1
         norm_factor *= np.nanmean(np.array(load["color_template"])) / np.nanmean(norm_factor)
         flux *= norm_factor
         flux_err *= norm_factor
-    else:
+    elif reference == False:
         flux *= conti
         flux_err *= conti
+    else:
+        assert_never(reference)
 
     if sub_dico == "matching_brute":
         force_brute = True
 
     mask_shifted = doppler_r(mask[:, 0], (rv_range + 5) * 1000)
-
     if force_brute:
         brute_mask = np.array(load["mask_brute"])
         used_region = ((grid) >= mask_shifted[1][:, np.newaxis]) & (
@@ -323,10 +235,6 @@ def yarara_ccf(
         & (doppler_r(mask[:, 0], 30000)[1] > grid.min()),
         :,
     ]  # supres line farther than 30kms
-    if wave_min is not None:
-        mask = mask[mask[:, 0] > wave_min, :]
-    if wave_max is not None:
-        mask = mask[mask[:, 0] < wave_max, :]
 
     print("\n [INFO] Nb lines in the mask : %.0f \n" % (len(mask)))
 
@@ -357,18 +265,15 @@ def yarara_ccf(
     else:
         used_region = np.ones(len(grid)).astype("bool")
 
-    if (
-        not os.path.exists(self.dir_root + "CCF_MASK/CCF_" + mask_name.split(".")[0] + ".fits")
-    ) | (force_brute):
-        print(
-            "\n [INFO] CCF mask reduced for the first time, wait for the static mask producing...\n"
-        )
-        time.sleep(1)
+    mask_path = paths.reinterpolated_mask_ccf(self) / (f"CCF_{mask_name}.fits")
+
+    if not mask_path.exists() or force_brute:
+        logging.info("CCF mask reduced for the first time, wait for the static mask producing...")
         mask_wave = np.log10(mask[:, 0])
         mask_contrast = mask[:, 1] * weighted + (1 - weighted)
 
-        mask_hole = (mask[:, 0] > doppler_r(file_random["parameters"]["hole_left"], -30000)[0]) & (
-            mask[:, 0] < doppler_r(file_random["parameters"]["hole_right"], 30000)[0]
+        mask_hole = (mask[:, 0] > doppler_r(hole_left, -30000)[0]) & (
+            mask[:, 0] < doppler_r(hole_right, 30000)[0]
         )
         mask_contrast[mask_hole] = 0
 
@@ -379,8 +284,6 @@ def yarara_ccf(
         )
         log_mask = np.zeros(len(log_grid_mask))
 
-        # mask_contrast /= np.sqrt(np.nansum(mask_contrast**2)) #UPDATE 04.05.21 (DOES NOT WORK)
-
         match = identify_nearest(mask_wave, log_grid_mask)
         for j in np.arange(-delta_window, delta_window + 1, 1):
             log_mask[match + j] = (mask_contrast) ** (1 + int(squared))
@@ -388,22 +291,15 @@ def yarara_ccf(
             plt.figure()
             plt.plot(log_grid_mask, log_mask)
 
-        if (not force_brute) & (mask_name != "No name"):
+        if not mask_path.exists():
+            # save for the next call
             hdu = fits.PrimaryHDU(np.array([log_grid_mask, log_mask]).T)
             hdul = fits.HDUList([hdu])
-            hdul.writeto(self.dir_root + "CCF_MASK/CCF_" + mask_name.split(".")[0] + ".fits")
-            print(
-                "\n [INFO] CCF mask saved under : %s"
-                % (self.dir_root + "CCF_MASK/CCF_" + mask_name.split(".")[0] + ".fits")
-            )
+            hdul.writeto(mask_path)
+            logging.info("CCF mask saved under : %s" % mask_path)
     else:
-        print(
-            "\n [INFO] CCF mask found : %s"
-            % (self.dir_root + "CCF_MASK/CCF_" + mask_name.split(".")[0] + ".fits")
-        )
-        log_grid_mask, log_mask = fits.open(
-            self.dir_root + "CCF_MASK/CCF_" + mask_name.split(".")[0] + ".fits"
-        )[0].data.T
+        logging.info("CCF mask found : %s" % mask_path)
+        log_grid_mask, log_mask = fits.open(mask_path)[0].data.T
 
     log_template = interp1d(
         log_grid_mask,
@@ -413,19 +309,8 @@ def yarara_ccf(
         fill_value="extrapolate",
     )(log_grid)
 
-    idx2_min = 0
-    idx2_max = len(flux)
-    if time_min is not None:
-        idx2_min = int(find_nearest(jdb, time_min)[0][0])
-    if time_max is not None:
-        idx2_max = int(find_nearest(jdb, time_max)[0][0] + 1)
-
-    flux = flux[idx2_min:idx2_max, grid_min:grid_max]
-    flux_err = flux_err[idx2_min:idx2_max, grid_min:grid_max]
-    files = files[idx2_min:idx2_max]
-    rv_shift = rv_shift[idx2_min:idx2_max]
-    jdb = jdb[idx2_min:idx2_max]
-    snr = snr[idx2_min:idx2_max]
+    flux = flux[:, grid_min:grid_max]
+    flux_err = flux_err[:, grid_min:grid_max]
 
     amplitudes = []
     amplitudes_std = []
@@ -446,9 +331,6 @@ def yarara_ccf(
     b2s = []
     b3s = []
     b4s = []
-
-    if display_ccf:
-        plt.figure()
 
     now = datetime.datetime.now()
     logging.info(
@@ -496,8 +378,6 @@ def yarara_ccf(
     )
     logging.info("CCF velocity step : %.0f m/s\n" % (np.median(np.diff(vrad))))
 
-    if not hasattr(self, "all_ccf_saved"):
-        self.all_ccf_saved = {}
     self.all_ccf_saved[ccf_name] = (vrad, ccf_power, ccf_power_std)
 
     ccf_ref = np.median(ccf_power, axis=1)
@@ -566,8 +446,6 @@ def yarara_ccf(
     )
 
     for j, i in enumerate(files):
-        if bis_analysis:
-            print("File (%.0f/%.0f) %s SNR %.0f reduced" % (j + 1, len(files), i, snr[j]))
         file = pd.read_pickle(i)
         # log_spectrum = interp1d(np.log10(grid), flux[j], kind='cubic', bounds_error=False, fill_value='extrapolate')(log_grid)
         # vrad, ccf_power_old = ccf2(log_grid, log_spectrum,  log_grid_mask, log_mask)
@@ -622,55 +500,8 @@ def yarara_ccf(
             ccf.yerr *= 0
             ccf.yerr += 0.01
 
-        if display_ccf:
-            ccf.plot(color=None)
-
         # bis #interpolated on 10 m/s step
         moments = np.zeros(5)
-        b0 = []
-        b1 = []
-        b2 = []
-        b3 = []
-        b4 = []
-
-        if bis_analysis:
-            ccf.x *= 1000
-            drv = 10
-            border = np.min([abs(ccf.x.min()), abs(ccf.x.max())])
-            border = (border // drv) * drv
-            grid_vrad = np.arange(-border, border + drv, drv)
-            ccf.interpolate(new_grid=grid_vrad, replace=False)
-            ccf.interpolated.yerr *= 0
-            ccf.interpolated.y = (ccf.interpolated.y - ccf.interpolated.y.min()) / (
-                ccf.interpolated.y.max() - ccf.interpolated.y.min()
-            )
-            ccf.interpolated.my_bisector(oversampling=10, between_max=True)
-            ccf.interpolated.bis.clip(min=[0.01, None], max=[0.7, None])
-            bis = ccf.interpolated.bis
-            bis.interpolate(new_grid=np.linspace(0.01, 0.7, 20))
-            bis.y -= bis.y[0]
-            if save:
-                save_bis = {
-                    "bis_flux": bis.x,
-                    "bis_rv": bis.y,
-                    "bis_rv_std": bis.yerr,
-                }
-                file["ccf_bis"] = save_bis
-            bis.y = np.gradient(bis.y)
-            for p in range(5):
-                moments[p] = np.sum(bis.x**p * bis.y)
-            b0.append(moments[0])
-            b1.append(moments[1])
-            b2.append(moments[2])
-            b3.append(moments[3])
-            b4.append(moments[4])
-            ccf.x /= 1000
-        else:
-            b0.append(0)
-            b1.append(0)
-            b2.append(0)
-            b3.append(0)
-            b4.append(0)
 
         ccf.clip(min=[-0.5, None], max=[0.5, None], replace=False)
         if len(ccf.clipped.x) < 7:
@@ -753,11 +584,6 @@ def yarara_ccf(
         file["ccf"] = save_ccf
         file["ccf_parabola"] = para_ccf
 
-        b0s.append(moments[0])
-        b1s.append(moments[1])
-        b2s.append(moments[2])
-        b3s.append(moments[3])
-        b4s.append(moments[4])
         if save:
             save_gauss = {
                 "contrast": contrast_ccf,
@@ -771,11 +597,6 @@ def yarara_ccf(
                 "offset_std": offset_ccf_std,
                 "vspan": rv_ccf - para_center,
                 "vspan_std": bisspan_ccf_std,
-                "b0": moments[0],
-                "b1": moments[1],
-                "b2": moments[2],
-                "b3": moments[3],
-                "b4": moments[4],
             }
 
             file["ccf_gaussian"] = save_gauss
@@ -793,7 +614,7 @@ def yarara_ccf(
     # except:
     #     pass
 
-    rvs_std_backup = np.array(self.table["rv_dace_std"])[idx2_min:idx2_max] / 1000
+    rvs_std_backup = np.array(self.table["rv_dace_std"]) / 1000
     rvs_std = svrad_phot2["rv"]
     rvs_std[rvs_std == 0] = rvs_std_backup[rvs_std == 0]
 
@@ -803,24 +624,61 @@ def yarara_ccf(
     if np.median(fwhms) > (rv_borders / 1.5):
         logging.warn("The CCF is larger than the RV borders for the fit")
 
-    ccf_result = CCFResult(
-        rv=tableXY(jdb, np.array(rvs) * 1000, np.array(rvs_std) * 1000),
-        centers=tableXY(jdb, np.array(centers) * 1000, np.array(centers_std) * 1000),
-        contrast=tableXY(jdb, amplitudes, amplitudes_std),
-        depth=tableXY(jdb, depths, depths_std),
-        fwhm=tableXY(jdb, fwhms, fwhms_std),
-        vspan=tableXY(jdb, np.array(bisspan) * 1000, np.array(bisspan_std) * 1000),
-        ew=tableXY(jdb, np.array(ew), np.array(ew_std)),
-        bis0=tableXY(jdb, b0s, np.sqrt(2) * np.array(rvs_std) * 1000),
-        jdb=jdb,
-        rv_photon_noise=svrad_phot2["rv"],
-        rv_shift=center,
+    self.ccf_rv = tableXY(jdb, np.array(rvs) * 1000, np.array(rvs_std) * 1000)
+    self.ccf_centers = tableXY(jdb, np.array(centers) * 1000, np.array(centers_std) * 1000)
+    self.ccf_contrast = tableXY(jdb, amplitudes, amplitudes_std)
+    self.ccf_depth = tableXY(jdb, depths, depths_std)
+    self.ccf_fwhm = tableXY(jdb, fwhms, fwhms_std)
+    self.ccf_vspan = tableXY(jdb, np.array(bisspan) * 1000, np.array(bisspan_std) * 1000)
+    self.ccf_ew = tableXY(jdb, np.array(ew), np.array(ew_std))
+    self.ccf_timeseries = np.array(
+        [
+            ew,
+            ew_std,
+            amplitudes,
+            amplitudes_std,
+            rvs,
+            rvs_std,
+            svrad_phot2["rv"],
+            fwhms,
+            fwhms_std,
+            centers,
+            centers_std,
+            depths,
+            depths_std,
+            np.NaN * np.ones((len(jdb),)),
+            bisspan,
+            bisspan_std,
+        ]
     )
-    ccf_result.rv.rms_w()
-    ccf_result.centers.rms_w()
+    self.ccf_rv.rms_w()
+    self.ccf_centers.rms_w()
+    self.ccf_rv_shift = center
 
+    ccf_infos = pd.DataFrame(
+        self.ccf_timeseries.T,
+        columns=[
+            "ew",
+            "ew_std",
+            "contrast",
+            "contrast_std",
+            "rv",
+            "rv_std",
+            "rv_std_phot",
+            "fwhm",
+            "fwhm_std",
+            "center",
+            "center_std",
+            "depth",
+            "depth_std",
+            "trash_do_not_use",
+            "bisspan",
+            "bisspan_std",
+        ],
+    )
+    ccf_infos["jdb"] = jdb
     ccf_infos = {
-        "table": ccf_result.infos(),
+        "table": ccf_infos,
         "creation_date": datetime.datetime.now().isoformat(),
     }
 
@@ -829,21 +687,20 @@ def yarara_ccf(
         io.pickle_dump(ccf_summary, open(self.directory + "/Analyse_ccf.p", "wb"))
 
     if save:
-        if mask_name != "No name":
-            file_summary_ccf = pd.read_pickle(self.directory + "Analyse_ccf.p")
-            try:
-                file_summary_ccf["CCF_" + mask_name.split(".")[0]][ccf_name] = ccf_infos
-            except KeyError:
-                file_summary_ccf["CCF_" + mask_name.split(".")[0]] = {ccf_name: ccf_infos}
+        file_summary_ccf = pd.read_pickle(self.directory + "Analyse_ccf.p")
+        key = "CCF_" + mask_name
+        if key not in file_summary_ccf:
+            file_summary_ccf[key] = {}
+        file_summary_ccf[key][ccf_name] = ccf_infos
 
-            io.pickle_dump(file_summary_ccf, open(self.directory + "/Analyse_ccf.p", "wb"))
+        io.pickle_dump(file_summary_ccf, open(self.directory + "/Analyse_ccf.p", "wb"))
 
     self.infos["latest_dico_ccf"] = ccf_name
 
     self.yarara_analyse_summary()
 
     if save_ccf_profile:
-        self.yarara_ccf_save(mask_name.split(".")[0], ccf_name)
+        self.yarara_ccf_save(mask_name, ccf_name)  # TODO: missing
 
     if plot:
         plt.figure(figsize=(12, 10))
@@ -893,7 +750,7 @@ def yarara_ccf(
         plt.legend()
         plt.title("Center", fontsize=14)
 
-        plt.subplot(4, 2, 7, sharex=ax).scatter(jdb, b0s, color="k")
+        plt.subplot(4, 2, 7, sharex=ax).scatter(jdb, 0.0 * jdb, color="k")
         plt.title("BIS", fontsize=14)
 
         plt.subplot(4, 2, 8, sharex=ax)  # .scatter(jdb,bisspan,color='k')
@@ -905,24 +762,6 @@ def yarara_ccf(
         )
         plt.subplots_adjust(left=0.07, right=0.93, top=0.95, bottom=0.08, wspace=0.3, hspace=0.3)
 
-        if bis_analysis:
-            plt.figure(figsize=(12, 10))
-            plt.subplot(3, 2, 1).scatter(jdb, b0s, color="k")
-            ax = plt.gca()
-            plt.title("B0", fontsize=14)
-            plt.subplot(3, 2, 2, sharex=ax).scatter(
-                jdb, self.ccf_rv.y - self.ccf_centers.y, color="k"
-            )
-            plt.title("RV-Center", fontsize=14)
-            plt.subplot(3, 2, 3, sharex=ax).scatter(jdb, b1s, color="k")
-            plt.title("B1", fontsize=14)
-            plt.subplot(3, 2, 4, sharex=ax).scatter(jdb, b2s, color="k")
-            plt.title("B2", fontsize=14)
-            plt.subplot(3, 2, 5, sharex=ax).scatter(jdb, b3s, color="k")
-            plt.title("B3", fontsize=14)
-            plt.subplot(3, 2, 6, sharex=ax).scatter(jdb, b4s, color="k")
-            plt.title("B4", fontsize=14)
-
     return {
         "rv": self.ccf_rv,
         "cen": self.ccf_centers,
@@ -932,18 +771,66 @@ def yarara_ccf(
     }
 
 
+def yarara_ccf_save(self: spec_time_series, mask: str, sub_dico: str):
+    self.import_ccf()
+    table = self.table_ccf["CCF_" + mask]
+
+    all_ccf_saved = self.all_ccf_saved[sub_dico]
+    vrad = all_ccf_saved[0]
+    ccfs = all_ccf_saved[1]
+    ccfs_std = all_ccf_saved[2]
+    creation_date = table[sub_dico]["creation_date"]
+    table_ccf_moments = table[sub_dico]["table"][
+        [
+            "jdb",
+            "rv",
+            "rv_std",
+            "contrast",
+            "contrast_std",
+            "fwhm",
+            "fwhm_std",
+            "bisspan",
+            "bisspan_std",
+            "ew",
+            "ew_std",
+        ]
+    ]
+
+    if not os.path.exists(self.directory + "Analyse_ccf_saved.p"):
+        file_to_save = {}
+    else:
+        file_to_save = pd.read_pickle(self.directory + "/Analyse_ccf_saved.p")
+
+    ccf_infos = {
+        "ccf_vrad": vrad,
+        "ccf_flux": ccfs,
+        "ccf_flux_std": ccfs_std,
+        "table": table_ccf_moments,
+        "creation_date": creation_date,
+    }
+
+    try:
+        file_to_save["CCF_" + mask][sub_dico] = ccf_infos
+    except KeyError:
+        file_to_save["CCF_" + mask] = {sub_dico: ccf_infos}
+
+    pickle_dump(file_to_save, open(self.directory + "/Analyse_ccf_saved.p", "wb"))
+
+
 def yarara_master_ccf(
     self: spec_time_series,
     sub_dico: str = "matching_diff",
     name_ext: str = "",
-    rvs: Optional[ndarray] = None,
+    rvs_: Optional[ndarray] = None,
 ) -> None:
     self.import_table()
 
     vrad, ccfs = (self.all_ccf_saved[sub_dico][0], self.all_ccf_saved[sub_dico][1])
 
-    if rvs is None:
-        rvs = self.ccf_rv.y.copy()
+    if rvs_ is None:
+        rvs: NDArray[np.float64] = self.ccf_rv.y.copy()
+    else:
+        rvs = rvs_
 
     med_rv = np.nanmedian(rvs)
     rvs -= med_rv

@@ -47,7 +47,7 @@ def yarara_non_zero_flux(
             flux[mask & zero] = min_value
             io.pickle_dump(file, open(j, "wb"))
     else:
-        print("[INFO] Removing null values of the spectrum")
+        logging.info("Removing null values of the spectrum")
         zero = spectrum <= 0
         if min_value is None:
             min_value = np.min(spectrum[spectrum > 0])

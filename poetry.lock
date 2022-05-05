@@ -1155,7 +1155,7 @@ test = ["pytest (>=3.6)", "pytest-cov", "pytest-timeout", "pytest-tornado", "jup
 
 [[package]]
 name = "nbformat"
-version = "5.3.0"
+version = "5.4.0"
 description = "The Jupyter Notebook format"
 category = "main"
 optional = true
@@ -1165,7 +1165,7 @@ python-versions = ">=3.7"
 fastjsonschema = "*"
 jsonschema = ">=2.6"
 jupyter-core = "*"
-traitlets = ">=4.1"
+traitlets = ">=5.1"
 
 [package.extras]
 test = ["check-manifest", "testpath", "pytest", "pre-commit"]
@@ -1207,23 +1207,6 @@ traitlets = ">=4.2.1"
 docs = ["sphinx", "nbsphinx", "sphinxcontrib-github-alt", "sphinx-rtd-theme", "myst-parser"]
 json-logging = ["json-logging"]
 test = ["pytest", "coverage", "requests", "testpath", "nbval", "selenium", "pytest-cov", "requests-unixsocket"]
-
-[[package]]
-name = "nptyping"
-version = "2.0.1"
-description = "Type hints for NumPy."
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-numpy = ">=1.20.0"
-typing-extensions = {version = "*", markers = "python_version < \"3.10\""}
-
-[package.extras]
-build = ["invoke (>=1.6.0)", "pip-tools (>=6.5.0)", "codecov (>=2.1.0)"]
-dev = ["invoke (>=1.6.0)", "pip-tools (>=6.5.0)", "codecov (>=2.1.0)", "autoflake", "black", "coverage", "isort", "mypy", "pylint", "setuptools", "wheel", "typeguard", "beartype (<0.10.0)", "beartype (>=0.10.0)"]
-qa = ["autoflake", "black", "coverage", "isort", "mypy", "pylint", "setuptools", "wheel", "typeguard", "beartype (<0.10.0)", "beartype (>=0.10.0)"]
 
 [[package]]
 name = "numpy"
@@ -2409,7 +2392,7 @@ docs = ["myst-nb", "ipykernel", "sphinx", "sphinx-argparse", "sphinx-autodoc-typ
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"
-content-hash = "1f0a9b0283c238e7b1e775f22e4e8ae633d2dda51be25e1077d47aacbffcd325"
+content-hash = "041ef7acbf2cf4e8b869b24efdec7bb116f7d7ba69d480ef228570a170dfe928"
 
 [metadata.files]
 alabaster = [
@@ -3132,8 +3115,8 @@ nbdime = [
     {file = "nbdime-3.1.1.tar.gz", hash = "sha256:67767320e971374f701a175aa59abd3a554723039d39fae908e72d16330d648b"},
 ]
 nbformat = [
-    {file = "nbformat-5.3.0-py3-none-any.whl", hash = "sha256:38856d97de49e8292e2d5d8f595e9d26f02abfd87e075d450af4511870b40538"},
-    {file = "nbformat-5.3.0.tar.gz", hash = "sha256:fcc5ab8cb74e20b19570b5be809e2dba9b82836fd2761a89066ad43394ba29f5"},
+    {file = "nbformat-5.4.0-py3-none-any.whl", hash = "sha256:0d6072aaec95dddc39735c144ee8bbc6589c383fb462e4058abc855348152dad"},
+    {file = "nbformat-5.4.0.tar.gz", hash = "sha256:44ba5ca6acb80c5d5a500f1e5b83ede8cbe364d5a495c4c8cf60aaf1ba656501"},
 ]
 nest-asyncio = [
     {file = "nest_asyncio-1.5.5-py3-none-any.whl", hash = "sha256:b98e3ec1b246135e4642eceffa5a6c23a3ab12c82ff816a92c612d68205813b2"},
@@ -3142,9 +3125,6 @@ nest-asyncio = [
 notebook = [
     {file = "notebook-6.4.11-py3-none-any.whl", hash = "sha256:b4a6baf2eba21ce67a0ca11a793d1781b06b8078f34d06c710742e55f3eee505"},
     {file = "notebook-6.4.11.tar.gz", hash = "sha256:709b1856a564fe53054796c80e17a67262071c86bfbdfa6b96aaa346113c555a"},
-]
-nptyping = [
-    {file = "nptyping-2.0.1-py3-none-any.whl", hash = "sha256:0fc5c4d76c65e12a77e750b9e2701dab6468d00926c8c4f383867bd70598a532"},
 ]
 numpy = [
     {file = "numpy-1.22.3-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:92bfa69cfbdf7dfc3040978ad09a48091143cffb778ec3b03fa170c494118d75"},

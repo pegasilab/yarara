@@ -2,7 +2,7 @@
 This modules does XXX
 """
 from itertools import combinations
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -303,7 +303,11 @@ def match_nearest(
 
 
 def rm_outliers(
-    array: ndarray, m: int = 1.5, kind: str = "sigma", axis: int = 0, return_borders: bool = False
+    array: ndarray,
+    m: int = 1.5,
+    kind: Union[Literal["inter"], Literal["sigma"], Literal["mad"]] = "sigma",
+    axis: int = 0,
+    return_borders: bool = False,
 ) -> Tuple[ndarray, ndarray]:
     if type(array) != np.ndarray:
         array = np.array(array)
@@ -319,16 +323,18 @@ def rm_outliers(
             inf = np.nanpercentile(array, 25, axis=axis) - m * interquartile
             sup = np.nanpercentile(array, 75, axis=axis) + m * interquartile
             mask = (array >= inf) & (array <= sup)
-        if kind == "sigma":
+        elif kind == "sigma":
             sup = np.nanmean(array, axis=axis) + m * np.nanstd(array, axis=axis)
             inf = np.nanmean(array, axis=axis) - m * np.nanstd(array, axis=axis)
             mask = abs(array - np.nanmean(array, axis=axis)) <= m * np.nanstd(array, axis=axis)
-        if kind == "mad":
+        elif kind == "mad":
             median = np.nanmedian(array, axis=axis)
             mad = np.nanmedian(abs(array - median), axis=axis)
             sup = median + m * mad * 1.48
             inf = median - m * mad * 1.48
             mask = abs(array - median) <= m * mad * 1.48
+        else:
+            assert_never(kind)
     else:
         mask = np.ones(len(array)).astype("bool")
 

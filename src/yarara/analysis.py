@@ -3,34 +3,45 @@ This modules does XXX
 """
 from __future__ import annotations
 
-from typing import List, Optional, Union
+from typing import Any, List, Literal, Optional, Tuple, Union, overload
 
+import matplotlib
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from lmfit import Model, Parameters
-from numpy import float64, ndarray
-from pandas.core.series import Series
+from numpy.typing import ArrayLike, NDArray
+from pydantic import NoneStrBytes
 from scipy.interpolate import interp1d
 from statsmodels.stats.weightstats import DescrStatsW
-from wpca import EMPCA
-from wpca import PCA as PCA_BACK
-from wpca import WPCA
+from wpca import EMPCA, PCA, WPCA
 
 from .mathfun import gaussian, sinus
 from .stats import local_max, mad
 from .stats import rm_outliers as rm_out
 from .stats import smooth
+from .util import assert_never
 
 
 class table(object):
     """this classe has been establish with pandas DataFrame"""
 
-    def __init__(self, array: ndarray) -> None:
-        self.table = array
-        self.dim = np.shape(array)
+    def __init__(self, array: NDArray[np.float64]) -> None:
+        self.table: NDArray[np.float64] = array
+        self.dim: Tuple[int, ...] = np.shape(array)
 
-    def rms_w(self, weights: ndarray, axis: int = 1) -> None:
+        self.rms: Any = None
+
+        self.components: Any = None
+        self.vec_fitted: Any = None
+        self.vec: Any = None
+        self.phi_components: Any = None
+        self.zscore_components: Any = None
+        self.var: Any = None
+        self.var_ratio: Any = None
+        self.wpca_model: Any = None
+
+    def rms_w(self, weights: np.ndarray, axis: int = 1) -> None:
         average = np.average(self.table, weights=weights, axis=axis)
 
         if axis == 1:
@@ -40,19 +51,16 @@ class table(object):
 
         variance = np.average((data_recentered) ** 2, weights=weights, axis=axis)
         self.rms = np.sqrt(variance)
- 
+
     def WPCA(
         self,
-        pca: str,
-        weight: Optional[ndarray] = None,
+        pca_type: Union[Literal["pca"], Literal["wpca"], Literal["empca"]],
+        weight: Optional[np.ndarray] = None,
         comp_max: Optional[int] = None,
-        m: int = 2,
-        kind: str = "inter",
     ) -> None:
         """from https://github.com/jakevdp/wpca/blob/master/WPCA-Example.ipynb
         enter which pca do yo want either 'pca', 'wpca' or 'empca'
         empca slower than wpca
-
         """
 
         # self.replace_outliers(m=m, kind=kind)
@@ -61,17 +69,16 @@ class table(object):
 
         R = Signal.copy()
 
-        if pca == "pca":
-            ThisPCA = PCA_BACK
-        elif pca == "wpca":
+        if pca_type == "pca":
+            ThisPCA = PCA
+        elif pca_type == "wpca":
             ThisPCA = WPCA
-        elif pca == "empca":
+        elif pca_type == "empca":
             ThisPCA = EMPCA
-        elif pca == "pca_backup":
-            # ThisPCA = PCA
-            pass
+        else:
+            assert_never(pca_type)
 
-        if (weight is None) | (pca == "pca"):
+        if (weight is None) or (pca_type == "pca"):
             kwds = {}
         else:
             kwds = {"weights": np.sqrt(weight)}  # defined as 1/sigma
@@ -104,7 +111,7 @@ class table(object):
         self.wpca_model = pca
 
     def fit_base(
-        self, base_vec: ndarray, weight: Optional[ndarray] = None, num_sim: int = 1
+        self, base_vec: np.ndarray, weight: Optional[np.ndarray] = None, num_sim: int = 1
     ) -> None:
         """weights define as 1/sigma**2 self.table = MxT, base_vec = NxT, N the number of basis element"""
 
@@ -200,51 +207,99 @@ class tableXY(object):
     Describes a scatter plot (x, y)
     """
 
+    @overload
+    def __init__(self, x: Optional[ArrayLike], y: ArrayLike, /) -> None:
+        pass
+
+    @overload
+    def __init__(self, x: Optional[ArrayLike], y: ArrayLike, yerr: ArrayLike, /) -> None:
+        pass
+
+    @overload
+    def __init__(
+        self, x: Optional[ArrayLike], y: ArrayLike, xerr: ArrayLike, yerr: ArrayLike, /
+    ) -> None:
+        pass
+
+    # TODO: check how the Sphinx documentation shows this constructor
+
     def __init__(
         self,
-        x: Union[Series, ndarray],
-        y: Union[Series, List[float64], ndarray, List[Union[float64, float]]],
-        *yerr,
+        x: Optional[ArrayLike],
+        y: ArrayLike,
+        *errs: ArrayLike,
     ) -> None:
-        self.stats = pd.DataFrame({}, index=[0])
-        self.y = np.array(y)  # vector of y
+        """Creates a tableXY
+
+        The constructor takes additional error vectors.
+
+        - If no error vector is provided, the y error is estimated using the median absolute deviation
+        - If one error vector is provided, it is attributed to the y error
+        - If two error vectors are provided, they correspond to the x and y errors respectively
+
+        Args:
+            x: X values, can be omitted by providing None (will be replaced by a 0 to (n-1) range instead)
+            y: Y values, must be provided
+            errs: See description
+
+        Raises:
+            ArgumentError: If more that two error vectors are provided
+        """
+        y = np.array(y).astype(np.float64)  # vector of y
 
         if x is None:  # for a fast table initialisation
             x = np.arange(len(y))
-        self.x = np.array(x)  # vector of x
+        x = np.array(x).astype(np.float64)  # vector of x
 
-        try:
-            np.sum(self.y)
-        except:
-            self.y = np.zeros(len(self.x))
-            self.yerr = np.ones(len(self.y))
+        assert len(x) == len(y), "X and Y must have the same length"
+        n = len(x)
 
-        if len(x) != len(y):
-            print("X et Y have no the same lenght")
-
-        if len(yerr) != 0:
-            if len(yerr) == 1:
-                self.yerr = np.array(yerr[0])
-                self.xerr = np.zeros(len(self.x))
-            elif len(yerr) == 2:
-                self.xerr = np.array(yerr[0])
-                self.yerr = np.array(yerr[1])
-        else:
-            if sum(~np.isnan(self.y.astype("float"))):
-                self.yerr = np.ones(len(self.x)) * mad(
-                    rm_out(self.y.astype("float"), m=2, kind="sigma")[1]
-                )
-                if not np.sum(abs(self.yerr)):
-                    self.yerr = np.ones(len(self.x))
+        if len(errs) == 0:
+            xerr = np.zeros(n)
+            if sum(~np.isnan(y)):
+                yerr = np.ones(n) * mad(rm_out(y, m=2, kind="sigma")[1])
+                if not np.sum(abs(yerr)):
+                    yerr = np.ones(n)
             else:
-                self.yerr = np.ones(len(self.x))
-            self.xerr = np.zeros(len(self.x))
+                yerr = np.ones(n)
+        elif len(errs) == 1:
+            xerr = np.zeros(n)
+            yerr = np.array(errs[0])
+        elif len(errs) == 2:
+            xerr = np.array(errs[0])
+            yerr = np.array(errs[1])
+        else:
+            raise ValueError("Maximum two errors arguments")
+
+        self.x: NDArray[np.float64] = x
+        self.y: NDArray[np.float64] = y
+        self.xerr: NDArray[np.float64] = xerr
+        self.yerr: NDArray[np.float64] = yerr
+        self.rms: Optional[float] = None
+        self.weighted_average: Optional[float] = None
+        self.clip_mask: Any = None
+        self.clipx: Any = None
+        self.clipy: Any = None
+        self.clipxerr: Any = None
+        self.clipyerr: Any = None
+        self.y_sym: Any = None
+        self.index_max: Any = None
+        self.x_max: Any = None
+        self.max_extremum: Any = None
+        self.index_min: Any = None
+        self.y_min: Any = None
+        self.x_min: Any = None
+        self.min_extremum: Any = None
+        self.y_smoothed: Any = None
+        self.x_backup: Any = None
+        self.y_backup: Any = None
+        self.xerr_backup: Any = None
+        self.yerr_backup: Any = None
 
     def rms_w(self) -> None:
         if len(self.x) > 1:
             self.rms = DescrStatsW(self.y, weights=1.0 / self.yerr**2).std
             self.weighted_average = DescrStatsW(self.y, weights=1.0 / self.yerr**2).mean
-            self.stats["rms"] = self.rms
         else:
             self.rms = 0
             self.weighted_average = self.y[0]
@@ -253,16 +308,15 @@ class tableXY(object):
         return tableXY(self.x.copy(), self.y.copy(), self.xerr.copy(), self.yerr.copy())
 
     def switch(self):
+        """Switches, in place, the x and y coordinates"""
         self.x, self.y = self.y, self.x
         self.xerr, self.yerr = self.yerr, self.xerr
 
-    def stack(self):
-        self.x = np.hstack(self.x)
-        self.y = np.hstack(self.y)
-
-    def order(self, order: None = None) -> None:
+    def order(self, order: Optional[ArrayLike] = None) -> None:
         if order is None:
             order = self.x.argsort()
+        else:
+            order = np.array(order).astype(np.int64)
         self.order_liste = order
         self.x = self.x[order]
         self.y = self.y[order]
@@ -274,8 +328,8 @@ class tableXY(object):
 
     def clip(
         self,
-        min: List[Optional[Union[float, float64, int]]] = [None, None],
-        max: List[Optional[Union[float, float64, int]]] = [None, None],
+        min: List[Optional[Union[float, int]]] = [None, None],
+        max: List[Optional[Union[float, int]]] = [None, None],
         replace: bool = True,
         invers: bool = False,
     ) -> None:
@@ -329,14 +383,14 @@ class tableXY(object):
         self.yerr[np.isnan(self.yerr)] = np.random.randn(sum(np.isnan(self.yerr)))
         self.xerr[np.isnan(self.xerr)] = np.random.randn(sum(np.isnan(self.xerr)))
 
-    def supress_mask(self, mask: ndarray) -> None:
+    def supress_mask(self, mask: np.ndarray) -> None:
         self.x = self.x[mask]
         self.y = self.y[mask]
         self.xerr = self.xerr[mask]
         self.yerr = self.yerr[mask]
 
     def center_symmetrise(
-        self, center: ndarray, replace: bool = False, Plot: bool = False
+        self, center: np.ndarray, replace: bool = False, Plot: bool = False
     ) -> None:
         x = self.x
         kernel = self.copy()
@@ -366,7 +420,7 @@ class tableXY(object):
         self,
         Show: bool = False,
         color: str = "k",
-        label: str = "",
+        label: Optional[str] = "",
         ls: str = "",
         offset: int = 0,
         mask: None = None,
@@ -374,7 +428,7 @@ class tableXY(object):
         fmt: str = "o",
         markersize: int = 6,
         zorder: int = 1,
-        species: None = None,
+        species: Optional[NDArray[np.float64]] = None,
         alpha: int = 1,
         modulo: Optional[float] = None,
         modulo_norm: bool = False,
@@ -395,7 +449,7 @@ class tableXY(object):
             species = np.ones(len(self.x))
 
         prop_cycle = plt.rcParams["axes.prop_cycle"]
-        colors_species = [color] + prop_cycle.by_key()["color"]
+        colors_species = [color] + prop_cycle.by_key()["color"]  # type: ignore
 
         for num, selection in enumerate(np.unique(species)):
 
@@ -450,6 +504,7 @@ class tableXY(object):
                         markersize=markersize,
                         zorder=zorder,
                     )
+
                     plt.scatter(
                         new_x[sel],
                         self.y[mask2][loc][sel] + offset,
@@ -460,7 +515,7 @@ class tableXY(object):
                         zorder=zorder * 100,
                     )
                     if periodic:
-                        for i in range(int(np.float(periodic))):
+                        for i in range(int(float(periodic))):
                             plt.errorbar(
                                 new_x[sel] - (i + 1) * modulo / norm,
                                 self.y[mask2][loc][sel] + offset,
@@ -586,7 +641,7 @@ class tableXY(object):
             self.roll_Q3 = np.ravel(
                 pd.DataFrame(self.y).rolling(window, min_periods=1, center=True).quantile(0.75)
             )
-            self.roll_IQ = self.roll_Q3 - self.roll_Q1
+            self.roll_IQ = self.roll_Q3 - self.roll_Q1  # type: ignore
         if quantile is not None:
             self.roll = np.ravel(
                 pd.DataFrame(self.y).rolling(window, min_periods=1, center=True).quantile(quantile)
@@ -659,42 +714,27 @@ class tableXY(object):
 
     def rm_outliers(
         self,
-        who: str = "Y",
+        who: Union[
+            Literal["X"], Literal["Xerr"], Literal["Y"], Literal["Yerr"], Literal["both"]
+        ] = "Y",
         m: int = 2,
-        kind: str = "inter",
-        bin_length: int = 0,
+        kind: Union[Literal["inter"], Literal["sigma"], Literal["mad"]] = "inter",
         replace: bool = True,
     ) -> None:
-        vec = self.copy()
-        if bin_length:
-            self.night_stack(bin_length=bin_length, replace=False)
-            vec_binned = self.stacked.copy()
-        else:
-            vec_binned = self.copy()
 
+        # TODO: I've removed the binning thing
         if who == "Xerr":
             mask = rm_out(self.xerr, m=m, kind=kind)[0]
-            vec_binned = vec_binned.xerr
-            vec = vec.xerr
-        if who == "Yerr":
+        elif who == "Yerr":
             mask = rm_out(self.yerr, m=m, kind=kind)[0]
-            vec_binned = vec_binned.yerr
-            vec = vec.yerr
-        if who == "Y":
+        elif who == "Y":
             mask = rm_out(self.y, m=m, kind=kind)[0]
-            vec_binned = vec_binned.y
-            vec = vec.y
-        if who == "X":
+        elif who == "X":
             mask = rm_out(self.x, m=m, kind=kind)[0]
-            vec_binned = vec_binned.x
-            vec = vec.x
-
-        if bin_length:
-            outputs = rm_out(vec_binned, m=m, kind=kind, return_borders=True)
-            mask = (vec >= outputs[-1]) & (vec <= outputs[-2])
-
-        if who == "both":
+        elif who == "both":
             mask = rm_out(self.x, m=m, kind=kind)[0] & rm_out(self.y, m=m, kind=kind)[0]
+        else:
+            assert_never(who)
         self.mask = mask
         if replace:
             self.x = self.x[mask]
@@ -703,12 +743,17 @@ class tableXY(object):
             self.xerr = self.xerr[mask]
 
     def fit_gaussian(
-        self, guess: None = None, Plot: bool = True, color: str = "r", free_offset: bool = True
+        self,
+        guess: Optional[ArrayLike] = None,
+        Plot: bool = True,
+        color: str = "r",
+        free_offset: bool = True,
     ) -> None:
         """guess = [amp,cen,width,offset]"""
         if guess is None:
             guess = [-0.5, 0, 3, 1]
-
+        if not isinstance(guess, np.ndarray):
+            guess = np.array(guess)
         gmodel = Model(gaussian)
         fit_params = Parameters()
         fit_params.add("amp", value=guess[0], min=-1, max=0)
@@ -724,23 +769,20 @@ class tableXY(object):
             newx = np.linspace(np.min(self.x), np.max(self.x), 10 * len(self.x))
             plt.plot(newx, gmodel.eval(result1.params, x=newx), color=color)
 
+    # TODO: remove the "scale" argument
     def interpolate(
         self,
-        new_grid: Union[ndarray, str] = "auto",
+        new_grid: Union[np.ndarray, Literal["auto"], int] = "auto",
         method: str = "cubic",
         replace: bool = True,
         interpolate_x: bool = True,
         fill_value: Union[float, str] = "extrapolate",
-        scale: str = "lin",
+        scale: Literal["lin"] = "lin",
     ) -> None:
-
-        if scale != "lin":
-            self.inv()
-
-        if type(new_grid) == str:
-            new_grid = np.linspace(self.x.min(), self.x.max(), 10 * len(self.x))
-        if type(new_grid) == int:
+        if isinstance(new_grid, int):
             new_grid = np.linspace(self.x.min(), self.x.max(), new_grid * len(self.x))
+        elif isinstance(new_grid, str) and new_grid == "auto":
+            new_grid = np.linspace(self.x.min(), self.x.max(), 10 * len(self.x))
 
         if np.sum(new_grid != self.x) != 0:
             if replace:
@@ -777,9 +819,6 @@ class tableXY(object):
                     self.xerr = np.zeros(len(new_grid))
                 self.x = new_grid
 
-                if scale != "lin":
-                    self.inv()
-
             else:
                 self.y_interp = interp1d(
                     self.x,
@@ -812,7 +851,3 @@ class tableXY(object):
                 self.interpolated = tableXY(
                     self.x_interp, self.y_interp, self.xerr_interp, self.yerr_interp
                 )
-
-                if scale != "lin":
-                    self.interpolated.inv()
-                    self.inv()

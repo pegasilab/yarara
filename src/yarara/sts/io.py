@@ -194,6 +194,14 @@ def yarara_add_ccf_entry(self, kw, default_value=1):
 # region IMPORT SUMMARY TABLE
 
 
+def import_ccf(self):
+    if self.table_ccf_ut != os.path.getmtime(self.directory + "Analyse_ccf.p"):
+        self.table_ccf = pd.read_pickle(self.directory + "Analyse_ccf.p")
+        self.table_ccf_ut = os.path.getmtime(self.directory + "Analyse_ccf.p")
+    else:
+        pass
+
+
 def import_star_info(self: spec_time_series) -> None:
     self.star_info = pd.read_pickle(
         self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p"
@@ -913,8 +921,8 @@ def supress_time_spectra(
 
     if sum(mask):
         idx = np.arange(len(jdb))[mask]
-        print(" [INFO] Following spectrum indices will be supressed : ", idx)
-        print(" [INFO] Number of spectrum supressed : %.0f \n" % (sum(mask)))
+        logging.info("Following spectrum indices will be supressed : ", idx)
+        logging.info("Number of spectrum supressed : %.0f \n" % (sum(mask)))
         maps = glob.glob(self.dir_root + "CORRECTION_MAP/*.p")
         if len(maps):
             for names in maps:

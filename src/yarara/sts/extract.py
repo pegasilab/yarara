@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union, overload
 
 import matplotlib.pylab as plt
 import numpy as np
-from numpy import float64, ndarray
 
 from ..analysis import tableXY
 from ..util import map_rnr
@@ -12,12 +11,14 @@ from ..util import map_rnr
 if TYPE_CHECKING:
     from . import spec_time_series
 
+from numpy.typing import NDArray
 
 # =============================================================================
 # EXTRACT BERV AT A SPECIFIC TIME
 # =============================================================================
 
 
+@overload
 def yarara_get_berv_value(
     self: spec_time_series,
     time_value: float,
@@ -25,7 +26,30 @@ def yarara_get_berv_value(
     new: bool = True,
     light_graphic: bool = False,
     save_fig: bool = True,
-) -> float64:
+) -> float:
+    pass
+
+
+@overload
+def yarara_get_berv_value(
+    self: spec_time_series,
+    time_value: NDArray[np.float64],
+    Draw: bool = False,
+    new: bool = True,
+    light_graphic: bool = False,
+    save_fig: bool = True,
+) -> NDArray[np.float64]:
+    pass
+
+
+def yarara_get_berv_value(
+    self: spec_time_series,
+    time_value: Union[NDArray[np.float64], float],
+    Draw: bool = False,
+    new: bool = True,
+    light_graphic: bool = False,
+    save_fig: bool = True,
+) -> Union[NDArray[np.float64], float]:
     """Return the berv value for a given jdb date"""
 
     self.import_table()
@@ -67,7 +91,7 @@ def yarara_get_berv_value(
     return berv_value
 
 
-def yarara_get_orders(self: spec_time_series) -> ndarray:
+def yarara_get_orders(self: spec_time_series) -> np.ndarray:
     self.import_material()
     mat = self.material
     orders = np.array(mat["orders_rnr"])
@@ -78,7 +102,7 @@ def yarara_get_orders(self: spec_time_series) -> ndarray:
 
 
 # extract
-def yarara_get_pixels(self: spec_time_series) -> ndarray:
+def yarara_get_pixels(self: spec_time_series) -> np.ndarray:
     self.import_material()
     mat = self.material
     pixels = np.array(mat["pixels_rnr"])

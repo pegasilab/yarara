@@ -271,7 +271,7 @@ if stage == 2:
 
         sts.yarara_telluric(
             sub_dico="matching_cosmics",
-            reference="norm",5
+            reference="norm",
             ratio=True,
         )
 
@@ -311,7 +311,7 @@ if stage == 3:
 
     sts.yarara_telluric(
         sub_dico="matching_cosmics",
-        mask="telluric",
+        telluric_tag="telluric",
         reference="norm",
         ratio=True,
         normalisation="left",
@@ -326,7 +326,7 @@ if stage == 3:
 
     sts.yarara_telluric(
         sub_dico="matching_cosmics",
-        mask="h2o",
+        telluric_tag="h2o",
         reference="norm",
         ratio=True,
         normalisation="left",
@@ -369,7 +369,7 @@ if stage == 4:
     # TELLURIC FOR MEDIAN MASTER
     sts.yarara_telluric(
         sub_dico="matching_cosmics",
-        mask="o2",
+        telluric_tag="o2",
         reference="norm",
         ratio=True,
         normalisation="left",
@@ -439,7 +439,7 @@ if stage == 5:
             wave_max_train=7000,
             pca_comp_kept=3,
             algo_pca="pca",
-            treshold_contam=0.5,
+            threshold_contam=0.5,
             equal_weight=True,
             complete_analysis=False,
             rcorr_min=0,
@@ -562,7 +562,7 @@ if stage == 8:
         sub_dico="matching_activity",
         reference=ref,
         berv_shift="berv",
-        treshold_contam=1,
+        threshold_contam=1,
         equal_weight=False,
         pca_comp_kept=3,
         complete_analysis=False,
@@ -588,7 +588,7 @@ if stage == 9:
         berv_shift="berv",
         wave_max_train=4100,
         pca_comp_kept=2,
-        treshold_contam=1,
+        threshold_contam=1,
         equal_weight=True,
         complete_analysis=False,
     )

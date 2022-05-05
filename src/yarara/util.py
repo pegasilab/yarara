@@ -1,7 +1,7 @@
 """
 This modules does XXX
 """
-from typing import Iterable, Optional, Sequence, Tuple, Union
+from typing import Iterable, NoReturn, Optional, Sequence, Tuple, Union, overload
 
 import numpy as np
 from colorama import Fore
@@ -186,7 +186,7 @@ def ccf(
     spec1: ndarray,
     spec2: ndarray,
     extended: int = 1500,
-    rv_range: int = 45,
+    rv_range: float = 45.0,
     oversampling: int = 10,
     spec1_std: Optional[ndarray] = None,
 ) -> Tuple[ndarray, ndarray, ndarray]:
@@ -294,9 +294,7 @@ def print_box(sentence: str) -> None:
     print("\n")
 
 
-def doppler_r(
-    lamb: Union[float32, float, ndarray, float64], v: Union[int, float64]
-) -> Tuple[ndarray, ndarray]:
+def doppler_r(lamb: Union[ndarray, float], v: Union[ndarray, float]) -> Tuple[ndarray, ndarray]:
     """Relativistic Doppler. Take (wavelength, velocity in [m/s]) and return lambda observed and lambda source"""
     c = 299.792e6
     button = False
@@ -310,3 +308,7 @@ def doppler_r(
         return lambo[0], lambs[0]
     else:
         return lambo, lambs
+
+
+def assert_never(x: NoReturn) -> NoReturn:
+    raise AssertionError(f"Invalid value: {x!r}")

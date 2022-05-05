@@ -4,14 +4,12 @@ import glob as glob
 import logging
 import time
 from typing import TYPE_CHECKING
-from typing import Literal as Shape
 
 import matplotlib.cm as cmx
 import matplotlib.colors as mplcolors
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-from nptyping import Float, NDArray
 from tqdm import tqdm
 
 from .. import io
@@ -103,13 +101,13 @@ def yarara_correct_smooth(
     if reference == "snr":
         ref = all_flux[snr.argmax()]
     elif reference == "median":
-        print("[INFO] Reference spectrum : median")
+        logging.info("Reference spectrum : median")
         ref = np.median(all_flux, axis=0)
     elif reference == "master":
-        print("[INFO] Reference spectrum : master")
+        logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
     elif type(reference) == int:
-        print("[INFO] Reference spectrum : spectrum %.0f" % (reference))
+        logging.info("Reference spectrum : spectrum %.0f" % (reference))
         ref = all_flux[reference]
     else:
         ref = 0 * np.median(all_flux, axis=0)
@@ -770,13 +768,13 @@ def yarara_correct_brute(
     if reference == "snr":
         ref = all_flux[snr.argmax()]
     elif reference == "median":
-        print("[INFO] Reference spectrum : median")
+        logging.info("Reference spectrum : median")
         ref = np.median(all_flux, axis=0)
     elif reference == "master":
-        print("[INFO] Reference spectrum : master")
+        logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
     elif type(reference) == int:
-        print("[INFO] Reference spectrum : spectrum %.0f" % (reference))
+        logging.info("Reference spectrum : spectrum %.0f" % (reference))
         ref = all_flux[reference]
     else:
         ref = 0 * np.median(all_flux, axis=0)
