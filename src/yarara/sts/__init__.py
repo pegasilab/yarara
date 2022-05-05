@@ -101,12 +101,10 @@ class spec_time_series(object):
         yarara_correct_mad,
         yarara_correct_smooth,
     )
-    from .processing import (
-        uncorrect_hole,
-        yarara_activity_index,
-        yarara_map,
-        yarara_retropropagation_correction,
-    )
+    from .processing.activity_index import yarara_activity_index
+    from .processing.map import yarara_map
+    from .processing.retropropagation_correction import yarara_retropropagation_correction
+    from .processing.uncorrect_hole import uncorrect_hole
     from .telluric.analysis import yarara_telluric
     from .telluric.correct import yarara_correct_telluric_proxy
     from .telluric.gradient import yarara_correct_telluric_gradient
