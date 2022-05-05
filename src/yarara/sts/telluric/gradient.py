@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, List, Literal, Optional, Sequence, Union
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -34,9 +34,10 @@ def yarara_correct_telluric_gradient(
     wave_min_correction: float = 4400,
     wave_max_correction: float = 6600,
     smooth_map: int = 1,
-    reference: str = "master",
+    reference: Union[
+        int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]
+    ] = "master",
     inst_resolution: int = 110000,
-    debug: bool = False,
     equal_weight: bool = True,
     nb_pca_comp: int = 20,
     nb_pca_comp_kept: None = None,
@@ -129,7 +130,10 @@ def yarara_correct_telluric_gradient(
     def idx_wave(wavelength):
         return int(find_nearest(wave, wavelength)[0])
 
-    if reference == "snr":
+    if isinstance(reference, int):
+        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        ref = flux[reference]
+    elif reference == "snr":
         ref = flux[snr.argmax()]
     elif reference == "median":
         logging.info("Reference spectrum : median")
@@ -137,11 +141,10 @@ def yarara_correct_telluric_gradient(
     elif reference == "master":
         logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
-    elif type(reference) == int:
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
-        ref = flux[reference]
-    else:
+    elif reference == "zeros":
         ref = 0 * np.median(flux, axis=0)
+    else:
+        assert_never(reference)
 
     diff = smooth2d(flux, smooth_map)
     diff_ref = smooth2d(flux - ref, smooth_map)
@@ -291,11 +294,15 @@ def yarara_correct_telluric_gradient(
 
     # self.debug1 = completness, completness_max, completness2, inside
 
+    # this declaration to hack around a wrong type declaration in the VS Code
+    minus_one_bugfix: bool = -1  # type: ignore
+    one_bugfix: bool = 1  # type: ignore
+
     plt.figure()
     val = plt.hist(
         np.log10(completness_max),
-        bins=np.linspace(-5, 0, 50),
-        cumulative=-1,
+        bins=list(np.linspace(-5, 0, 50)),
+        cumulative=minus_one_bugfix,
         histtype="step",
         lw=3,
         color="k",
@@ -303,8 +310,8 @@ def yarara_correct_telluric_gradient(
     )
     val2 = plt.hist(
         np.log10(completness),
-        bins=np.linspace(-5, 0, 50),
-        cumulative=-1,
+        bins=list(np.linspace(-5, 0, 50)),
+        cumulative=minus_one_bugfix,
         histtype="step",
         lw=3,
         color="r",
@@ -312,8 +319,8 @@ def yarara_correct_telluric_gradient(
     )
     val3 = plt.hist(
         np.log10(completness2),
-        bins=np.linspace(-5, 0, 50),
-        cumulative=1,
+        bins=list(np.linspace(-5, 0, 50)),
+        cumulative=one_bugfix,
         histtype="step",
         lw=3,
         color="g",
@@ -322,8 +329,8 @@ def yarara_correct_telluric_gradient(
     plt.close()
 
     # comp_percent = 100*(1 - (val[0]-val2[0])/(val[0]+1e-12)) #update 10.06.21 to complicated metric
-    comp_percent = val3[0] * 100 / np.max(val3[0])
-    tel_depth_grid = val[1][0:-1] + 0.5 * (val[1][1] - val[1][0])
+    comp_percent = val3[0] * 100 / np.max(val3[0])  # type: ignore
+    tel_depth_grid = val[1][0:-1] + 0.5 * (val[1][1] - val[1][0])  # type: ignore
 
     plt.figure(12, figsize=(8.5, 7))
     plt.plot(tel_depth_grid, comp_percent, color="k")
@@ -375,102 +382,21 @@ def yarara_correct_telluric_gradient(
     min_telluric_size = wave / inst_resolution / np.gradient(wave)
     telluric_kept = telluric_kept[min_telluric_size[telluric_kept[:, 0]] < telluric_kept[:, -1]]
 
-    if debug:
-        plt.figure(1)
-        plt.subplot(3, 2, 1)
-        plt.plot(wave, ref, color="k")
-        (l4,) = plt.plot(5500 * np.ones(2), [0, 1], color="r")
-        ax = plt.gca()
-        plt.subplot(2, 2, 2, sharex=ax)
-        plt.plot(wave, ztot, color="k")
-        ax = plt.gca()
-        border_y = ax.get_ylim()
-        (l,) = plt.plot(5500 * np.ones(2), border_y, color="r")
-        idx = find_nearest(wave, 5500)[0].astype("int")
-        plt.ylim(border_y)
-        for j in range(len(telluric_kept)):
-            plt.axvspan(
-                xmin=wave[telluric_kept[j, 0].astype("int")],
-                xmax=wave[telluric_kept[j, 1].astype("int")],
-                alpha=0.3,
-                color="r",
-            )
-        plt.subplot(2, 2, 4, sharex=ax)
-        plt.imshow(
-            ratio_ref,
-            aspect="auto",
-            cmap="plasma",
-            vmin=0.99,
-            vmax=1.01,
-            extent=[wave[0], wave[-1], 0, len(jdb)],
+    plt.figure(1)
+    plt.subplot(3, 1, 1)
+    plt.plot(ref, color="k")
+    ax = plt.gca()
+    plt.subplot(3, 1, 2, sharex=ax)
+    plt.plot(ztot, color="k")
+    for j in range(len(telluric_kept)):
+        plt.axvspan(
+            xmin=telluric_kept[j, 0].astype("int"),
+            xmax=telluric_kept[j, 1].astype("int"),
+            alpha=0.3,
+            color="r",
         )
-
-        (l2,) = plt.plot(5500 * np.ones(2), [0, len(jdb)], color="k")
-
-        plt.subplot(3, 2, 5)
-        l5, (), (bars5,) = plt.errorbar(
-            jdb % 365.25, ratio_ref[:, idx], 0.001 * np.ones(len(jdb)), fmt="ko"
-        )
-        plt.ylim(0.99, 1.01)
-        ax3 = plt.gca()
-
-        plt.subplot(3, 2, 3)
-        l3, (), (bars3,) = plt.errorbar(
-            jdb, ratio_ref[:, idx], 0.001 * np.ones(len(jdb)), fmt="ko"
-        )
-        plt.ylim(0.99, 1.01)
-        ax4 = plt.gca()
-
-        class Index:
-            def update_data(self: spec_time_series, newx, newy):
-                idx = find_nearest(wave, newx)[0].astype("int")
-                l.set_xdata(newx * np.ones(len(l.get_xdata())))
-                l2.set_xdata(newx * np.ones(len(l.get_xdata())))
-                l4.set_xdata(newx * np.ones(len(l.get_xdata())))
-                l3.set_ydata(ratio_ref[:, idx])
-                l5.set_ydata(ratio_ref[:, idx])
-                new_segments = [
-                    np.array([[x, yt], [x, yb]])
-                    for x, yt, yb in zip(jdb, ratio_ref[:, idx] + 0.001, ratio_ref[:, idx] - 0.001)
-                ]
-                bars3.set_segments(new_segments)
-                bars5.set_segments(new_segments)
-                ax3.set_ylim(
-                    np.min(ratio_ref[:, idx]) - 0.002,
-                    np.max(ratio_ref[:, idx]) + 0.002,
-                )
-                ax4.set_ylim(
-                    np.min(ratio_ref[:, idx]) - 0.002,
-                    np.max(ratio_ref[:, idx]) + 0.002,
-                )
-                plt.gcf().canvas.draw_idle()
-
-        t = Index()
-
-        def onclick(event):
-            newx = event.xdata
-            newy = event.ydata
-            if event.dblclick:
-                print(newx)
-                t.update_data(newx, newy)
-
-        plt.gcf().canvas.mpl_connect("button_press_event", onclick)
-    else:
-        plt.figure(1)
-        plt.subplot(3, 1, 1)
-        plt.plot(ref, color="k")
-        ax = plt.gca()
-        plt.subplot(3, 1, 2, sharex=ax)
-        plt.plot(ztot, color="k")
-        for j in range(len(telluric_kept)):
-            plt.axvspan(
-                xmin=telluric_kept[j, 0].astype("int"),
-                xmax=telluric_kept[j, 1].astype("int"),
-                alpha=0.3,
-                color="r",
-            )
-        plt.subplot(3, 1, 3, sharex=ax)
-        plt.imshow(diff_ref, aspect="auto", vmin=-0.005, vmax=0.005)
+    plt.subplot(3, 1, 3, sharex=ax)
+    plt.imshow(diff_ref, aspect="auto", vmin=-0.005, vmax=0.005)
 
     telluric_extracted_ratio_ref = []
     telluric_extracted_ratio_ref_std = []
@@ -611,23 +537,26 @@ def yarara_correct_telluric_gradient(
     rcorr_telluric = rcorr[int(find_nearest(wave, 5800)[0]) : int(find_nearest(wave, 6000)[0])]
 
     plt.figure(figsize=(8, 6))
-    bins_contam, bins, dust = plt.hist(
+    bins: ArrayLike = None  # type: ignore
+    bins_contam: ArrayLike = None  # type: ignore
+    bins_control: ArrayLike = None  # type: ignore
+    bins_contam, bins, _ = plt.hist(
         rcorr_telluric,
         label="contaminated region",
-        bins=np.linspace(0, 1, 100),
+        bins=list(np.linspace(0, 1, 100)),
         alpha=0.5,
-    )
-    bins_control, bins, dust = plt.hist(
+    )  # type: ignore
+    bins_control, bins, _ = plt.hist(
         rcorr_telluric_free,
-        bins=np.linspace(0, 1, 100),
+        bins=list(np.linspace(0, 1, 100)),
         label="free region",
         alpha=0.5,
-    )
+    )  # type: ignore
     plt.legend()
     plt.yscale("log")
-    bins = bins[0:-1] + np.diff(bins) * 0.5
-    sum_a = np.sum(bins_contam[bins > 0.40])
-    sum_b = np.sum(bins_control[bins > 0.40])
+    bins = bins[0:-1] + np.diff(bins) * 0.5  # type: ignore
+    sum_a = np.sum(bins_contam[bins > 0.40])  # type: ignore
+    sum_b = np.sum(bins_control[bins > 0.40])  # type: ignore
     crit = int(sum_a > (2 * sum_b))
     check = ["r", "g"][crit]  # five times more correlation than in the control group
     plt.xlabel(r"|$\mathcal{R}_{pearson}$|", fontsize=14, fontweight="bold", color=check)
@@ -696,7 +625,7 @@ def yarara_correct_telluric_gradient(
 
     del correction
 
-    ratio2_backup = ratio_backup - correction_backup + 1
+    ratio2_backup = ratio_backup - correction_backup + 1  # type: ignore
 
     del correction_backup
 
@@ -717,7 +646,7 @@ def yarara_correct_telluric_gradient(
     new_wave = wave[int(idx_min) : int(idx_max)]
 
     fig = plt.figure(figsize=(21, 9))
-    plt.axes([0.05, 0.55, 0.90, 0.40])
+    plt.axes((0.05, 0.55, 0.90, 0.40))
     ax = plt.gca()
     my_colormesh(
         new_wave,
@@ -736,7 +665,7 @@ def yarara_correct_telluric_gradient(
     ax1 = plt.colorbar(cax=cbaxes)
     ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
-    plt.axes([0.05, 0.1, 0.90, 0.40], sharex=ax, sharey=ax)
+    plt.axes((0.05, 0.1, 0.90, 0.40), sharex=ax, sharey=ax)
     my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
@@ -766,7 +695,7 @@ def yarara_correct_telluric_gradient(
         to_be_saved["correction_map"].astype("float32"),
     )
 
-    print(" Computation of the new continua, wait ... \n")
+    logging.info("Computation of the new continua, wait")
     time.sleep(0.5)
 
     self.info_reduction["matching_pca"] = {

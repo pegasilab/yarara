@@ -379,12 +379,11 @@ def yarara_correct_frog(
     plt.savefig(self.dir_root + "IMAGES/" + name + "_control_check.pdf")
     logging.info("%.0f versus %.0f" % (sum_a, sum_b))
 
+    # TODO: what about failed steps?
+
     if not crit:
-        print(
-            Fore.YELLOW
-            + " [WARNING] Control check failed. Correction may be poorly performed for: %s"
-            % (name)
-            + Fore.RESET
+        logging.warning(
+            "Control check failed. Correction may be poorly performed for: %s" % (name)
         )
 
         self.info_reduction["matching_" + name] = {

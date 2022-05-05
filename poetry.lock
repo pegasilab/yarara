@@ -36,7 +36,7 @@ name = "appnope"
 version = "0.1.3"
 description = "Disable App Nap on macOS >= 10.9"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -124,7 +124,7 @@ name = "asttokens"
 version = "2.0.5"
 description = "Annotate AST trees with source code positions"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -171,7 +171,7 @@ name = "backcall"
 version = "0.2.0"
 description = "Specifications for callback functions passed in to an API"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -240,7 +240,7 @@ name = "cffi"
 version = "1.15.0"
 description = "Foreign Function Interface for Python calling C code."
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -359,7 +359,7 @@ name = "debugpy"
 version = "1.6.0"
 description = "An implementation of the Debug Adapter Protocol for Python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [[package]]
@@ -375,7 +375,7 @@ name = "decorator"
 version = "5.1.1"
 description = "Decorators for Humans"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [[package]]
@@ -424,7 +424,7 @@ name = "entrypoints"
 version = "0.4"
 description = "Discover and load entry points from installed packages."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
@@ -449,7 +449,7 @@ name = "executing"
 version = "0.8.3"
 description = "Get the currently executing AST node of a frame, and other information"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -586,7 +586,7 @@ name = "ipykernel"
 version = "6.13.0"
 description = "IPython Kernel for Jupyter"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -609,7 +609,7 @@ name = "ipython"
 version = "8.3.0"
 description = "IPython: Productive Interactive Computing"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.8"
 
 [package.dependencies]
@@ -686,7 +686,7 @@ name = "jedi"
 version = "0.18.1"
 description = "An autocompletion tool for Python that can be used for text editors."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -761,7 +761,7 @@ name = "jupyter-client"
 version = "7.3.0"
 description = "Jupyter protocol implementation and client libraries"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -782,7 +782,7 @@ name = "jupyter-core"
 version = "4.10.0"
 description = "Jupyter core package. A base package on which Jupyter projects rely."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -958,7 +958,7 @@ name = "matplotlib-inline"
 version = "0.1.3"
 description = "Inline Matplotlib backend for Jupyter"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
@@ -1175,7 +1175,7 @@ name = "nest-asyncio"
 version = "1.5.5"
 description = "Patch asyncio to allow nested event loops"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [[package]]
@@ -1269,7 +1269,7 @@ name = "parso"
 version = "0.8.3"
 description = "A Python Parser"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.extras]
@@ -1320,7 +1320,7 @@ name = "pexpect"
 version = "4.8.0"
 description = "Pexpect allows easy control of interactive console applications."
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -1331,7 +1331,7 @@ name = "pickleshare"
 version = "0.7.5"
 description = "Tiny 'shelve'-like database with concurrency support"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -1397,7 +1397,7 @@ name = "psutil"
 version = "5.9.0"
 description = "Cross-platform lib for process and system monitoring in Python."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.extras]
@@ -1408,7 +1408,7 @@ name = "ptyprocess"
 version = "0.7.0"
 description = "Run a subprocess in a pseudo terminal"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -1416,7 +1416,7 @@ name = "pure-eval"
 version = "0.2.2"
 description = "Safely evaluate AST nodes without side effects"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.extras]
@@ -1478,7 +1478,7 @@ name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
@@ -1697,7 +1697,7 @@ name = "pywin32"
 version = "304"
 description = "Python for Window Extensions"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -1721,7 +1721,7 @@ name = "pyzmq"
 version = "22.3.0"
 description = "Python bindings for 0MQ"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -2127,7 +2127,7 @@ name = "stack-data"
 version = "0.2.0"
 description = "Extract data from python stack frames and tracebacks for informative displays"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -2237,7 +2237,7 @@ name = "tornado"
 version = "6.1"
 description = "Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed."
 category = "main"
-optional = true
+optional = false
 python-versions = ">= 3.5"
 
 [[package]]
@@ -2262,7 +2262,7 @@ name = "traitlets"
 version = "5.1.1"
 description = "Traitlets Python configuration system"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.extras]
@@ -2392,7 +2392,7 @@ docs = ["myst-nb", "ipykernel", "sphinx", "sphinx-argparse", "sphinx-autodoc-typ
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"
-content-hash = "041ef7acbf2cf4e8b869b24efdec7bb116f7d7ba69d480ef228570a170dfe928"
+content-hash = "0b10faaa07c2ba71f920f5da8d9b6697d93b426916976c684b15fe5974e6f352"
 
 [metadata.files]
 alabaster = [
