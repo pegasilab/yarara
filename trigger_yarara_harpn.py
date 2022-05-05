@@ -338,8 +338,8 @@ if stage == 3:
         sub_dico_output="telluric",
         reference="master",
         proxies_corr=["h2o_depth", "h2o_fwhm"],
-        wave_min_correction=4400,
-        min_r_corr=0.4,
+        wave_min_correction_=4400.0,
+        min_r_corr_=0.4,
         sigma_ext=2,
     )
 
@@ -381,8 +381,8 @@ if stage == 4:
         sub_dico_output="oxygen",
         reference="master",
         proxies_corr=["h2o_depth", "h2o_fwhm", "o2_depth", "o2_fwhm"],
-        wave_min_correction=4400,
-        min_r_corr=0.4,
+        wave_min_correction_=4400,
+        min_r_corr_=0.4,
         sigma_ext=2,
     )
 
@@ -390,7 +390,6 @@ if stage == 4:
         sub_dico="matching_oxygen",
         oxygene_bands=[[5787, 5830]],
         reference="master",
-        continuum="linear",
     )
 
     if close_figure:

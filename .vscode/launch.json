@@ -19,7 +19,7 @@
             "program": "trigger_yarara_harpn.py",
             "args": [
                 "-b",
-                "1", // was 1
+                "1", // starts at 1
                 "-e",
                 "4"
             ],
