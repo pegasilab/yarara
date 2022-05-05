@@ -33,7 +33,7 @@ def yarara_correct_pattern(
     width_range: Tuple[float, float] = (0.1, 20.0),
     correct_blue: bool = True,
     correct_red: bool = True,
-    jdb_range: Optional[Sequence[int]] = None,
+    jdb_range: Optional[Tuple[int, int]] = None,
 ) -> None:
 
     """

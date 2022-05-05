@@ -19,9 +19,9 @@
             "program": "trigger_yarara_harpn.py",
             "args": [
                 "-b",
-                "1", // starts at 1
+                "8", // starts at 1
                 "-e",
-                "6"
+                "10"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

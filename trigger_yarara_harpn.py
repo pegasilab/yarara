@@ -12,7 +12,7 @@ import getopt
 import os
 import sys
 import time
-from typing import Dict, Optional, Union
+from typing import Dict, Literal, Optional, Union
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -257,33 +257,37 @@ if stage == 6:
     get_time_step("matching_pca")
     stage = break_func(stage)
 
-ref = ["master", "median"][reference is None]
+ref: Union[Literal["master"], Literal["median"]] = ["master", "median"][reference is None]  # type: ignore
 
 if stage == 7:
     yarara.stages.matching_activity(
-        sts=sts, reference=reference, close_figure=close_figure, input_dico="matching_pca"
+        sts=sts, reference=reference, ref=ref, close_figure=close_figure, input_dico="matching_pca"
     )
     get_time_step("matching_activity")
     stage = break_func(stage)
 
 
-# if stage == 8:
-#     yarara.stages.todo.matching_ghost_a(sts=sts, reference=reference, close_figure=close_figure)
-#     get_time_step("matching_ghost_a")
-#     stage = break_func(stage)
+if stage == 8:
+    yarara.stages.matching_ghost_a(
+        sts=sts,
+        ref=ref,
+        close_figure=close_figure,
+        frog_file=root + "/Python/Material/Ghost_" + ins + ".p",
+    )
+    get_time_step("matching_ghost_a")
+    stage = break_func(stage)
 
 
-# if stage == 9:
-#     yarara.stages.todo.matching_ghost_b(sts=sts, reference=reference, close_figure=close_figure)
-#     get_time_step("matching_ghost_b")
-#     stage = break_func(stage)
+if stage == 9:
+    yarara.stages.matching_ghost_b(sts=sts, ref=ref, close_figure=close_figure)
+    get_time_step("matching_ghost_b")
+    stage = break_func(stage)
 
 
-# if stage == 10:
-#     yarara.stages.todo.matching_fourier(sts=sts, reference=reference, close_figure=close_figure)
-
-#     get_time_step("matching_fourier")
-#     stage = break_func(stage)
+if stage == 10:
+    yarara.stages.matching_fourier(sts=sts, reference=reference, close_figure=close_figure)
+    get_time_step("matching_fourier")
+    stage = break_func(stage)
 
 # if stage == 11:
 #     yarara.stages.todo.matching_smooth(sts=sts, reference=reference, close_figure=close_figure)

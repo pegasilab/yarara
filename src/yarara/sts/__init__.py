@@ -125,8 +125,11 @@ class spec_time_series(object):
         self.dir_root = directory.split("WORKSPACE/")[0]
         self.dir_yarara = directory.split("Yarara/")[0] + "Yarara/"
         self.cmap = "plasma"
+
+        # color code of the spec time series residuals in flux normalized units
         self.low_cmap = -0.005
         self.high_cmap = 0.005
+
         self.zoom = 1
         self.smooth_map = 1
         self.planet: bool = False  #: If a planet has been injected
@@ -388,3 +391,26 @@ class spec_time_series(object):
 
         # this is assigned by get_pixels
         self.pixels: Any = None
+
+        # this is assigned by activity_index
+        self.all_kernels: Any = None
+        self.all_proxies: Any = None
+        self.all_proxies_name: Any = None
+        self.ca1: Any = None
+        self.ca2k: Any = None
+        self.ca2h: Any = None
+        self.ca2: Any = None
+        self.rhk: Any = None
+        self.mg1: Any = None
+        self.mga: Any = None
+        self.mgb: Any = None
+        self.mgc: Any = None
+        self.nad: Any = None
+        self.nad1: Any = None
+        self.nad2: Any = None
+        self.ha: Any = None
+        self.hb: Any = None
+        self.hc: Any = None
+        self.hd: Any = None
+        self.heps: Any = None
+        self.hed3: Any = None

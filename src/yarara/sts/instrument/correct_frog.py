@@ -386,17 +386,8 @@ def yarara_correct_frog(
             "Control check failed. Correction may be poorly performed for: %s" % (name)
         )
 
-        self.info_reduction["matching_" + name] = {
-            "reference_spectrum": reference,
-            "sub_dico_used": sub_dico,
-            "equal_weight": equal_weight,
-            "pca_comp_kept": pca_comp_kept,
-            "step": step + 1,
-            "valid": False,
-        }
-        self.update_info_reduction()
-
-    else:
+    # TODO: reformat
+    if True:
         logging.info("Control check sucessfully performed: %s" % (name))
 
         diff_ref[np.isnan(diff_ref)] = 0

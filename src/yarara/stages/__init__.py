@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional, Union
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -228,6 +228,124 @@ def matching_pca(sts: spec_time_series, reference: Optional[str], close_figure: 
         name_ext="_telluric",
         rvs_=np.array(sts.table["berv"]) * 1000.0,
     )
+
+    if close_figure:
+        plt.close("all")
+
+
+def matching_activity(
+    sts: spec_time_series,
+    reference: Optional[str],
+    ref: Union[int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]],
+    close_figure: bool,
+    input_dico: str,
+) -> None:
+    # CORRECT ACTIVITY WITH PROXIES + CCF MOMENT
+
+    # ACTIVITY
+    print("\n Compute activity proxy")
+    sts.yarara_activity_index(
+        sub_dico="matching_pca",
+    )
+
+    sts.yarara_ccf(
+        mask=sts.read_ccf_mask(sts.mask_harps),
+        mask_name=sts.mask_harps,
+        plot=True,
+        sub_dico=input_dico,
+        ccf_oversampling=1,
+        rv_range=None,
+    )
+
+    proxy = ["Kernel_CaII", "CaII"][reference is None]  # sts.yarara_determine_optimal_Sindex()
+    print("\n Optimal proxy of activity : %s" % (proxy))
+
+    sts.yarara_correct_activity(
+        sub_dico=input_dico,
+        proxy_corr=[proxy, "ccf_fwhm", "ccf_contrast"],
+        smooth_corr=1,
+        reference=ref,
+    )
+
+    if close_figure:
+        plt.close("all")
+
+
+def matching_ghost_a(
+    sts: spec_time_series,
+    frog_file: str,
+    ref: Union[int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]],
+    close_figure: bool,
+) -> None:
+    # Material/Ghost_{instrument}.p type InstrumentGhost
+
+    # CORRECT FROG
+    sts.dico_actif = "matching_activity"
+
+    sts.yarara_correct_borders_pxl(
+        pixels_to_reject=np.hstack([np.arange(1, 6), np.arange(4092, 4097)])
+    )
+    sts.yarara_produce_mask_frog(frog_file=frog_file)
+
+    sts.yarara_correct_frog(
+        correction="ghost_a",
+        sub_dico="matching_activity",
+        reference=ref,
+        threshold_contam=1,
+        equal_weight=False,
+        pca_comp_kept_=3,
+        complete_analysis=False,
+    )
+
+    if close_figure:
+        plt.close("all")
+
+
+def matching_ghost_b(
+    sts: spec_time_series,
+    ref: Union[int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]],
+    close_figure: bool,
+) -> None:
+    # CORRECT GHOST B CONTAM
+    sts.yarara_correct_frog(
+        correction="ghost_b",
+        sub_dico="matching_ghost_a",
+        reference=ref,
+        wave_max_train=4100,
+        pca_comp_kept_=2,
+        threshold_contam=1,
+        equal_weight=True,
+        complete_analysis=False,
+    )
+
+    if close_figure:
+        plt.close("all")
+
+
+def matching_fourier(
+    sts: spec_time_series,
+    reference: Optional[str],
+    close_figure: bool,
+) -> None:
+    # CORRECT INTERFERENCE PATTERN
+
+    # MEDIAN MASTER
+    if reference is None:
+        sts.yarara_median_master(
+            sub_dico="matching_ghost_b",
+            method="mean",  # if smt else than max, the classical weighted average of v1.0
+            jdb_range=[0, 100000, 1],
+        )
+
+    # CORRECT PATTERN IN FOURIER SPACE
+    sts.yarara_correct_pattern(
+        sub_dico="matching_ghost_b",
+        reference="master",
+        correct_blue=True,
+        correct_red=True,
+        width_range=(2.5, 3.5),
+        jdb_range=(0, 100000),
+    )  # all the time a pattern on HARPN
 
     if close_figure:
         plt.close("all")

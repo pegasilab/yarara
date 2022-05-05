@@ -275,8 +275,8 @@ class tableXY(object):
         self.y: NDArray[np.float64] = y
         self.xerr: NDArray[np.float64] = xerr
         self.yerr: NDArray[np.float64] = yerr
-        self.rms: Optional[float] = None
-        self.weighted_average: Optional[float] = None
+        self.rms: float = None # type: ignore
+        self.weighted_average: float = None # type: ignore
         self.clip_mask: Any = None
         self.clipx: Any = None
         self.clipy: Any = None

@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import glob as glob
-import time
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import matplotlib.pylab as plt
 import numpy as np
+from numpy.typing import ArrayLike
 
 from ... import io
 from ...stats import clustering
-from ...util import doppler_r, flux_norm_std, print_box, sphinx
+from ...util import print_box
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -17,7 +16,7 @@ if TYPE_CHECKING:
 
 def yarara_correct_borders_pxl(
     self: spec_time_series,
-    pixels_to_reject: Tuple[int, int] = (2, 4095),
+    pixels_to_reject: ArrayLike = [2, 4095],
     min_shift: int = -30,
     max_shift: int = 30,
 ) -> None:

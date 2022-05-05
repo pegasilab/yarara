@@ -1,39 +1,36 @@
 from __future__ import annotations
 
 import glob as glob
+import logging
 import time
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Literal, Sequence, Union
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 from .. import io
 from ..analysis import table, tableXY
 from ..plots import my_colormesh
 from ..stats import find_nearest, smooth, smooth2d
-from ..util import doppler_r, print_box
+from ..util import assert_never, doppler_r, print_box
 
 if TYPE_CHECKING:
     from . import spec_time_series
 
 
-# =============================================================================
-#  ACTIVITY CORRECTION
-# =============================================================================
-
-# activity
 def yarara_correct_activity(
     self: spec_time_series,
     sub_dico: str = "matching_telluric",
-    continuum: str = "linear",
-    wave_min: int = 3900,
-    wave_max: int = 4400,
+    wave_min: float = 3900.0,
+    wave_max: float = 4400.0,
     smooth_corr: int = 5,
-    reference: str = "median",
-    rv_shift: str = "none",
-    proxy_corr: List[str] = ["CaII"],
+    reference: Union[
+        int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]
+    ] = "median",
+    proxy_corr: Sequence[str] = ["CaII"],
 ) -> None:
     """
     Display the time-series spectra with proxies and its correlation
@@ -66,69 +63,50 @@ def yarara_correct_activity(
     smooth_map = self.smooth_map
     cmap = self.cmap
     planet: bool = self.planet
-    low_cmap = self.low_cmap * 100
-    high_cmap = self.high_cmap * 100
+    low_cmap: float = self.low_cmap * 100.0
+    high_cmap: float = self.high_cmap * 100.0
     self.import_material()
+    self.import_table()
+    self.import_info_reduction()
+
     load = self.material
+    wave = np.array(load["wave"])
+
+    jdb = np.array(self.table["jdb"])
+    snr = np.array(self.table["snr"])
+    rv = np.array(self.table["rv_shift"])
+
+    mean_rv = np.mean(rv)
+    rv = rv - mean_rv
+    rv *= 0.0  # TBD WHY this RV value ? (to take into account the CCF RV ?)
 
     epsilon = 1e-12
 
     kw = "_planet" * planet
     if kw != "":
-        print("\n---- PLANET ACTIVATED ----")
+        logging.info("PLANET ACTIVATED ----")
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    print("\n---- DICO %s used ----\n" % (sub_dico))
+    logging.info("DICO %s used ----\n" % (sub_dico))
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
 
-    flux = []
-    snr = []
-    conti = []
-    prox = []
-    jdb = []
-    rv = []
-
-    self.import_table()
+    prox: List[NDArray[np.float64]] = []
     for prox_name in proxy_corr:
         prox.append(np.array(self.table[prox_name]))
     proxy = np.array(prox)
 
-    for i, j in enumerate(files):
-        file = pd.read_pickle(j)
-        if not i:
-            wave = file["wave"]
-        snr.append(file["parameters"]["SNR_5500"])
-        conti.append(file[sub_dico]["continuum_" + continuum])
-        flux.append(file["flux" + kw] / file[sub_dico]["continuum_" + continuum])
-        try:
-            jdb.append(file["parameters"]["jdb"])
-        except:
-            jdb.append(i)
-        try:
-            rv.append(file["parameters"][rv_shift])
-        except:
-            rv.append(0)
+    all_flux, conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
+    flux = all_flux / conti
 
-    step = file[sub_dico]["parameters"]["step"]
+    step = self.info_reduction[sub_dico]["step"]
 
-    wave = np.array(wave)
-    flux = np.array(flux)
-    conti = np.array(conti)
-    snr = np.array(snr)
-    proxy = np.array(prox)
-    jdb = np.array(jdb)
-    rv = np.array(rv)
-    mean_rv = np.mean(rv)
-    rv = rv - mean_rv
-
-    #        proxy = tableXY(jdb,proxy)
-    #        proxy.substract_polyfit(proxy_detrending)
-    #        proxy = proxy.detrend_poly.y
-
-    if reference == "snr":
+    if isinstance(reference, int):
+        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        ref = flux[reference]
+    elif reference == "snr":
         ref = flux[snr.argmax()]
     elif reference == "median":
         logging.info("Reference spectrum : median")
@@ -136,16 +114,10 @@ def yarara_correct_activity(
     elif reference == "master":
         logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
-    elif type(reference) == int:
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
-        ref = flux[reference]
-    else:
+    elif reference == "zeros":
         ref = 0 * np.median(flux, axis=0)
-
-    if low_cmap is None:
-        low_cmap = np.percentile(flux - ref, 2.5)
-    if high_cmap is None:
-        high_cmap = np.percentile(flux - ref, 97.5)
+    else:
+        assert_never(reference)
 
     diff = smooth2d(flux - ref, smooth_map)
     diff_backup = diff.copy()
@@ -181,7 +153,7 @@ def yarara_correct_activity(
     correction_backup[:, 0:index_min_backup] = 0
     correction_backup[:, index_max_backup:] = 0
 
-    diff2_backup = diff_backup - correction_backup
+    diff2_backup = diff_backup - correction_backup  # type: ignore
 
     new_conti = conti * (diff_backup + ref) / (diff2_backup + ref + epsilon)
     new_continuum = new_conti.copy()
@@ -205,7 +177,7 @@ def yarara_correct_activity(
 
     fig = plt.figure(figsize=(21, 9))
 
-    plt.axes([0.05, 0.66, 0.90, 0.25])
+    plt.axes((0.05, 0.66, 0.90, 0.25))
     my_colormesh(
         new_wave,
         np.arange(len(diff)),
@@ -223,7 +195,7 @@ def yarara_correct_activity(
     ax1 = plt.colorbar(cax=cbaxes)
     ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
-    plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
+    plt.axes((0.05, 0.375, 0.90, 0.25), sharex=ax, sharey=ax)
     my_colormesh(
         new_wave,
         np.arange(len(diff)),
@@ -241,7 +213,7 @@ def yarara_correct_activity(
     ax2 = plt.colorbar(cax=cbaxes2)
     ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
-    plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
+    plt.axes((0.05, 0.09, 0.90, 0.25), sharex=ax, sharey=ax)
     my_colormesh(
         new_wave,
         np.arange(len(diff)),
@@ -269,21 +241,18 @@ def yarara_correct_activity(
         open(self.dir_root + "CORRECTION_MAP/map_matching_activity.p", "wb"),
     )
 
-    print("\nComputation of the new continua, wait ... \n")
-    time.sleep(0.5)
+    logging.info("Computation of the new continua, wait ...")
 
-    i = -1
-    for j in tqdm(files):
-        i += 1
-        file = pd.read_pickle(j)
-        output = {"continuum_" + continuum: new_continuum[i]}
-        file["matching_activity"] = output
-        file["matching_activity"]["parameters"] = {
-            "reference_spectrum": reference,
-            "sub_dico_used": sub_dico,
-            "proxy_used": proxy_corr,
-            "step": step + 1,
-        }
-        io.save_pickle(j, file)
+    self.info_reduction["matching_activity"] = {
+        "reference_spectrum": reference,
+        "sub_dico_used": sub_dico,
+        "proxy_used": proxy_corr,
+        "step": step + 1,
+        "valid": True,
+    }
+    self.update_info_reduction()
+
+    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % "matching_activity"
+    np.save(fname, new_continuum.astype("float32"))
 
     self.dico_actif = "matching_activity"

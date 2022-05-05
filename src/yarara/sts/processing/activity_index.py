@@ -24,7 +24,7 @@ from ...paths import root
 from ...plots import auto_axis, my_colormesh
 from ...stats import IQ, find_nearest, identify_nearest, match_nearest, smooth2d
 from ...util import ccf as ccf_fun
-from ...util import doppler_r, get_phase, print_box
+from ...util import doppler_r, flux_norm_std, get_phase, print_box
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -38,15 +38,12 @@ if TYPE_CHECKING:
 def yarara_activity_index(
     self: spec_time_series,
     sub_dico: str = "matching_diff",
-    continuum: str = "linear",
     plot: bool = True,
     debug: bool = False,
     calib_std: int = 0,
     optimize: bool = False,
-    substract_map: List[Any] = [],
-    add_map: List[Any] = [],
     p_noise: float = 1 / np.inf,
-    save: bool = True,
+    save_kw: bool = True,
 ) -> None:
     """
     Produce the activity proxy time-series. Need to cancel the RV systemic of the star
@@ -67,6 +64,8 @@ def yarara_activity_index(
     directory = self.directory
     rv_sys = self.rv_sys
     self.import_table()
+    jdb = np.array(self.table["jdb"])
+    snrs = np.array(self.table["snr"])
 
     self.import_material()
     load = self.material
@@ -76,7 +75,6 @@ def yarara_activity_index(
     time.sleep(1)
 
     epsilon = 1e-12
-    save_kw = save
 
     try:
         self.import_star_info()
@@ -135,12 +133,6 @@ def yarara_activity_index(
     # calib_std = 5.34e-4 #from Cretignier+20 precision linear + clustering
     # calib_std = 10.00e-4 #from Cretignier+20 precision linear + clustering (new sun) related to flat field SNR
 
-    fluxes = []
-    err_fluxes = []
-    jdb = []
-    snrs = []
-    count = 0
-
     file_random = self.import_spectrum()
     waves = file_random["wave"]
     all_prox_names = np.array(all_proxies)[:, 4]
@@ -150,32 +142,13 @@ def yarara_activity_index(
     all_proxies = list(np.array(all_proxies)[proxy_found])
 
     dgrid = np.mean(np.diff(waves))
-    for j in tqdm(files):
-        count += 1
-        file = pd.read_pickle(j)
-        try:
-            jdb.append(file["parameters"]["jdb"])
-        except:
-            jdb.append(count)
-
-        snrs.append(file["parameters"]["SNR_5500"])
-
-        f = file["flux" + kw]
-        f_std = file["flux_err"]
-        c = file[sub_dico]["continuum_" + continuum]
-        c_std = file["continuum_err"]
-
-        f_norm, f_norm_std = util.flux_norm_std(f, f_std, c, c_std)
-        dustbin, f_norm_std = util.flux_norm_std(
-            f, f_std, file["matching_diff"]["continuum_" + continuum], c_std
-        )
-
-        fluxes.append(f_norm)
-        err_fluxes.append(f_norm_std)
+    all_flux, all_flux_err, conti, conti2, conti_err = self.import_sts_flux(
+        load=["flux" + kw, "flux_err", sub_dico, "matching_diff", "continuum_err"]
+    )
+    flux, err_flux = flux_norm_std(all_flux, all_flux_err, conti + epsilon, conti_err)
+    dust, err_flux = flux_norm_std(all_flux, all_flux_err, conti2 + epsilon, conti_err)
 
     waves = np.array(waves)
-    flux = np.array(fluxes)
-    err_flux = np.array(err_fluxes)
     flux *= np.array(load["correction_factor"])
     err_flux *= np.array(load["correction_factor"])
     snrs = np.array(snrs)
@@ -185,14 +158,6 @@ def yarara_activity_index(
     )
     flux += noise_matrix
     err_flux = np.sqrt(err_flux**2 + noise_values**2)
-
-    # TODO: restore those two methods or remove those arguments
-
-    # for maps in substract_map:
-    #     flux = self.yarara_substract_map(flux, maps, correction_factor=True)
-
-    # for maps in add_map:
-    #     flux = self.yarara_add_map(flux, maps, correction_factor=True)
 
     jdb = np.array(jdb)
     ref = snrs.argmax()
@@ -309,7 +274,7 @@ def yarara_activity_index(
         else:
             return 0 * proxy, 0 * proxy_std, 0 * wave, 0 * wave
 
-    save = {"null": 0}
+    save: Dict[str, Any] = {"null": 0}
     mask_activity = np.zeros(len(waves))
     all_rcorr = []
     all_rslope = []
@@ -377,6 +342,16 @@ def yarara_activity_index(
         save_backup["CaIIH"] = save_backup["Ha"]
         save_backup["CaIIK_std"] = save_backup["Ha_std"]
         save_backup["CaIIH_std"] = save_backup["Ha_std"]
+
+    def non_neg(prox, prox_std):
+        mask = prox <= 0
+        prox[mask] = np.median(prox[~mask])
+        prox_std[mask] = np.median(prox[~mask]) * 0.99
+        return prox, prox_std
+
+    for kw in save.keys():
+        if kw[-3:] != "std":
+            save[kw], save[kw + "_std"] = non_neg(save[kw], save[kw + "_std"])
 
     save["CaII"] = 0.5 * (save["CaIIK"] + save["CaIIH"])
     save["CaII_std"] = 0.5 * np.sqrt((save["CaIIK_std"]) ** 2 + (save["CaIIH_std"]) ** 2)
