@@ -140,12 +140,14 @@ def yarara_ccf(
     else:
         assert_never(rv_sys_)
 
-    if rv_shift_ == "zeros":
+    if isinstance(rv_shift_, np.ndarray):
+        rv_shift = rv_shift_
+    elif rv_shift_ == "zeros":
         rv_shift: NDArray[np.float64] = np.zeros(len(files))
     elif rv_shift_ == "table":
         rv_shift = np.array(self.table["rv_shift"]) * 1000.0
-    elif isinstance(rv_shift_, np.ndarray):
-        rv_shift = rv_shift_
+    else:
+        assert_never(rv_shift_)
 
     self.import_table()
     self.import_material()
