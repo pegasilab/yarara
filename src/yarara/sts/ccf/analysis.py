@@ -4,7 +4,6 @@ import datetime
 import logging
 import os
 import time
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import matplotlib.pylab as plt
@@ -15,27 +14,17 @@ from numpy import ndarray
 from numpy.typing import NDArray
 from scipy.interpolate import interp1d
 
-from yarara.analysis import tableXY
-
-from .. import io, util
-from ..analysis import tableXY
-from ..io import pickle_dump
-from ..paths import paths, root
-from ..stats import IQ, find_nearest, identify_nearest
-from ..util import assert_never
-from ..util import ccf as ccf_fun
-from ..util import doppler_r
+from ... import io, util
+from ...analysis import tableXY
+from ...io import pickle_dump
+from ...paths import paths, root
+from ...stats import IQ, find_nearest, identify_nearest
+from ...util import assert_never
+from ...util import ccf as ccf_fun
+from ...util import doppler_r
 
 if TYPE_CHECKING:
-    from . import spec_time_series
-
-
-def read_ccf_mask(self: spec_time_series, mask_name: str) -> NDArray[np.float64]:
-    logging.info("Reading CCF mask : %s \n" % (mask_name))
-    mask_path = root + "/Python/MASK_CCF/" + mask_name + ".txt"
-    mask = np.genfromtxt(mask_path)
-    mask = np.array([0.5 * (mask[:, 0] + mask[:, 1]), mask[:, 2]]).T
-    return mask
+    from .. import spec_time_series
 
 
 def yarara_ccf(
@@ -447,6 +436,7 @@ def yarara_ccf(
         "Photon noise RV from calibration : %.2f m/s\n " % (np.median(svrad_phot2["rv"]) * 1000)
     )
 
+    center = 0.0
     for j, i in enumerate(files):
         file = pd.read_pickle(i)
         # log_spectrum = interp1d(np.log10(grid), flux[j], kind='cubic', bounds_error=False, fill_value='extrapolate')(log_grid)
@@ -771,154 +761,3 @@ def yarara_ccf(
         "fwhm": self.ccf_fwhm,
         "vspan": self.ccf_vspan,
     }
-
-
-def yarara_ccf_save(self: spec_time_series, mask: str, sub_dico: str):
-    self.import_ccf()
-    table = self.table_ccf["CCF_" + mask]
-
-    all_ccf_saved = self.all_ccf_saved[sub_dico]
-    vrad = all_ccf_saved[0]
-    ccfs = all_ccf_saved[1]
-    ccfs_std = all_ccf_saved[2]
-    creation_date = table[sub_dico]["creation_date"]
-    table_ccf_moments = table[sub_dico]["table"][
-        [
-            "jdb",
-            "rv",
-            "rv_std",
-            "contrast",
-            "contrast_std",
-            "fwhm",
-            "fwhm_std",
-            "bisspan",
-            "bisspan_std",
-            "ew",
-            "ew_std",
-        ]
-    ]
-
-    if not os.path.exists(self.directory + "Analyse_ccf_saved.p"):
-        file_to_save = {}
-    else:
-        file_to_save = pd.read_pickle(self.directory + "/Analyse_ccf_saved.p")
-
-    ccf_infos = {
-        "ccf_vrad": vrad,
-        "ccf_flux": ccfs,
-        "ccf_flux_std": ccfs_std,
-        "table": table_ccf_moments,
-        "creation_date": creation_date,
-    }
-
-    try:
-        file_to_save["CCF_" + mask][sub_dico] = ccf_infos
-    except KeyError:
-        file_to_save["CCF_" + mask] = {sub_dico: ccf_infos}
-
-    pickle_dump(file_to_save, open(self.directory + "/Analyse_ccf_saved.p", "wb"))
-
-
-def yarara_master_ccf(
-    self: spec_time_series,
-    sub_dico: str = "matching_diff",
-    name_ext: str = "",
-    rvs_: Optional[ndarray] = None,
-) -> None:
-    self.import_table()
-
-    vrad, ccfs = (self.all_ccf_saved[sub_dico][0], self.all_ccf_saved[sub_dico][1])
-
-    if rvs_ is None:
-        rvs: NDArray[np.float64] = self.ccf_rv.y.copy()
-    else:
-        rvs = rvs_
-
-    med_rv = np.nanmedian(rvs)
-    rvs -= med_rv
-
-    new_ccf = []
-    for j in range(len(ccfs.T)):
-        ccf = tableXY(vrad - rvs[j], ccfs[:, j])
-        ccf.interpolate(new_grid=vrad, method="linear", fill_value=np.nan)
-        new_ccf.append(ccf.y)
-    new_ccf = np.array(new_ccf)
-    new_vrad = vrad - med_rv
-    stack = np.sum(new_ccf, axis=0)
-    stack /= np.nanpercentile(stack, 95)
-    half = 0.5 * (1 + np.nanmin(stack))
-
-    master_ccf = tableXY(new_vrad, stack)
-    master_ccf.supress_nan()
-    master_ccf.interpolate(replace=True, method="cubic")
-
-    new_vrad = master_ccf.x
-    stack = master_ccf.y
-
-    v1 = new_vrad[new_vrad < 0][find_nearest(stack[new_vrad < 0], half)[0][0]]
-    v2 = new_vrad[new_vrad > 0][find_nearest(stack[new_vrad > 0], half)[0][0]]
-
-    vmin = np.nanmin(new_vrad[~np.isnan(stack)])
-    vmax = np.nanmax(new_vrad[~np.isnan(stack)])
-
-    vlim = np.min([abs(vmin), abs(vmax)])
-    vmin = -vlim
-    vmax = vlim
-
-    contrast = 1 - np.nanmin(stack)
-
-    plt.figure()
-    plt.plot(new_vrad, stack, color="k", label="Contrast = %.1f %%" % (100 * contrast))
-
-    extension = ["YARARA", "HARPS", "telluric"][int(name_ext != "") + int(name_ext == "_telluric")]
-
-    if extension == "YARARA":
-        self.fwhm = np.round((v2 - v1) / 1000, 2)
-        io.pickle_dump(
-            {"vrad": new_vrad, "ccf_power": stack},
-            open(self.dir_root + "MASTER/MASTER_CCF_KITCAT.p", "wb"),
-        )
-        try:
-            old = pd.read_pickle(self.dir_root + "MASTER/MASTER_CCF_HARPS.p")
-            plt.plot(old["vrad"], old["ccf_power"], alpha=0.5, color="k", ls="--")
-        except:
-            pass
-    elif extension == "HARPS":
-        io.pickle_dump(
-            {"vrad": new_vrad, "ccf_power": stack},
-            open(self.dir_root + "MASTER/MASTER_CCF_HARPS.p", "wb"),
-        )
-    elif extension == "telluric":
-        try:
-            old = pd.read_pickle(self.dir_root + "MASTER/MASTER_CCF" + name_ext + ".p")
-            plt.plot(old["vrad"], old["ccf_power"], alpha=0.5, color="k", ls="--")
-        except:
-            pass
-        io.pickle_dump(
-            {"vrad": new_vrad, "ccf_power": stack},
-            open(self.dir_root + "MASTER/MASTER_CCF" + name_ext + ".p", "wb"),
-        )
-    else:
-        raise ValueError("Cannot happen")
-
-    plt.xlim(vmin, vmax)
-
-    plt.plot(
-        [v1, v2],
-        [half, half],
-        color="r",
-        label="FHWM = %.2f kms" % ((v2 - v1) / 1000),
-    )
-    plt.scatter([v1, v2], [half, half], color="r", edgecolor="k", zorder=10)
-    plt.scatter([0], [np.nanmin(stack)], color="k", edgecolor="k", zorder=10)
-    plt.axvline(x=0, ls=":", color="k", alpha=0.5)
-    plt.legend()
-    plt.grid()
-    plt.xlabel("RV [m/s]", fontsize=13)
-    plt.ylabel("Flux normalised", fontsize=13)
-    plt.title("%s" % (self.starname), fontsize=14)
-
-    self.yarara_star_info(Contrast=[extension, np.round(contrast, 3)])
-    self.yarara_star_info(Fwhm=[extension, np.round((v2 - v1) / 1000, 2)])
-
-    plt.savefig(self.dir_root + "IMAGES/MASTER_CCF" + name_ext + ".pdf")

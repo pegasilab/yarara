@@ -67,7 +67,9 @@ class StarInfo(TypedDict, total=False):
 
 class spec_time_series(object):
     from .activity import yarara_correct_activity
-    from .ccf import yarara_ccf, yarara_ccf_save, yarara_master_ccf
+    from .ccf.analysis import yarara_ccf
+    from .ccf.io import read_ccf_mask, yarara_ccf_save
+    from .ccf.master import yarara_master_ccf
     from .extract import yarara_get_berv_value, yarara_get_orders, yarara_get_pixels
     from .instrument.correct_borders_pxl import yarara_correct_borders_pxl
     from .instrument.correct_frog import yarara_correct_frog
