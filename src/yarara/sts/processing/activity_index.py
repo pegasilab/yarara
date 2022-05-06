@@ -412,7 +412,7 @@ def yarara_activity_index(
 
             self.yarara_analyse_summary()
         else:
-            self.yarara_obs_info(kw=pd.DataFrame(save))
+            self.yarara_obs_info(df=pd.DataFrame(save))
 
     self.ca2k = tableXY(jdb, save["CaIIK"], save["CaIIK_std"] + calib_std)
     self.ca2h = tableXY(jdb, save["CaIIH"], save["CaIIH_std"] + calib_std)

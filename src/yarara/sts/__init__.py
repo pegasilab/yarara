@@ -76,25 +76,19 @@ class spec_time_series(object):
     from .instrument.correct_pattern import yarara_correct_pattern
     from .instrument.produce_mask_contam import yarara_produce_mask_contam
     from .instrument.produce_mask_frog import yarara_produce_mask_frog
-    from .io import (
-        import_ccf,
-        import_dico_tree,
-        import_info_reduction,
-        import_material,
-        import_rassine_output,
-        import_spectrum,
-        import_star_info,
-        import_sts_flux,
-        import_table,
-        spectrum,
-        supress_time_spectra,
-        update_info_reduction,
-        yarara_add_step_dico,
-        yarara_analyse_summary,
-        yarara_exploding_pickle,
-        yarara_obs_info,
-        yarara_star_info,
-    )
+    from .io.ccf import import_ccf, yarara_add_ccf_entry
+    from .io.dico import import_dico_chain, import_dico_tree, yarara_add_step_dico
+    from .io.flux import import_sts_flux
+    from .io.material import import_material
+    from .io.obs_info import yarara_obs_info
+    from .io.pickle import yarara_exploding_pickle
+    from .io.rassine import import_rassine_output
+    from .io.reduction import import_info_reduction, update_info_reduction
+    from .io.spectrum import import_spectrum, spectrum
+    from .io.star_info import import_star_info, yarara_star_info
+    from .io.summary import yarara_analyse_summary
+    from .io.suppress import suppress_time_RV, suppress_time_spectra
+    from .io.table import import_table
     from .outliers.brute import yarara_correct_brute
     from .outliers.cosmics import yarara_correct_cosmics
     from .outliers.mad import yarara_correct_mad
@@ -107,12 +101,11 @@ class spec_time_series(object):
     from .telluric.correct import yarara_correct_telluric_proxy
     from .telluric.gradient import yarara_correct_telluric_gradient
     from .telluric.oxygen import yarara_correct_oxygen
-    from .util import (
-        yarara_cut_spectrum,
-        yarara_median_master,
-        yarara_non_zero_flux,
-        yarara_poissonian_noise,
-    )
+    from .util.cut_spectrum import yarara_cut_spectrum
+    from .util.map import yarara_add_map, yarara_substract_map
+    from .util.median_master import yarara_median_master
+    from .util.non_zero_flux import yarara_non_zero_flux
+    from .util.poissonian_noise import yarara_poissonian_noise
 
     def __init__(self, directory: str) -> None:
         if len(directory.split("/")) == 1:
@@ -138,7 +131,6 @@ class spec_time_series(object):
         self.teff = None
         self.log_g = None
         self.bv = None
-        self.wave = None
         self.infos = {}
         self.ram = []
 
@@ -343,6 +335,9 @@ class spec_time_series(object):
 
         #: warning, indexing convention has changed during YARARA lifetime
 
+        # this is assigned by import_dico_chain
+        self.dico_chain: Any = None
+
         # this is assigned by yarara_ccf
         self.ccf_timeseries: Any = None
         self.all_ccf_saved: Dict[
@@ -414,3 +409,12 @@ class spec_time_series(object):
         self.hd: Any = None
         self.heps: Any = None
         self.hed3: Any = None
+
+        # assigned by yarara_map
+        self.map: Tuple[NDArray[np.float64], NDArray[np.float64]] = None  # type: ignore
+
+        # assigned by yarara_median_master
+        self.wave: NDArray[np.float64] = None  # type: ignore
+
+        # assigned by median_master
+        self.reference: Tuple[NDArray[np.float64], NDArray[np.float64]] = None  # type: ignore

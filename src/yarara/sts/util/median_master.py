@@ -1,58 +1,23 @@
 from __future__ import annotations
 
-import glob as glob
 import logging
-import time
-from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, Optional, Union
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-from colorama import Fore
-from numpy import ndarray
+from numpy.typing import NDArray
 from tqdm import tqdm
 
-from .. import io
-from ..analysis import tableXY
-from ..paths import root
-from ..plots import my_colormesh
-from ..stats import IQ, find_nearest, flat_clustering, smooth
-from ..util import doppler_r, flux_norm_std, print_box
+from ... import io
+from ...analysis import tableXY
+from ...paths import root
+from ...plots import my_colormesh
+from ...stats import IQ, find_nearest, flat_clustering
+from ...util import doppler_r, print_box
 
 if TYPE_CHECKING:
-    from . import spec_time_series
-
-
-def yarara_non_zero_flux(
-    self: spec_time_series, spectrum: Optional[ndarray] = None, min_value: None = None
-) -> ndarray:
-    file_test = self.import_spectrum()
-    hole_left = file_test["parameters"]["hole_left"]
-    hole_right = file_test["parameters"]["hole_right"]
-    grid = file_test["wave"]
-    mask = (grid < hole_left) | (grid > hole_right)
-
-    directory = self.directory
-
-    files = glob.glob(directory + "RASSI*.p")
-    files = np.sort(files)
-
-    if spectrum is None:
-        for i, j in enumerate(files):
-            file = pd.read_pickle(j)
-            flux = file["flux"]
-            zero = flux == 0
-            if min_value is None:
-                min_value = np.min(flux[flux != 0])
-            flux[mask & zero] = min_value
-            io.pickle_dump(file, open(j, "wb"))
-    else:
-        logging.info("Removing null values of the spectrum")
-        zero = spectrum <= 0
-        if min_value is None:
-            min_value = np.min(spectrum[spectrum > 0])
-        spectrum[mask & zero] = min_value
-        return spectrum
+    from .. import spec_time_series
 
 
 def yarara_median_master(
@@ -63,28 +28,22 @@ def yarara_median_master(
     suppress_telluric: bool = True,
     shift_spectrum: bool = False,
     telluric_tresh: float = 0.001,
-    wave_min: int = 5750,
-    wave_max: int = 5900,
+    wave_min: float = 5750.0,
+    wave_max: float = 5900.0,
     jdb_range: List[int] = [-100000, 100000, 1],
-    mask_percentile: List[Optional[int]] = [None, 50],
-    save: bool = True,
 ) -> None:
     """
     Produce a median master by masking region of the spectrum
 
     Parameters
     ----------
-
     sub_dico : The sub_dictionnary used to  select the continuum
     telluric_tresh : Treshold used to cover the position of the contaminated wavelength
     wave_min : The minimum xlim axis
     wave_max : The maximum xlim axis
-
     """
 
-    mask_percentile = [None, 50]
-
-    print_box("\n---- RECIPE : PRODUCE MASTER MEDIAN SPECTRUM ----\n")
+    logging.info("RECIPE : PRODUCE MASTER MEDIAN SPECTRUM")
 
     self.import_table()
     self.import_material()
@@ -98,11 +57,11 @@ def yarara_median_master(
 
     kw = "_planet" * planet
     if kw != "":
-        print("\n---- PLANET ACTIVATED ----")
+        logging.info("PLANET ACTIVATED ----")
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    print("\n---- DICO %s used ----" % (sub_dico))
+    logging.info("DICO %s used ----" % (sub_dico))
 
     if self.table["telluric_fwhm"][0] is None:
         fwhm = np.array([3.0] * len(self.table.jdb))
@@ -116,19 +75,19 @@ def yarara_median_master(
     fwhm_min = [2, 3][self.instrument[:-2] == "CORALIE"]
     fwhm_default = [3, 5][self.instrument[:-2] == "CORALIE"]
     if np.percentile(fwhm, 95) > fwhm_max:
-        logging.warn(
-            "[WARNING] FWHM of tellurics larger than %.0f km/s (%.1f), reduced to default value of %.0f km/s"
+        logging.warning(
+            "FWHM of tellurics larger than %.0f km/s (%.1f), reduced to default value of %.0f km/s"
             % (fwhm_max, np.percentile(fwhm, 95), fwhm_default)
         )
         fwhm = np.array([fwhm_default] * len(self.table.jdb))
     if np.percentile(fwhm, 95) < fwhm_min:
-        logging.warn(
+        logging.warning(
             "FWHM of tellurics smaller than %.0f km/s (%.1f), increased to default value of %.0f km/s"
             % (fwhm_min, np.percentile(fwhm, 95), fwhm_default)
         )
         fwhm = np.array([fwhm_default] * len(self.table.jdb))
 
-    print("\n [INFO] FWHM of tellurics : %.1f km/s" % (np.percentile(fwhm, 95)))
+    logging.info("FWHM of tellurics : %.1f km/s" % (np.percentile(fwhm, 95)))
 
     all_flux, all_conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
     all_flux_norm = all_flux / all_conti
@@ -144,16 +103,14 @@ def yarara_median_master(
         )
 
     if sum(mask) < 40:
-        print(
-            Fore.YELLOW
-            + "\n [WARNING] Not enough spectra %s the specified temporal range"
+        logging.warning(
+            "Not enough spectra %s the specified temporal range"
             % (["inside", "outside"][jdb_range[2] == 0])
-            + Fore.RESET
         )
         mask = np.ones(len(self.table.jdb)).astype("bool")
     else:
-        print(
-            "\n [INFO] %.0f spectra %s the specified temporal range can be used for the median\n"
+        logging.info(
+            "%.0f spectra %s the specified temporal range can be used for the median"
             % (sum(mask), ["inside", "outside"][jdb_range[2] == 0])
         )
 
@@ -264,28 +221,15 @@ def yarara_median_master(
     all_mask_nan2 = 1 - all_mask2
     all_mask_nan2[all_mask_nan2 == 0] = np.nan
 
-    print(" ", mask_percentile)
-    if mask_percentile[0] is None:
-        mask_percentile[0] = np.ones(len(wavelength)).astype("bool")
-
-    print(
-        " ",
-        np.shape(wavelength),
-        np.shape(all_flux_norm),
-        np.shape(mask_percentile[0]),
-        np.shape(mask_percentile[1]),
-    )
+    mask_percentile_0 = np.ones(len(wavelength)).astype("bool")
+    mask_percentile_1 = 50.0
+    print(" ", np.shape(wavelength), np.shape(all_flux_norm))
 
     med = np.zeros(len(wavelength))
-    med[mask_percentile[0]] = np.nanpercentile(
-        all_flux_norm[:, mask_percentile[0]], mask_percentile[1], axis=0
+    med[mask_percentile_0] = np.nanpercentile(
+        all_flux_norm[:, mask_percentile_0], mask_percentile_1, axis=0
     )
-    med[~mask_percentile[0]] = np.nanpercentile(all_flux_norm[:, ~mask_percentile[0]], 50, axis=0)
-
-    del mask_percentile
-
-    # med1 = np.nanmedian(all_flux_norm*all_mask_nan1,axis=0)
-    # med2 = np.nanmedian(all_flux_norm*all_mask_nan2,axis=0)
+    med[~mask_percentile_0] = np.nanpercentile(all_flux_norm[:, ~mask_percentile_0], 50, axis=0)
 
     mean = np.nansum(all_flux, axis=0) / np.nansum(all_conti, axis=0)
     mean1 = np.nansum(all_flux * all_mask_nan1, axis=0) / (
@@ -389,199 +333,4 @@ def yarara_median_master(
 
     load.loc[load["reference_spectrum"] < 0, "reference_spectrum"] = 0
 
-    if save:
-        io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
-    else:
-        return np.array(load["reference_spectrum"])
-
-
-def yarara_cut_spectrum(
-    self: spec_time_series, wave_min: None = None, wave_max: Optional[int] = None
-) -> None:
-    """Cut the spectrum time-series borders to reach the specified wavelength limits (included)
-
-    There is no way to cancel this step ! Use it wisely."""
-
-    print_box("\n---- RECIPE : SPECTRA CROPING ----\n")
-
-    directory = self.directory
-    self.import_material()
-    load = self.material
-
-    if wave_min == "auto":
-        w0 = np.min(load["wave"])
-        a, b, c = self.yarara_map(
-            "matching_diff",
-            reference="norm",
-            wave_min=w0,
-            wave_max=w0 + 1000,
-            Plot=False,
-        )
-        a = a[np.sum(a < 1e-5, axis=1) > 100]  # only kept spectra with more than 10 values below 0
-
-        if len(a):
-            t = np.nanmean(np.cumsum(a < 1e-5, axis=1).T / np.sum(a < 1e-5, axis=1), axis=1)
-            i0 = find_nearest(t, 0.99)[0][0]  # supress wavelength range until 99% of nan values
-            if i0:
-                wave_min = load["wave"][i0]
-                print(
-                    " [INFO] Automatic detection of the blue edge spectrum found at %.2f AA\n"
-                    % (wave_min)
-                )
-            else:
-                wave_min = None
-        else:
-            wave_min = None
-
-    maps = glob.glob(self.dir_root + "CORRECTION_MAP/*.p")
-    if len(maps):
-        for name in maps:
-            correction_map = pd.read_pickle(name)
-            old_wave = correction_map["wave"]
-            length = len(old_wave)
-            idx_min = 0
-            idx_max = len(old_wave)
-            if wave_min is not None:
-                idx_min = int(find_nearest(old_wave, wave_min)[0])
-            if wave_max is not None:
-                idx_max = int(find_nearest(old_wave, wave_max)[0] + 1)
-            correction_map["wave"] = old_wave[idx_min:idx_max]
-            correction_map["correction_map"] = correction_map["correction_map"][:, idx_min:idx_max]
-            io.pickle_dump(correction_map, open(name, "wb"))
-            print("%s modified" % (name.split("/")[-1]))
-
-    time.sleep(1)
-
-    old_wave = np.array(load["wave"])
-    length = len(old_wave)
-    idx_min = 0
-    idx_max = len(old_wave)
-    if wave_min is not None:
-        idx_min = int(find_nearest(old_wave, wave_min)[0])
-    if wave_max is not None:
-        idx_max = int(find_nearest(old_wave, wave_max)[0] + 1)
-
-    new_wave = old_wave[idx_min:idx_max]
-    wave_min = np.min(new_wave)
-    wave_max = np.max(new_wave)
-
-    load = load[idx_min:idx_max]
-    load = load.reset_index(drop=True)
     io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
-
-    try:
-        file_kitcat = pd.read_pickle(self.dir_root + "KITCAT/kitcat_spectrum.p")
-        wave_kit = file_kitcat["wave"]
-        idx_min = 0
-        idx_max = len(wave_kit)
-        if wave_min is not None:
-            idx_min = int(find_nearest(wave_kit, wave_min)[0])
-        if wave_max is not None:
-            idx_max = int(find_nearest(wave_kit, wave_max)[0] + 1)
-        for kw in [
-            "wave",
-            "flux",
-            "correction_factor",
-            "flux_telluric",
-            "flux_uncorrected",
-            "continuum",
-        ]:
-            file_kitcat[kw] = np.array(file_kitcat[kw])[idx_min:idx_max]
-        io.pickle_dump(file_kitcat, open(self.dir_root + "KITCAT/kitcat_spectrum.p", "wb"))
-    except:
-        pass
-
-    files = glob.glob(directory + "RASSI*.p")
-    files = np.sort(files)
-
-    file_ref = self.import_spectrum()
-    old_wave = np.array(file_ref["wave"])
-    length = len(old_wave)
-    idx_min = 0
-    idx_max = len(old_wave)
-    if wave_min is not None:
-        idx_min = int(find_nearest(old_wave, wave_min)[0])
-    if wave_max is not None:
-        idx_max = int(find_nearest(old_wave, wave_max)[0] + 1)
-
-    new_wave = old_wave[idx_min:idx_max]
-    wave_min = np.min(new_wave)
-    wave_max = np.max(new_wave)
-
-    for j in tqdm(files):
-        file = pd.read_pickle(j)
-        file["parameters"]["wave_min"] = wave_min
-        file["parameters"]["wave_max"] = wave_max
-
-        anchors_wave = file["matching_anchors"]["anchor_wave"]
-        mask = (anchors_wave >= wave_min) & (anchors_wave <= wave_max)
-        file["matching_anchors"]["anchor_index"] = (
-            file["matching_anchors"]["anchor_index"][mask] - idx_min
-        )
-        file["matching_anchors"]["anchor_flux"] = file["matching_anchors"]["anchor_flux"][mask]
-        file["matching_anchors"]["anchor_wave"] = file["matching_anchors"]["anchor_wave"][mask]
-
-        anchors_wave = file["output"]["anchor_wave"]
-        mask = (anchors_wave >= wave_min) & (anchors_wave <= wave_max)
-        file["output"]["anchor_index"] = file["output"]["anchor_index"][mask] - idx_min
-        file["output"]["anchor_flux"] = file["output"]["anchor_flux"][mask]
-        file["output"]["anchor_wave"] = file["output"]["anchor_wave"][mask]
-
-        fields = file.keys()
-        for field in fields:
-            if type(file[field]) == dict:
-                sub_fields = file[field].keys()
-                for sfield in sub_fields:
-                    if type(file[field][sfield]) == np.ndarray:
-                        if len(file[field][sfield]) == length:
-                            file[field][sfield] = file[field][sfield][idx_min:idx_max]
-            elif type(file[field]) == np.ndarray:
-                if len(file[field]) == length:
-                    file[field] = file[field][idx_min:idx_max]
-        io.save_pickle(j, file)
-
-
-def yarara_poissonian_noise(
-    self: spec_time_series,
-    noise_wanted: float = 1 / 100,
-    wave_ref: None = None,
-    flat_snr: bool = True,
-    seed: int = 9,
-) -> Tuple[ndarray, ndarray]:
-    self.import_table()
-    self.import_material()
-
-    if noise_wanted:
-        master = np.sqrt(
-            np.array(self.material.reference_spectrum * self.material.correction_factor)
-        )  # used to scale the snr continuum into errors bars
-        snrs = pd.read_pickle(self.dir_root + "WORKSPACE/Analyse_snr.p")
-
-        if not flat_snr:
-            if wave_ref is None:
-                current_snr = np.array(self.table.snr_computed)
-            else:
-                i = find_nearest(snrs["wave"], wave_ref)[0]
-                current_snr = snrs["snr_curve"][:, i]
-
-            curves = current_snr * np.ones(len(master))[:, np.newaxis]
-        else:
-            curves = snrs["snr_curve"]  # snr curves representing the continuum snr
-
-        snr_wanted = 1 / noise_wanted
-        diff = 1 / snr_wanted**2 - 1 / curves**2
-        diff[diff < 0] = 0
-        # snr_to_degrate = 1/np.sqrt(diff)
-
-        noise = np.sqrt(diff)
-        noise[np.isnan(noise)] = 0
-
-        noise_values = noise * master[:, np.newaxis].T
-        np.random.seed(seed=seed)
-        matrix_noise = np.random.randn(len(self.table.jdb), len(self.material.wave))
-        matrix_noise *= noise_values
-    else:
-        matrix_noise = np.zeros((len(self.table.jdb), len(self.material.wave)))
-        noise_values = np.zeros((len(self.table.jdb), len(self.material.wave)))
-
-    return matrix_noise, noise_values

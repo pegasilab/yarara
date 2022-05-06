@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 def yarara_correct_cosmics(
     self: spec_time_series,
     sub_dico: str = "matching_diff",
-    continuum: str = "linear",
     k_sigma: int = 3,
     bypass_warning: bool = True,
 ) -> None:
@@ -102,8 +101,8 @@ def yarara_correct_cosmics(
             all_snr,
             np.sum(mask, axis=1) * 100 / len(mask.T),
             edgecolor="k",
-            c=jdb,
-            cmap="brg",
+            c=jdb,  # type: ignore
+            cmap="brg",  # type: ignore
         )
         ax = plt.colorbar()
         plt.yscale("log")

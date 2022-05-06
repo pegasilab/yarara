@@ -2,22 +2,16 @@ from __future__ import annotations
 
 import glob as glob
 import logging
-import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
-import matplotlib.cm as cmx
-import matplotlib.colors as mplcolors
 import matplotlib.pylab as plt
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 
-from ... import io
-from ...analysis import tableXY
 from ...paths import root
 from ...plots import my_colormesh
-from ...stats import clustering, find_nearest, flat_clustering, smooth
-from ...util import flux_norm_std, print_box, sphinx, yarara_artefact_suppressed
+from ...stats import find_nearest, smooth
+from ...util import assert_never, flux_norm_std, print_box, yarara_artefact_suppressed
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -25,20 +19,19 @@ if TYPE_CHECKING:
 
 def yarara_correct_smooth(
     self: spec_time_series,
-    sub_dico: str = "matching_diff",
-    continuum: str = "linear",
-    reference: str = "median",
-    wave_min: int = 4200,
-    wave_max: int = 4300,
-    window_ang: int = 5,
+    sub_dico: Optional[str] = "matching_diff",
+    reference: Union[
+        int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]
+    ] = "median",
+    wave_min: float = 4200.0,
+    wave_max: float = 4300.0,
+    window_ang: float = 5.0,
 ) -> None:
 
     print_box("\n---- RECIPE : CORRECTION SMOOTH ----\n")
 
     directory = self.directory
 
-    zoom = self.zoom
-    smooth_map = self.smooth_map
     low_cmap = self.low_cmap * 100
     high_cmap = self.high_cmap * 100
     cmap = self.cmap
@@ -46,59 +39,43 @@ def yarara_correct_smooth(
 
     self.import_material()
     self.import_table()
+    self.import_info_reduction()
+
+    snr = np.array(self.table["snr"])
+
     load = self.material
+    wave = np.array(load["wave"])
 
     epsilon = 1e-12
 
     kw = "_planet" * planet
     if kw != "":
-        print("\n---- PLANET ACTIVATED ----")
+        logging.info("PLANET ACTIVATED")
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    print("\n---- DICO %s used ----\n" % (sub_dico))
+
+    logging.info("DICO %s used" % (sub_dico))
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
 
-    flux = []
-    # flux_err = []
-    conti = []
-    snr = []
-    for i, j in enumerate(files):
-        file = pd.read_pickle(j)
-        if not i:
-            wave = file["wave"]
-            dgrid = file["parameters"]["dwave"]
-            try:
-                hl = file["parameters"]["hole_left"]
-            except:
-                hl = None
-            try:
-                hr = file["parameters"]["hole_right"]
-            except:
-                hr = None
+    file_ref = self.import_spectrum()
+    hl = file_ref["parameters"]["hole_left"]
+    hr = file_ref["parameters"]["hole_right"]
+    dgrid = file_ref["parameters"]["dwave"]
 
-        snr.append(file["parameters"]["SNR_5500"])
+    flux, all_flux_err, conti, conti_err = self.import_sts_flux(
+        load=["flux" + kw, "flux_err", sub_dico, "continuum_err"]
+    )
+    all_flux, _ = flux_norm_std(flux, all_flux_err, conti + epsilon, conti_err)
 
-        f = file["flux" + kw]
-        f_std = file["flux_err"]
-        c = file[sub_dico]["continuum_" + continuum]
-        c_std = file["continuum_err"]
-        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-        flux.append(f_norm)
-        # flux_err.append(f_norm_std)
-        conti.append(c)
+    step = self.info_reduction[sub_dico]["step"]
 
-    step = file[sub_dico]["parameters"]["step"]
-
-    snr = np.array(snr)
-    wave = np.array(wave)
-    all_flux = np.array(flux)
-    # all_flux_std = np.array(flux_err)
-    conti = np.array(conti)
-
-    if reference == "snr":
+    if isinstance(reference, int):
+        logging.info("Reference spectrum : spectrum %d" % (reference))
+        ref = all_flux[reference]
+    elif reference == "snr":
         ref = all_flux[snr.argmax()]
     elif reference == "median":
         logging.info("Reference spectrum : median")
@@ -106,11 +83,10 @@ def yarara_correct_smooth(
     elif reference == "master":
         logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
-    elif type(reference) == int:
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
-        ref = all_flux[reference]
-    else:
+    elif reference == "zeros":
         ref = 0 * np.median(all_flux, axis=0)
+    else:
+        assert_never(reference)
 
     diff_ref = all_flux.copy() - ref
 
@@ -165,7 +141,7 @@ def yarara_correct_smooth(
 
     fig = plt.figure(figsize=(21, 9))
 
-    plt.axes([0.05, 0.66, 0.90, 0.25])
+    plt.axes((0.05, 0.66, 0.90, 0.25))
     my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
@@ -182,7 +158,7 @@ def yarara_correct_smooth(
     ax1 = plt.colorbar(cax=cbaxes)
     ax1.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
-    plt.axes([0.05, 0.375, 0.90, 0.25], sharex=ax, sharey=ax)
+    plt.axes((0.05, 0.375, 0.90, 0.25), sharex=ax, sharey=ax)
     my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
@@ -199,7 +175,7 @@ def yarara_correct_smooth(
     ax2 = plt.colorbar(cax=cbaxes2)
     ax2.ax.set_ylabel(r"$\Delta$ flux normalised [%]", fontsize=14)
 
-    plt.axes([0.05, 0.09, 0.90, 0.25], sharex=ax, sharey=ax)
+    plt.axes((0.05, 0.09, 0.90, 0.25), sharex=ax, sharey=ax)
     my_colormesh(
         new_wave,
         np.arange(len(diff_ref)),
@@ -229,43 +205,38 @@ def yarara_correct_smooth(
     else:
         plt.savefig(self.dir_root + "IMAGES/Correction_smooth.png")
         to_be_saved = {"wave": wave, "correction_map": correction_smooth}
-        io.pickle_dump(
-            to_be_saved,
-            open(self.dir_root + "CORRECTION_MAP/map_matching_smooth.p", "wb"),
+        np.save(
+            self.dir_root + "CORRECTION_MAP/map_matching_smooth.npy",
+            to_be_saved["correction_map"].astype("float32"),
         )
         name = "smooth"
         recenter = False
         ref_name = str(reference)
         savgol_window = 0
 
-    # diff_ref2 = flux_ratio - ref
-    # correction_smooth = diff_ref - diff_ref2
-    # new_conti = conti*(diff_ref+ref)/(diff_ref2+ref+epsilon)
-    # new_continuum = new_conti.copy()
-    # new_continuum = self.uncorrect_hole(new_continuum,conti)
+    self.info_reduction["matching_" + name] = {
+        "reference_continuum": ref_name,
+        "sub_dico_used": sub_dico,
+        "savgol_window": savgol_window,
+        "window_ang": window_ang,
+        "step": step + 1,
+        "recenter": recenter,
+        "valid": True,
+    }
+    self.update_info_reduction()
 
-    print("Computation of the new continua, wait ... \n")
-    time.sleep(0.5)
     count_file = -1
     for j in tqdm(files):
         count_file += 1
-        file = pd.read_pickle(j)
-        conti = new_continuum[count_file]
         mask = yarara_artefact_suppressed(
-            file[sub_dico]["continuum_" + continuum],
-            conti,
+            conti[count_file],
+            new_continuum[count_file],
             larger_than=50,
             lower_than=-50,
         )
-        conti[mask] = file[sub_dico]["continuum_" + continuum][mask]
-        output = {"continuum_" + continuum: conti}
-        file["matching_" + name] = output
-        file["matching_" + name]["parameters"] = {
-            "reference_continuum": ref_name,
-            "sub_dico_used": sub_dico,
-            "savgol_window": savgol_window,
-            "window_ang": window_ang,
-            "step": step + 1,
-            "recenter": recenter,
-        }
-        io.save_pickle(j, file)
+        new_continuum[count_file][mask] = conti[count_file][mask]
+
+    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_smooth")
+    np.save(fname, new_continuum.astype("float32"))
+
+    logging.info("Computation of the new continua, wait ...")

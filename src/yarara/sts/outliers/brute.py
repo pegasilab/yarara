@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import matplotlib.cm as cmx
 import matplotlib.colors as mplcolors
@@ -17,7 +17,7 @@ from ...analysis import tableXY
 from ...paths import root
 from ...plots import my_colormesh
 from ...stats import clustering, find_nearest, flat_clustering, smooth
-from ...util import flux_norm_std, print_box, sphinx, yarara_artefact_suppressed
+from ...util import assert_never, flux_norm_std, print_box, sphinx, yarara_artefact_suppressed
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -26,17 +26,16 @@ if TYPE_CHECKING:
 def yarara_correct_brute(
     self: spec_time_series,
     sub_dico: str = "matching_mad",
-    continuum: str = "linear",
-    reference: str = "median",
+    reference: Union[
+        int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]
+    ] = "median",
     win_roll: int = 1000,
     min_length: int = 5,
-    percent_removed: int = 10,
+    percent_removed: Optional[float] = 10,
     k_sigma: int = 2,
     extended: int = 10,
-    ghost2: bool = "HARPS03",
     borders_pxl: bool = False,
 ) -> None:
-
     """
     Brutal suppression of flux value with variance to high (final solution)
 
@@ -63,8 +62,13 @@ def yarara_correct_brute(
     low_cmap = self.low_cmap
     high_cmap = self.high_cmap
 
+    self.import_info_reduction()
     self.import_material()
     load = self.material
+    grid = np.array(load["wave"])
+    self.import_table()
+    jdb = np.array(self.table["jdb"])
+    snr = np.array(self.table["snr"])
 
     epsilon = 1e-12
 
@@ -76,28 +80,15 @@ def yarara_correct_brute(
         sub_dico = self.dico_actif
     print("\n---- DICO %s used ----\n" % (sub_dico))
 
-    files = glob.glob(directory + "RASSI*.p")
-    files = np.sort(files)
+    all_flux, conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
+    all_flux = all_flux / conti
 
-    all_flux = []
-    snr = []
-    jdb = []
-    conti = []
+    step = self.info_reduction[sub_dico]["step"]
 
-    for i, j in enumerate(files):
-        file = pd.read_pickle(j)
-        if not i:
-            grid = file["wave"]
-        all_flux.append(file["flux" + kw] / file[sub_dico]["continuum_" + continuum])
-        conti.append(file[sub_dico]["continuum_" + continuum])
-        jdb.append(file["parameters"]["jdb"])
-        snr.append(file["parameters"]["SNR_5500"])
-
-    step = file[sub_dico]["parameters"]["step"]
-    all_flux = np.array(all_flux)
-    conti = np.array(conti)
-
-    if reference == "snr":
+    if isinstance(reference, int):
+        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        ref = all_flux[reference]
+    elif reference == "snr":
         ref = all_flux[snr.argmax()]
     elif reference == "median":
         logging.info("Reference spectrum : median")
@@ -105,11 +96,10 @@ def yarara_correct_brute(
     elif reference == "master":
         logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
-    elif type(reference) == int:
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
-        ref = all_flux[reference]
-    else:
+    elif reference == "zeros":
         ref = 0 * np.median(all_flux, axis=0)
+    else:
+        assert_never(reference)
 
     all_flux = all_flux - ref
     metric = np.std(all_flux, axis=0)
@@ -176,9 +166,7 @@ def yarara_correct_brute(
         plt.axhline(y=b.deri.y[j], color="k", ls=":")
 
     if percent_removed is None:
-        percent_removed = sphinx("Select the percentage of spectrum removed")
-
-    percent_removed = int(percent_removed)
+        percent_removed = int(sphinx("Select the percentage of spectrum removed"))
 
     loc_select = find_nearest(sum_mask, percent_removed)[0]
 
@@ -189,17 +177,7 @@ def yarara_correct_brute(
     else:
         borders_pxl_mask = np.zeros(len(final_mask)).astype("bool")
 
-    if ghost2:
-        g = pd.read_pickle(root + "/Python/Material/Ghost2_" + ghost2 + ".p")
-        ghost = tableXY(g["wave"], g["ghost2"], 0 * g["wave"])
-        ghost.interpolate(new_grid=grid, replace=True, method="linear", interpolate_x=False)
-        ghost_brute_mask = ghost.y.astype("bool")
-    else:
-        ghost_brute_mask = np.zeros(len(final_mask)).astype("bool")
-    load["ghost2"] = ghost_brute_mask.astype("int")
-    io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
-
-    final_mask = final_mask | ghost_brute_mask | borders_pxl_mask
+    final_mask = final_mask | borders_pxl_mask
 
     load["mask_brute"] = final_mask
     io.pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
@@ -222,23 +200,20 @@ def yarara_correct_brute(
     new_continuum[np.isnan(new_continuum)] = conti[np.isnan(new_continuum)]
 
     print("\nComputation of the new continua, wait ... \n")
-    time.sleep(0.5)
 
-    i = -1
-    for j in tqdm(files):
-        i += 1
-        file = pd.read_pickle(j)
-        output = {"continuum_" + continuum: new_continuum[i]}
-        file["matching_brute"] = output
-        file["matching_brute"]["parameters"] = {
-            "reference_spectrum": reference,
-            "sub_dico_used": sub_dico,
-            "k_sigma": k_sigma,
-            "rolling_window": win_roll,
-            "minimum_length_cluster": min_length,
-            "percentage_removed": percent_removed,
-            "step": step + 1,
-        }
-        io.save_pickle(j, file)
+    self.info_reduction["matching_brute"] = {
+        "reference_spectrum": reference,
+        "sub_dico_used": sub_dico,
+        "k_sigma": k_sigma,
+        "rolling_window": win_roll,
+        "minimum_length_cluster": min_length,
+        "percentage_removed": percent_removed,
+        "step": step + 1,
+        "valid": True,
+    }
+    self.update_info_reduction()
+
+    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_brute")
+    np.save(fname, new_continuum.astype("float32"))
 
     self.dico_actif = "matching_brute"

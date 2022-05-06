@@ -10,6 +10,7 @@ import matplotlib.colors as mplcolors
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 from ... import io
@@ -22,36 +23,42 @@ from ...util import flux_norm_std, print_box, sphinx, yarara_artefact_suppressed
 if TYPE_CHECKING:
     from .. import spec_time_series
 
-
-# =========================================================================================
-# SUPRESS VARIATION RELATIF TO MEDIAN-MAD SPECTRUM (OUTLIERS CORRECTION + ECCENTRIC PLANET)
-# =========================================================================================
+# TODO: remove interactivity by always having n_iter an integer, remove dead code
 
 
 def yarara_correct_mad(
     self: spec_time_series,
     sub_dico: str = "matching_diff",
-    continuum: str = "linear",
     k_sigma: int = 2,
     k_mad: int = 2,
     n_iter: int = 1,
     ext: str = "0",
-) -> np.ndarray:
-
+) -> NDArray[np.float64]:
     """
-    Supress flux value outside k-sigma mad clipping
+    Suppress flux value outside k-sigma mad clipping
 
-    Parameters
-    ----------
-    sub_dico : The sub_dictionnary used to  select the continuum
-    continuum : The continuum to select (either linear or cubic)
+    # SUPRESS VARIATION RELATIF TO MEDIAN-MAD SPECTRUM (OUTLIERS CORRECTION + ECCENTRIC PLANET)
 
+    Args:
+        sub_dico : The sub_dictionnary used to  select the continuum
+        ext: Index used in saving the mad_statistics_iter_%d.png file
     """
 
     print_box("\n---- RECIPE : CORRECTION MAD ----\n")
 
     directory = self.directory
     planet = self.planet
+
+    self.import_material()
+    self.import_info_reduction()
+    self.import_table()
+    epsilon = 1e-12
+
+    wave = np.array(self.material["wave"])
+    grid = wave.copy()
+    jdb = np.array(self.table["jdb"])
+    all_snr = np.array(self.table["snr"])
+    snr_max = all_snr.argmax()
 
     kw = "_planet" * planet
     if kw != "":
@@ -64,33 +71,12 @@ def yarara_correct_mad(
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
 
-    all_flux = []
-    all_flux_std = []
-    all_snr = []
-    jdb = []
+    flux, all_flux_err, conti, conti_err = self.import_sts_flux(
+        load=["flux" + kw, "flux_err", sub_dico, "continuum_err"]
+    )
+    all_flux, all_flux_std = flux_norm_std(flux, all_flux_err, conti + epsilon, conti_err)
 
-    for i, j in enumerate(files):
-        file = pd.read_pickle(j)
-        if not i:
-            grid = file["wave"]
-
-        f = file["flux" + kw]
-        f_std = file["flux_err"]
-        c = file[sub_dico]["continuum_" + continuum]
-        c_std = file["continuum_err"]
-        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-        all_flux.append(f_norm)
-        all_flux_std.append(f_norm_std)
-        all_snr.append(file["parameters"]["SNR_5500"])
-        jdb.append(file["parameters"]["jdb"])
-
-    step = file[sub_dico]["parameters"]["step"]
-
-    all_flux = np.array(all_flux)
-    all_flux_std = np.array(all_flux_std)
-    all_snr = np.array(all_snr)
-    snr_max = all_snr.argmax()
-    jdb = np.array(jdb)
+    step = self.info_reduction[sub_dico]["step"]
 
     # plt.subplot(3,1,1)
     # for j in range(len(all_flux)):
@@ -113,6 +99,8 @@ def yarara_correct_mad(
 
     save = []
     count = 0
+    counter_mad_removed = np.array([])
+    cum_curves = np.array([])
     while ok == "y":
 
         mad = 1.48 * np.median(
@@ -124,34 +112,8 @@ def yarara_correct_mad(
         for j in tqdm(range(len(all_flux2))):
             sigma = tableXY(grid, (abs(all_flux2[j] - med) - all_flux_std[j] * k_sigma) / mad)
             sigma.smooth(box_pts=6, shape="rectangular")
-            # sigma.rolling(window=100,quantile=0.50)
-            # sig = (sigma.y>(sigma.roll_Q1+3*sigma.roll_IQ))
-            # sig = sigma.roll_Q1+3*sigma.roll_IQ
-
-            # sigma.y *= -1
-            # sigma.find_max(vicinity=5)
-            # loc_min = sigma.index_max.copy()
-            # sigma.y *= -1
 
             mask = sigma.y > k_mad
-
-            # sigma.find_max(vicinity=5)
-            # loc_max = np.array([sigma.y_max, sigma.index_max]).T
-            # loc_max = loc_max[loc_max[:,0]>k_mad] # only keep sigma higher than k_sigma
-            # loc_max = loc_max[:,-1]
-
-            # diff = loc_max - loc_min[:,np.newaxis]
-            # diff1 = diff.copy()
-            # #diff2 = diff.copy()
-            # diff1[diff1<0] = 1000 #arbitrary large value
-            # #diff2[diff2>0] = -1000 #arbitrary small value
-            # left = np.argmin(diff1,axis=1)
-            # left = np.unique(left)
-            # mask = np.zeros(len(grid)).astype('bool')
-            # for k in range(len(left)-1):
-            #     mask[int(sigma.index_max[left[k]]):int(sigma.index_max[left[k]+1])+1] = True
-
-            # all_flux2[j][sigma.y>3] = med[sigma.y>3]
 
             all_flux2[j][mask] = med[mask]
             counter_removed.append(100 * np.sum(mask * (ref < 0.9)) / np.sum(ref < 0.9))
@@ -212,7 +174,7 @@ def yarara_correct_mad(
             label="rejection criterion  (%.0f)" % (sum(counter_mad_removed > 0.15)),
         )
         plt.legend()
-        plt.scatter(jdb, counter_mad_removed, c=jdb, cmap="jet")
+        plt.scatter(jdb, counter_mad_removed, c=jdb, cmap="jet")  # type: ignore
         plt.xlabel("Time", fontsize=13)
         plt.ylabel("Percent of the spectrum removed [%]", fontsize=13)
         ax = plt.colorbar()
@@ -224,7 +186,7 @@ def yarara_correct_mad(
             ls=":",
             label="rejection criterion (%.0f)" % (sum(counter_mad_removed > 0.15)),
         )
-        plt.scatter(all_snr, counter_mad_removed, c=jdb, cmap="jet")
+        plt.scatter(all_snr, counter_mad_removed, c=jdb, cmap="jet")  # type: ignore
         plt.xlabel("SNR", fontsize=13)
         plt.ylabel("Percent of the spectrum removed [%]", fontsize=13)
         ax = plt.colorbar()
@@ -276,41 +238,46 @@ def yarara_correct_mad(
         plt.subplots_adjust(left=0.07, right=0.97)
         plt.savefig(self.dir_root + "IMAGES/mad_statistics_iter_%s.png" % (ext))
 
-        correction_mad = all_flux - all_flux2
+        correction_mad = all_flux - all_flux2  # type: ignore
         to_be_saved = {"wave": grid, "correction_map": correction_mad}
-        io.pickle_dump(
-            to_be_saved,
-            open(self.dir_root + "CORRECTION_MAP/map_matching_mad.p", "wb"),
+        np.save(
+            self.dir_root + "CORRECTION_MAP/map_matching_mad.npy",
+            to_be_saved["correction_map"].astype("float32"),
         )
 
         print("\nComputation of the new continua, wait ... \n")
-        time.sleep(0.5)
-        count_file = -1
 
+        self.info_reduction["matching_mad"] = {
+            "iteration": count + 1,
+            "sub_dico_used": sub_dico,
+            "k_sigma": k_sigma,
+            "k_mad": k_mad,
+            "step": step + 1,
+            "valid": True,
+        }
+        self.update_info_reduction()
+
+        print(" Computation of the new continua, wait ... \n")
+        time.sleep(0.5)
+
+        all_flux2[flux == 0] = 1
+        all_flux2[all_flux2 == 0] = 1
+        new_continuum = flux / all_flux2
+        new_continuum[(new_continuum == 0) | (new_continuum != new_continuum)] = 1
+
+        count_file = -1
         for j in tqdm(files):
             count_file += 1
-            file = pd.read_pickle(j)
-            all_flux2[count_file][file["flux" + kw] == 0] = 1
-            all_flux2[count_file][all_flux2[count_file] == 0] = 1
-            new_flux = file["flux" + kw] / all_flux2[count_file]
-            new_flux[(new_flux == 0) | (new_flux != new_flux)] = 1
             mask = yarara_artefact_suppressed(
-                file[sub_dico]["continuum_" + continuum],
-                new_flux,
+                conti[count_file],
+                new_continuum[count_file],
                 larger_than=50,
                 lower_than=-50,
             )
-            new_flux[mask] = file[sub_dico]["continuum_" + continuum][mask]
-            output = {"continuum_" + continuum: new_flux}
-            file["matching_mad"] = output
-            file["matching_mad"]["parameters"] = {
-                "iteration": count + 1,
-                "sub_dico_used": sub_dico,
-                "k_sigma": k_sigma,
-                "k_mad": k_mad,
-                "step": step + 1,
-            }
-            io.save_pickle(j, file)
+            new_continuum[count_file][mask] = conti[count_file][mask]
+
+        fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_mad")
+        np.save(fname, new_continuum.astype("float32"))
 
         self.dico_actif = "matching_mad"
     return counter_mad_removed

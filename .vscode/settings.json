@@ -13,7 +13,7 @@
         "reportUnboundVariable": "error", // TODO: reenable
         "reportGeneralTypeIssues": "error",
     },
-    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.diagnosticMode": "workspace",
     "autoDocstring.guessTypes": false,
     "autoDocstring.docstringFormat": "google-notypes",
     //    "python.linting.mypyEnabled": true,

@@ -289,28 +289,28 @@ if stage == 10:
     get_time_step("matching_fourier")
     stage = break_func(stage)
 
-# if stage == 11:
-#     yarara.stages.todo.matching_smooth(sts=sts, reference=reference, close_figure=close_figure)
-#     get_time_step("matching_smooth")
-#     stage = break_func(stage)
+if stage == 11:
+    yarara.stages.matching_smooth(sts=sts, ref=ref, reference=reference, close_figure=close_figure)
+    get_time_step("matching_smooth")
+    stage = break_func(stage)
 
 
-# if stage == 12:
-#     yarara.stages.todo.matching_mad(sts=sts, reference=reference, close_figure=close_figure)
-#     get_time_step("matching_mad")
-#     stage = break_func(stage)
+if stage == 12:
+    yarara.stages.matching_mad(sts=sts, reference=reference, close_figure=close_figure)
+    get_time_step("matching_mad")
+    stage = break_func(stage)
 
 
-# if stage == 13:
-#     yarara.stages.todo.stellar_atmos1(sts=sts, reference=reference, close_figure=close_figure)
-#     get_time_step("stellar_atmos1")
-#     stage = break_func(stage)
+if stage == 13:
+    yarara.stages.stellar_atmos1(sts=sts, reference=reference, close_figure=close_figure)
+    get_time_step("stellar_atmos1")
+    stage = break_func(stage)
 
 
-# if stage == 14:
-#     yarara.stages.todo.matching_brute(sts=sts, reference=reference, close_figure=close_figure)
-#     get_time_step("matching_brute")
-#     stage = break_func(stage)
+if stage == 14:
+    yarara.stages.matching_brute(sts=sts, reference=reference, close_figure=close_figure)
+    get_time_step("matching_brute")
+    stage = break_func(stage)
 
 
 # =============================================================================

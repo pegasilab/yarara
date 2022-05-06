@@ -4,7 +4,7 @@ This modules does XXX
 
 import pickle
 from io import BufferedWriter
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import pandas as pd
 from astropy.io import fits
@@ -30,7 +30,7 @@ def save_pickle(filename: Union[str_, str], output: Any, header: None = None) ->
         pass
 
 
-def pickle_dump(obj: Any, obj_file: BufferedWriter, protocol: None = None) -> None:
+def pickle_dump(obj: Any, obj_file: BufferedWriter, protocol: Optional[int] = None) -> None:
     if protocol is None:
         protocol = pickle_protocol_version
     pickle.dump(obj, obj_file, protocol=protocol)

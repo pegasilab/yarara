@@ -45,7 +45,6 @@ def yarara_correct_activity(
     smooth_map = int-type, smooth the 2D plot by gaussian 2D convolution
     smooth_corr = smooth thecoefficient  ofcorrelation curve
     reference : 'median', 'snr' or 'master' to select the reference normalised spectrum usedin the difference
-    berv_shift : True/False to move in terrestrial rest-frame
     proxy_corr : keyword  of the first proxies from RASSINE dictionnary to use in the correlation
     proxy_detrending : Degree of the polynomial fit to detrend the proxy
 

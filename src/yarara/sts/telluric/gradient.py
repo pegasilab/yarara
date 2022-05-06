@@ -18,7 +18,7 @@ from ...analysis import tableXY
 from ...paths import paths, root
 from ...plots import my_colormesh, plot_color_box
 from ...stats import IQ as IQ_fun
-from ...stats import clustering, find_nearest, mad, merge_borders, smooth, smooth2d
+from ...stats import clustering, find_nearest, mad, smooth, smooth2d
 from ...util import assert_never, doppler_r, flux_norm_std, print_box
 
 if TYPE_CHECKING:
@@ -55,7 +55,6 @@ def yarara_correct_telluric_gradient(
     wave_min : Minimum x axis limit
     wave_max : Maximum x axis limit
     smooth_map = int-type, smooth the 2D plot by gaussian 2D convolution
-    berv_shift : True/False to move in terrestrial rest-frame
     cmap : cmap of the 2D plot
     low_cmap : vmin cmap colorbar
     high_cmap : vmax cmap colorbar
@@ -367,7 +366,7 @@ def yarara_correct_telluric_gradient(
 
     # extraction of uncontaminated telluric
 
-    plateau, cluster = clustering(telluric_location, 0.5, 1)
+    plateau, cluster = clustering(telluric_location.astype(np.float64), 0.5, 1)
     plateau = np.array([np.product(j) for j in plateau]).astype("bool")
     cluster = cluster[plateau]
     # med_width = np.median(cluster[:,-1])

@@ -122,8 +122,7 @@ def my_ruler(mini, maxi, dmini, dmaxi):
     return a
 
 
-# util
-def map_rnr(array: ndarray, val_max: None = None, n: int = 2) -> ndarray:
+def map_rnr(array: ndarray, val_max: Optional[float] = None, n: int = 2) -> ndarray:
     """val_max must be strictly larger than all number in the array, n smaller than 10"""
     if type(array) != np.ndarray:
         array = np.hstack([array])
@@ -155,7 +154,7 @@ def map_rnr(array: ndarray, val_max: None = None, n: int = 2) -> ndarray:
             string = str(array[i])
             code, num = string.split(".")
             n = int(code[0])
-            val_max = np.float(code[1:])
+            val_max = float(code[1:])
             vec = []
             for k in range(n):
                 vec.append("0." + num[k::n])

@@ -210,7 +210,7 @@ def yarara_correct_telluric_proxy(
 
     # fwhm_telluric = np.median(self.table['telluric_fwhm'])
     fwhm_telluric = self.star_info["FWHM"]["telluric"]  # 09.08.21
-    val, borders = clustering(first_guess_position, 0.5, 1)
+    val, borders = clustering(first_guess_position.astype(np.float64), 0.5, 1)
     val = np.array([np.product(v) for v in val]).astype("bool")
     borders = borders[val]
     wave_tel = wave[(0.5 * (borders[:, 0] + borders[:, 1])).astype("int")]

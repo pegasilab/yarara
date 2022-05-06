@@ -5,32 +5,23 @@ import glob as glob
 import logging
 import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Literal, Optional, Sequence, Tuple, Union
 
 import matplotlib.pylab as plt
 import numpy as np
-import pandas as pd
-from astropy.io import fits
-from colorama import Fore
-from numpy import ndarray
-from scipy.interpolate import interp1d
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 from yarara.analysis import tableXY
 
 from ... import io, util
-from ...analysis import table, tableXY
-from ...paths import root
-from ...plots import auto_axis, my_colormesh
-from ...stats import IQ, find_nearest, identify_nearest, match_nearest, smooth2d
-from ...util import ccf as ccf_fun
-from ...util import doppler_r, get_phase, print_box
+from ...analysis import tableXY
+from ...plots import my_colormesh
+from ...stats import find_nearest, match_nearest, smooth2d
+from ...util import assert_never, doppler_r
 
 if TYPE_CHECKING:
     from .. import spec_time_series
-
-
-
 
 
 # =============================================================================
@@ -41,26 +32,22 @@ if TYPE_CHECKING:
 def yarara_map(
     self: spec_time_series,
     sub_dico: str = "matching_diff",
-    continuum: str = "linear",
     planet: bool = False,
-    modulo: None = None,
     unit: float = 1.0,
-    wave_min: None = 4000,
-    wave_max: None = 4300,
-    time_min: None = None,
-    time_max: None = None,
+    wave_min: Optional[float] = 4000.0,  # was None
+    wave_max: Optional[float] = 4300.0,  # was None
     index: str = "index",
     ratio: bool = False,
-    reference: bool = "median",
-    berv_shift: bool = False,
-    rv_shift: bool = False,
+    reference: Union[
+        int, NDArray[np.float64], Literal["snr", "median", "master", "zeros"]
+    ] = "median",
     new: bool = True,
-    Plot: bool = True,
-    substract_map: List[Any] = [],
-    add_map: List[Any] = [],
+    plot: bool = True,
+    substract_map: Sequence[str] = [],
+    add_map: Sequence[str] = [],
     correction_factor: bool = True,
     p_noise: float = 1 / np.inf,
-) -> Tuple[ndarray, ndarray, ndarray]:
+) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
 
     """
     Display the time-series spectra with proxies and its correlation
@@ -71,19 +58,18 @@ def yarara_map(
     continuum : The continuum to select (either linear or cubic)
     wave_min : Minimum x axis limit
     wave_max : Maximum x axis limit
-    time_min : Minimum y axis limit
-    time_max : Maximum y axis limit
     index : 'index' or 'time' if 'time', display the time-series with blank color if no spectra at specific time  (need roughly equidistant time-series spectra)
     zoom : int-type, to improve the resolution of the 2D plot
     smooth_map = int-type, smooth the 2D plot by gaussian 2D convolution
     reference : 'median', 'snr' or 'master' to select the reference normalised spectrum usedin the difference
-    berv_shift : keyword column to use to move in terrestrial rest-frame, km/s speed
     rv_shift : keyword column to use to shift spectra, m/s speed
     cmap : cmap of the 2D plot
     low_cmap : vmin cmap colorbar
     high_cmap : vmax cmap colorbar
 
     """
+    time_min: None = None
+    time_max: None = None
 
     directory = self.directory
     self.import_material()
@@ -94,24 +80,6 @@ def yarara_map(
     jdb = np.array(self.table["jdb"])
     snr = np.array(self.table["snr"])
 
-    if type(berv_shift) != np.ndarray:
-        try:
-            berv = np.array(self.table[berv_shift])
-        except:
-            berv = 0 * jdb
-    else:
-        berv = berv_shift
-
-    if type(rv_shift) != np.ndarray:
-        try:
-            rv = np.array(self.table[rv_shift])
-        except:
-            rv = 0 * jdb
-    else:
-        rv = rv_shift
-
-    rv = rv - np.median(rv)
-
     kw = "_planet" * planet
     if kw != "":
         print("\n---- PLANET ACTIVATED ----")
@@ -119,8 +87,8 @@ def yarara_map(
     zoom = self.zoom
     smooth_map = self.smooth_map
     cmap = self.cmap
-    low_cmap = self.low_cmap
-    high_cmap = self.high_cmap
+    low_cmap: float = self.low_cmap
+    high_cmap: float = self.high_cmap
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.array(self.table["filename"])  # updated 29.10.21 to allow ins_merged
@@ -164,7 +132,7 @@ def yarara_map(
         idx2_max = time_max + 1
 
     if (idx_min == 0) & (idx_max == 0):
-        idx_max = find_nearest(wave, np.min(wave) + (wave_max - wave_min))[0]
+        idx_max = find_nearest(wave, np.min(wave) + (wave_max - wave_min))[0]  # type: ignore
 
     noise_matrix, noise_values = self.yarara_poissonian_noise(
         noise_wanted=p_noise, wave_ref=None, flat_snr=True
@@ -184,16 +152,15 @@ def yarara_map(
 
     snr = snr[int(idx2_min) : int(idx2_max)]
     jdb = jdb[int(idx2_min) : int(idx2_max)]
-    berv = berv[int(idx2_min) : int(idx2_max)]
 
-    if np.sum(abs(rv)) != 0:
-        for j in tqdm(np.arange(len(flux))):
-            test = tableXY(wave, flux[j], 0 * wave)
-            test.x = doppler_r(test.x, rv[j])[1]
-            test.interpolate(new_grid=wave, method="cubic", replace=True)
-            flux[j] = test.y
-
-    if reference == "snr":
+    if isinstance(reference, int):
+        ref = flux[reference]
+    elif isinstance(reference, np.ndarray):
+        assert isinstance(reference[0], float)
+        ref = reference.copy()
+        if len(ref) == old_length:
+            ref = ref[int(idx_min) : int(idx_max)]
+    elif reference == "snr":
         ref = flux[snr.argmax()]
     elif reference == "median":
         ref = np.median(flux, axis=0)
@@ -201,21 +168,12 @@ def yarara_map(
         ref = (np.array(load["reference_spectrum"]) * np.array(load["correction_factor"]))[
             int(idx_min) : int(idx_max)
         ]
-    elif type(reference) == int:
-        ref = flux[reference]
-    elif type(reference) == np.ndarray:
-        ref = reference.copy()
-        if len(ref) == old_length:
-            ref = ref[int(idx_min) : int(idx_max)]
-    else:
+    elif reference == "zeros":
         ref = 0 * np.median(flux, axis=0)
-        low_cmap = 0
-        high_cmap = 1
-
-    if low_cmap is None:
-        low_cmap = np.percentile(flux - ref, 2.5)
-    if high_cmap is None:
-        high_cmap = np.percentile(flux - ref, 97.5)
+        low_cmap = 0.0
+        high_cmap = 1.0
+    else:
+        assert_never(reference)
 
     if ratio:
         diff = smooth2d(flux / (ref + epsilon), smooth_map)
@@ -223,16 +181,6 @@ def yarara_map(
         high_cmap = 1 + 0.005
     else:
         diff = smooth2d(flux - ref, smooth_map)
-
-    if modulo is not None:
-        diff = self.yarara_map_folded(diff, modulo=modulo, jdb=jdb)[0]
-
-    if np.sum(abs(berv)) != 0:
-        for j in tqdm(np.arange(len(flux))):
-            test = tableXY(wave, diff[j], 0 * wave)
-            test.x = doppler_r(test.x, berv[j] * 1000)[1]
-            test.interpolate(new_grid=wave, method="cubic", replace=True)
-            diff[j] = test.y
 
     self.map = (wave, diff)
 
@@ -252,10 +200,10 @@ def yarara_map(
         snr = snr2
         jdb = jdb2
         diff = diff2
-    if Plot:
+    if plot:
         if new:
             fig = plt.figure(figsize=(24, 6))
-            plt.axes([0.1, 0.1, 0.8, 0.8])
+            plt.axes((0.1, 0.1, 0.8, 0.8))
         my_colormesh(
             wave,
             np.arange(len(diff)),
@@ -270,7 +218,7 @@ def yarara_map(
         plt.xlabel(r"Wavelength [$\AA$]", fontsize=14)
         plt.ylim(0, None)
         if new:
-            cbaxes = fig.add_axes([0.86 + 0.04, 0.1, 0.01, 0.8])
+            cbaxes = fig.add_axes([0.86 + 0.04, 0.1, 0.01, 0.8])  # type:ignore
             ax = plt.colorbar(cax=cbaxes)
             ax.ax.set_ylabel(r"$\Delta$ flux normalised")
     return diff, err_flux, wave

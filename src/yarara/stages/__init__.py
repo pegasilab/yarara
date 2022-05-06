@@ -3,14 +3,15 @@ from typing import Literal, Optional, Union
 import matplotlib.pylab as plt
 import numpy as np
 
+from yarara.io import pickle_dump
+
 from ..sts import spec_time_series
-from . import todo
 
 
 def load_and_adapt_input_data(sts: spec_time_series) -> None:
     # ADAPT INPUT DATA
     sts.yarara_analyse_summary(rm_old=True)
-    sts.yarara_add_step_dico("matching_diff", 0, sub_dico_used="matching_anchors")
+    sts.yarara_add_step_dico(sub_dico="matching_diff", step=0, sub_dico_used="matching_anchors")
     sts.yarara_exploding_pickle()
 
 
@@ -18,7 +19,7 @@ def matching_cosmics(sts: spec_time_series, reference: Optional[str], close_figu
     # needs mask_telluric_telluric.txt, type MaskCCF
     sub_dico = "matching_diff"
 
-    sts.yarara_correct_cosmics(sub_dico=sub_dico, continuum="linear", k_sigma=5)
+    sts.yarara_correct_cosmics(sub_dico=sub_dico, k_sigma=5)
 
     if reference is None:
         # MEDIAN MASTER
@@ -346,6 +347,122 @@ def matching_fourier(
         width_range=(2.5, 3.5),
         jdb_range=(0, 100000),
     )  # all the time a pattern on HARPN
+
+    if close_figure:
+        plt.close("all")
+
+
+def matching_smooth(
+    sts: spec_time_series,
+    reference: Optional[str],
+    ref: Union[int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]],
+    close_figure: bool,
+) -> None:
+    # CORRECT CONTINUUM
+
+    sts.yarara_correct_smooth(sub_dico="matching_fourier", reference=ref, window_ang=5)
+
+    if reference is None:
+        sts.yarara_retropropagation_correction(
+            correction_map="matching_smooth",
+            sub_dico="matching_cosmics",
+        )
+
+    if close_figure:
+        plt.close("all")
+    pass
+
+
+def matching_mad(sts: spec_time_series, reference: Optional[str], close_figure: bool) -> None:
+    # CORRECT MAD
+    counter_mad_removed = sts.yarara_correct_mad(
+        sub_dico="matching_smooth",
+        k_sigma=2,
+        k_mad=2,
+        n_iter=1,
+        ext=["0", "1"][int(reference == "master")],
+    )
+    # spectrum_removed = counter_mad_removed > [0.15, 0.15][int(reference == "master")]
+    spectrum_removed = counter_mad_removed > 0.15
+    sts.suppress_time_spectra(mask=spectrum_removed)
+
+    sts.yarara_ccf(
+        mask=sts.read_ccf_mask(sts.mask_harps),
+        mask_name=sts.mask_harps,
+        plot=True,
+        sub_dico="matching_mad",
+        ccf_oversampling=1,
+        rv_range=None,
+    )
+
+    if close_figure:
+        plt.close("all")
+
+
+def stellar_atmos1(sts: spec_time_series, reference: Optional[str], close_figure: bool) -> None:
+    # TEMPERATURE + MODEL FIT
+
+    sts.yarara_median_master(
+        sub_dico="matching_mad",
+        method="median",  # if smt else than max, the classical weighted average of v1.0
+        suppress_telluric=False,
+        shift_spectrum=False,
+    )
+
+    if reference != "master":
+        sts.import_material()
+        load = sts.material
+
+        load["reference_spectrum_backup"] = load["reference_spectrum"].copy()
+        pickle_dump(load, open(sts.directory + "Analyse_material.p", "wb"))
+
+    sts.yarara_cut_spectrum(wave_min=None, wave_max=6834)
+
+    #    sts.yarara_stellar_atmos(sub_dico="matching_diff", reference="master", continuum="linear")
+
+    #    sts.yarara_correct_continuum_absorption(model=None, T=None, g=None)
+
+    sts.yarara_ccf(
+        mask=sts.read_ccf_mask(sts.mask_harps),
+        mask_name=sts.mask_harps,
+        plot=True,
+        sub_dico="matching_pca",
+        ccf_oversampling=1,
+        rv_range=None,
+    )
+    sts.yarara_ccf(
+        mask=sts.read_ccf_mask(sts.mask_harps),
+        mask_name=sts.mask_harps,
+        plot=True,
+        sub_dico="matching_mad",
+        ccf_oversampling=1,
+        rv_range=None,
+    )
+
+    #    sts.yarara_snr_curve()
+    #    sts.snr_statistic(version=2)
+    #    sts.yarara_kernel_caii(
+    #     contam=True,
+    #     mask="CaII_HD128621",
+    #     power_snr=None,
+    #     noise_kernel="unique",
+    #     wave_max=None,
+    #     doppler_free=False,
+    # )
+
+    if close_figure:
+        plt.close("all")
+
+
+def matching_brute(sts: spec_time_series, reference: Optional[str], close_figure: bool) -> None:
+    # CORRECT BRUTE
+    sts.yarara_correct_brute(
+        sub_dico="matching_mad",
+        min_length=3,
+        k_sigma=2,
+        percent_removed=10,  # None if sphinx
+        borders_pxl=True,
+    )
 
     if close_figure:
         plt.close("all")
