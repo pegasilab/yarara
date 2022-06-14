@@ -246,24 +246,11 @@ if stage == 0:
     )
 
     sts.yarara_correct_secular_acc(update_rv=True)
-    snr = tableXY(sts.table.jdb, sts.table.snr)
-
-    lim_inf = np.nanpercentile(snr.y, 50) - 1.5 * IQ(snr.y)
-
-    for lim in [100, 75, 50, 35, 20]:
-        if (lim_inf < lim) & (np.nanpercentile(snr.y, 16) > lim):
-            lim_inf = lim
-            break
-
-    if lim_inf < 0:
-        lim_inf = 35
-
-    print("Spectra under SNR %.0f suppressed" % (lim_inf))
 
     sts.scale_cmap()
 
     # sous option
-    sts.suppress_low_snr_spectra(snr_cutoff=lim_inf, suppress=False)
+    sts.suppress_low_snr_spectra(suppress=False)
 
     # sous option
     sts.yarara_suppress_doubtful_spectra(suppress=False)

@@ -9,12 +9,11 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
-from yarara.stats import rm_outliers
-from yarara.util import doppler_r
-
 from ...analysis import tableXY
 from ...io import pickle_dump, save_pickle, touch_pickle
 from ...paths import root
+from ...stats import IQ, rm_outliers
+from ...util import doppler_r
 from .. import spec_time_series
 
 
@@ -285,22 +284,32 @@ def scale_cmap(self: spec_time_series):
     self.high_cmap = clim
 
 
-def suppress_low_snr_spectra(
-    self: spec_time_series, snr_cutoff: float = 100.0, suppress: bool = False
-):
+def suppress_low_snr_spectra(self: spec_time_series, suppress: bool = False):
     """
     Supress spectra under fixed treshold in SNR
 
     Args:
-        snr_cutoff : treshold value of the cutoff below which spectra are removed
         suppress : True/False to delete of simply hide the files
 
     """
+    snr = tableXY(self.table.jdb, self.table.snr)
+
+    lim_inf = np.nanpercentile(snr.y, 50) - 1.5 * IQ(snr.y)
+
+    for lim in [100, 75, 50, 35, 20]:
+        if (lim_inf < lim) & (np.nanpercentile(snr.y, 16) > lim):
+            lim_inf = lim
+            break
+
+    if lim_inf < 0:
+        lim_inf = 35
+
+    logging.info("Spectra under SNR %.0f suppressed", lim_inf)
 
     files_to_process = np.sort(glob.glob(self.directory + "R*.p"))
     mask = np.zeros(len(files_to_process))
     self.import_table()
-    mask = np.array(self.table["snr"]) < snr_cutoff
+    mask = np.array(self.table["snr"]) < lim_inf
 
     self.suppress_time_spectra(mask=mask, suppress=suppress)
     os.system("rm " + self.directory + "Analyse_summary.p")
