@@ -89,3 +89,23 @@ def import_spectrum(self: spec_time_series, num: int = 0) -> Dict[str, Any]:
         files = glob.glob(directory.replace("WORKSPACE", "TEMP") + "RASSI*.p")
 
     return pd.read_pickle(files[num])
+
+
+def yarara_get_bin_length(self):
+    try:
+        bin_length = float(
+            "".join(
+                glob.glob(self.dir_root + "WORKSPACE/RASSINE*")[0]
+                .split("_B")[1]
+                .split("_D")[0]
+            )
+        )
+    except:
+        bin_length = float(
+            "".join(
+                glob.glob(self.dir_root + "TEMP/RASSINE*")[0]
+                .split("_B")[1]
+                .split("_D")[0]
+            )
+        )
+    return bin_length

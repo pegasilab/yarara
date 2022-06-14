@@ -1,27 +1,17 @@
 from __future__ import annotations
 
-import datetime
 import logging
 import os
-import time
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-from astropy.io import fits
-from numpy import ndarray
 from numpy.typing import NDArray
-from scipy.interpolate import interp1d
 
-from ... import io, util
-from ...analysis import tableXY
 from ...io import pickle_dump
 from ...paths import paths, root
-from ...stats import IQ, find_nearest, identify_nearest
-from ...util import assert_never
-from ...util import ccf as ccf_fun
-from ...util import doppler_r
+from ...util import assert_never, ccf_fun, doppler_r
 
 if TYPE_CHECKING:
     from .. import spec_time_series

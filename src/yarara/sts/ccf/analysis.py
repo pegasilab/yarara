@@ -19,9 +19,7 @@ from ...analysis import tableXY
 from ...io import pickle_dump
 from ...paths import paths, root
 from ...stats import IQ, find_nearest, identify_nearest
-from ...util import assert_never
-from ...util import ccf as ccf_fun
-from ...util import doppler_r
+from ...util import assert_never, ccf_fun, doppler_r
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -166,7 +164,7 @@ def yarara_ccf(
         planet=self.planet,
         wave_min=None,
         wave_max=None,
-        Plot=False,
+        plot=False,
         reference=False,
         substract_map=substract_map,
         add_map=add_map,

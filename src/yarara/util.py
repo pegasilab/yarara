@@ -180,7 +180,7 @@ def flux_norm_std(
     return flux_norm, flux_norm_std
 
 
-def ccf(
+def ccf_fun(
     wave: ndarray,
     spec1: ndarray,
     spec2: ndarray,

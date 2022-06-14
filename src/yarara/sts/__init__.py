@@ -67,6 +67,18 @@ class StarInfo(TypedDict, total=False):
 
 class spec_time_series(object):
     from .activity import yarara_correct_activity
+    from .bridge import (
+        continuum_error,
+        flux_error,
+        scale_cmap,
+        supress_low_snr_spectra,
+        supress_time_spectra,
+        yarara_check_fwhm,
+        yarara_check_rv_sys,
+        yarara_correct_secular_acc,
+        yarara_simbad_query,
+        yarara_supress_doubtful_spectra,
+    )
     from .ccf.analysis import yarara_ccf
     from .ccf.io import read_ccf_mask, yarara_ccf_save
     from .ccf.master import yarara_master_ccf
@@ -84,7 +96,7 @@ class spec_time_series(object):
     from .io.pickle import yarara_exploding_pickle
     from .io.rassine import import_rassine_output
     from .io.reduction import import_info_reduction, update_info_reduction
-    from .io.spectrum import import_spectrum, spectrum
+    from .io.spectrum import import_spectrum, spectrum, yarara_get_bin_length
     from .io.star_info import import_star_info, yarara_star_info
     from .io.summary import yarara_analyse_summary
     from .io.suppress import suppress_time_RV, suppress_time_spectra
@@ -418,3 +430,5 @@ class spec_time_series(object):
 
         # assigned by median_master
         self.reference: Tuple[NDArray[np.float64], NDArray[np.float64]] = None  # type: ignore
+
+        self.table_snr: Dict[str, Any] = None # type: ignore

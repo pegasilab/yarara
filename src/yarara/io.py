@@ -2,6 +2,7 @@
 This modules does XXX
 """
 
+import os
 import pickle
 from io import BufferedWriter
 from typing import Any, Optional, Union
@@ -12,6 +13,13 @@ from numpy import str_
 
 from . import pickle_protocol_version
 
+
+def touch_pickle(filename):
+    if not os.path.exists(filename):
+        pickle_dump({},open(filename,'wb'))
+        return {}
+    else:
+        return pd.read_pickle(filename)
 
 def open_pickle(filename):
     if filename.split(".")[-1] == "p":

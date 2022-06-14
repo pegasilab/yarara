@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from ... import io, util
 from ...analysis import tableXY
+from ...paths import root
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -26,7 +27,7 @@ def import_star_info(self: spec_time_series) -> None:
 
 def yarara_star_info(
     self: spec_time_series,
-    Rv_sys: None = None,
+    Rv_sys: Optional[List[Union[str, float64]]] = None,
     simbad_name: None = None,
     magB: None = None,
     magV: None = None,
@@ -121,3 +122,4 @@ def yarara_star_info(
         self.star_info,
         open(self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p", "wb"),
     )
+

@@ -3,6 +3,7 @@ This modules does XXX
 """
 from __future__ import annotations
 
+import logging
 from typing import Any, List, Literal, Optional, Union, overload
 
 import matplotlib.pylab as plt
@@ -14,10 +15,10 @@ from scipy.interpolate import interp1d
 from statsmodels.stats.weightstats import DescrStatsW
 
 from ..mathfun import gaussian, sinus
-from ..stats import local_max, mad
+from ..stats import find_nearest, identify_nearest, local_max, mad
 from ..stats import rm_outliers as rm_out
 from ..stats import smooth
-from ..util import assert_never
+from ..util import assert_never, ccf_fun, doppler_r
 
 
 class tableXY(object):
@@ -675,3 +676,99 @@ class tableXY(object):
                 self.interpolated = tableXY(
                     self.x_interp, self.y_interp, self.xerr_interp, self.yerr_interp
                 )
+
+    def ccf(self, mask, rv_sys=0, rv_range=15, weighted=True, ccf_oversampling=1, wave_min=None, wave_max=None):
+        
+        if len(np.shape(mask))<2:
+            mask = np.hstack([mask[:,np.newaxis],np.ones(len(mask))[:,np.newaxis]])
+        
+        grid = self.x
+        flux = self.y[:,np.newaxis].T
+        flux_err = self.yerr[:,np.newaxis].T
+
+        if rv_sys:
+            mask[:,0] = doppler_r(mask[:,0],rv_sys)[0]
+        
+        mask_shifted = doppler_r(mask[:,0],(rv_range+5)*1000)
+
+        mask = mask[(doppler_r(mask[:,0],30000)[0]<grid.max())&(doppler_r(mask[:,0],30000)[1]>grid.min()),:] #supres line farther than 30kms
+        if wave_min is not None:
+            mask = mask[mask[:,0]>wave_min,:] 
+        if wave_max is not None:
+            mask = mask[mask[:,0]<wave_max,:] 
+
+        mask_min = np.min(mask[:,0])
+        mask_max = np.max(mask[:,0])
+        
+        grid_min = int(find_nearest(grid,doppler_r(mask_min,-100000)[0])[0])
+        grid_max = int(find_nearest(grid,doppler_r(mask_max,100000)[0])[0])
+        grid = grid[grid_min:grid_max]
+
+        log_grid = np.linspace(np.log10(grid).min(),np.log10(grid).max(),len(grid))
+        dgrid = log_grid[1] - log_grid[0]
+        #dv = (10**(dgrid)-1)*299.792e6  
+        
+        used_region = ((10**log_grid)>=mask_shifted[1][:,np.newaxis])&((10**log_grid)<=mask_shifted[0][:,np.newaxis])
+        used_region = (np.sum(used_region,axis=0)!=0).astype('bool')
+        logging.info('Percentage of the spectrum used : %.1f [%%] \n'%(100*sum(used_region)/len(grid)))
+        
+        mask_wave = np.log10(mask[:,0])
+        mask_contrast = mask[:,1]*weighted + (1-weighted)
+                
+        log_grid_mask = np.arange(log_grid.min()-10*dgrid,log_grid.max()+10*dgrid+dgrid/10,dgrid/11)
+        log_mask = np.zeros(len(log_grid_mask))
+        
+        match = identify_nearest(mask_wave,log_grid_mask)
+        for j in np.arange(-5,6,1):
+            log_mask[match+j] = (mask_contrast)**2        
+
+        all_flux = []
+        all_flux.append(interp1d(np.log10(self.x), flux[0], kind='cubic', bounds_error=False, fill_value='extrapolate')(log_grid))
+        flux = np.array(all_flux)
+
+        all_flux_err = []
+        all_flux_err.append(interp1d(np.log10(self.x), flux_err[0], kind='linear', bounds_error=False, fill_value='extrapolate')(log_grid))
+        flux_err = np.array(all_flux_err)
+
+        log_template = interp1d(log_grid_mask, log_mask, kind='linear', bounds_error=False, fill_value='extrapolate')(log_grid)
+        
+        vrad, ccf_power, ccf_power_std = ccf_fun(log_grid[used_region], flux[:,used_region], log_template[used_region], 
+                                                 rv_range = rv_range, oversampling = ccf_oversampling, spec1_std = flux_err[:,used_region]) #to compute on all the ccf simultaneously
+
+        self.ccf_profile = tableXY(vrad,np.ravel(ccf_power))
+        self.ccf_profile.yerr/=np.max(self.ccf_profile.y)
+        self.ccf_profile.y/=np.max(self.ccf_profile.y)
+        
+        ccf_profile = self.ccf_profile
+        
+        plt.figure(figsize=(18,6))
+        plt.axes((0.05,0.1,0.58,0.75))
+        plt.plot(self.x,self.y,color='k')
+        plt.xlim(np.min(mask[:,0]),np.max(mask[:,0]))
+        for j in mask[:,0]:
+            plt.axvline(x=j,color='b',alpha=0.5)
+        plt.axes((0.68,0.1,0.3,0.75))
+        plt.scatter(ccf_profile.x,ccf_profile.y,color='k',marker='o')
+        plt.axvline(x=0,ls=':',color='k')
+        plt.axhline(y=1,ls=':',color='k')
+        plt.ylim(0,1.1)
+        
+        amp = np.percentile(ccf_profile.y,95) - np.percentile(ccf_profile.y,5) 
+        xmin = np.argmin(ccf_profile.y)
+        x1 = find_nearest(ccf_profile.y[0:xmin],1-amp/2)[0][0]
+        x2 = find_nearest(ccf_profile.y[xmin:],1-amp/2)[0][0]
+        width = ccf_profile.x[xmin:][x2]-ccf_profile.x[0:xmin][x1]
+        center = ccf_profile.x[xmin]
+        
+        ccf_profile.fit_gaussian(guess=[-amp,center,width,1],Plot=True)
+        plt.axvline(x=ccf_profile.params['cen'].value,color='r',alpha=0.3)
+        
+        self.ccf_params = ccf_profile.params
+        
+        plt.title('C = %.2f +/- %.2f [%%] \n FWHM = %.2f +/- %.2f [km/s] \n RV = %.2f +/- %.2f [m/s]'%(100*(-ccf_profile.params['amp'].value),
+                                                                                               ccf_profile.params['amp'].stderr,
+                                                                                               ccf_profile.params['wid'].value/1000*2.355,
+                                                                                               ccf_profile.params['wid'].stderr/1000*2.355,
+                                                                                               ccf_profile.params['cen'].value,
+                                                                                               ccf_profile.params['cen'].stderr))
+        
