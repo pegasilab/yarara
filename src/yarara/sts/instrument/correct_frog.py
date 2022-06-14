@@ -477,7 +477,7 @@ def yarara_correct_frog(
             new_continuum[all_flux == 0] = conti[all_flux == 0]
             new_continuum[new_continuum != new_continuum] = conti[
                 new_continuum != new_continuum
-            ]  # to supress mystic nan appearing
+            ]  # to suppress mystic nan appearing
             new_continuum[np.isnan(new_continuum)] = conti[np.isnan(new_continuum)]
             new_continuum[new_continuum == 0] = conti[new_continuum == 0]
             new_continuum = self.uncorrect_hole(new_continuum, conti)

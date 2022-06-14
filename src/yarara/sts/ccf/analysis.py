@@ -223,14 +223,14 @@ def yarara_ccf(
         (doppler_r(mask[:, 0], 30000)[0] < grid.max())
         & (doppler_r(mask[:, 0], 30000)[1] > grid.min()),
         :,
-    ]  # supres line farther than 30kms
+    ]  # suppress line farther than 30kms
 
     print("\n [INFO] Nb lines in the mask : %.0f \n" % (len(mask)))
 
     mask_min = np.min(mask[:, 0])
     mask_max = np.max(mask[:, 0])
 
-    # supress useless part of the spectra to speed up the CCF
+    # suppress useless part of the spectra to speed up the CCF
     grid_min = int(find_nearest(grid, doppler_r(mask_min, -100000)[0])[0])
     grid_max = int(find_nearest(grid, doppler_r(mask_max, 100000)[0])[0])
     grid = grid[grid_min:grid_max]
@@ -467,13 +467,13 @@ def yarara_ccf(
 
         if not del_outside_max:
             mask = (ccf.x > -rv_borders) & (ccf.x < rv_borders)
-            ccf.supress_mask(mask)
+            ccf.suppress_mask(mask)
         else:
             ccf.find_max(vicinity=10)
             ccf.index_max = np.sort(ccf.index_max)
             mask = np.zeros(len(ccf.x)).astype("bool")
             mask[ccf.index_max[0] : ccf.index_max[1] + 1] = True
-            ccf.supress_mask(mask)
+            ccf.suppress_mask(mask)
 
         if normalisation == "left":
             norm = ccf.y[0]

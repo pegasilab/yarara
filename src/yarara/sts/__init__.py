@@ -71,13 +71,13 @@ class spec_time_series(object):
         continuum_error,
         flux_error,
         scale_cmap,
-        supress_low_snr_spectra,
-        supress_time_spectra,
+        suppress_low_snr_spectra,
+        suppress_time_RV,
         yarara_check_fwhm,
         yarara_check_rv_sys,
         yarara_correct_secular_acc,
         yarara_simbad_query,
-        yarara_supress_doubtful_spectra,
+        yarara_suppress_doubtful_spectra,
     )
     from .ccf.analysis import yarara_ccf
     from .ccf.io import read_ccf_mask, yarara_ccf_save
@@ -115,6 +115,7 @@ class spec_time_series(object):
     from .telluric.oxygen import yarara_correct_oxygen
     from .util.cut_spectrum import yarara_cut_spectrum
     from .util.map import yarara_add_map, yarara_substract_map
+    from .util.map_all import yarara_map_all
     from .util.median_master import yarara_median_master
     from .util.non_zero_flux import yarara_non_zero_flux
     from .util.poissonian_noise import yarara_poissonian_noise
@@ -431,4 +432,8 @@ class spec_time_series(object):
         # assigned by median_master
         self.reference: Tuple[NDArray[np.float64], NDArray[np.float64]] = None  # type: ignore
 
-        self.table_snr: Dict[str, Any] = None # type: ignore
+        # assigned by suppress_time_spectra
+        self.table_snr: Dict[str, Any] = None  # type: ignore
+
+        # from yarara_check_fwhm
+        self.warning_rv_borders: bool = None  # type: ignore

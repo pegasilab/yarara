@@ -133,7 +133,7 @@ def yarara_correct_cosmics(
         new_continuum[all_flux == 0] = conti[all_flux == 0]
         new_continuum[new_continuum != new_continuum] = conti[
             new_continuum != new_continuum
-        ]  # to supress mystic nan appearing
+        ]  # to suppress mystic nan appearing
 
         self.info_reduction["matching_cosmics"] = {
             "sub_dico_used": sub_dico,

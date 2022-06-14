@@ -55,7 +55,7 @@ def yarara_master_ccf(
     half = 0.5 * (1 + np.nanmin(stack))
 
     master_ccf = tableXY(new_vrad, stack)
-    master_ccf.supress_nan()
+    master_ccf.suppress_nan()
     master_ccf.interpolate(replace=True, method="cubic")
 
     new_vrad = master_ccf.x

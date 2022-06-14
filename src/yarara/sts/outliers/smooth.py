@@ -121,7 +121,7 @@ def yarara_correct_smooth(
     new_continuum[flux == 0] = conti[flux == 0].copy()
     new_continuum[new_continuum != new_continuum] = conti[
         new_continuum != new_continuum
-    ].copy()  # to supress mystic nan appearing
+    ].copy()  # to suppress mystic nan appearing
     new_continuum[np.isnan(new_continuum)] = conti[np.isnan(new_continuum)].copy()
     new_continuum[new_continuum == 0] = conti[new_continuum == 0].copy()
     new_continuum = self.uncorrect_hole(new_continuum, conti)

@@ -591,7 +591,7 @@ def yarara_correct_telluric_gradient(
     # base_vec = np.vstack([np.ones(len(flux)), jdb-np.median(jdb), test2.vec[:,0:pca_comp_kept].T])
     base_vec = np.vstack([np.ones(len(flux)), test2.vec[:, 0:pca_comp_kept].T])
     collection.fit_base(base_vec, weight=weights, num_sim=1)
-    # collection.coeff_fitted[:,3] = 0 #supress the linear trend fitted
+    # collection.coeff_fitted[:,3] = 0 #suppress the linear trend fitted
 
     del weights
     del flux_err

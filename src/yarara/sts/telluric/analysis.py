@@ -94,7 +94,7 @@ def yarara_telluric(
     wave_tel = wave_tel[(wave_tel < np.max(grid)) & (wave_tel > np.min(grid))]
 
     test.clip(min=[mask[0, 0], None], max=[mask[-1, 0], None])
-    test.rolling(window=ccf_sigma, quantile=1)  # to supress telluric in broad asorption line
+    test.rolling(window=ccf_sigma, quantile=1)  # to suppress telluric in broad asorption line
     tt, matrix = clustering((test.roll < 0.97).astype("int"), tresh=0.5, num=0.5)
     t = np.array([k[0] for k in tt]) == 1
     matrix = matrix[t, :]

@@ -89,7 +89,7 @@ def yarara_retropropagation_correction(
     new_continuum[flux == 0] = conti[flux == 0]
     new_continuum[new_continuum != new_continuum] = conti[
         new_continuum != new_continuum
-    ]  # to supress mystic nan appearing
+    ]  # to suppress mystic nan appearing
     new_continuum[np.isnan(new_continuum)] = conti[np.isnan(new_continuum)]
     new_continuum[new_continuum == 0] = conti[new_continuum == 0]
     if hl is not None:
