@@ -19,7 +19,9 @@ import numpy as np
 import pandas as pd
 
 import yarara.stages
+from yarara.analysis.table_xy import tableXY
 from yarara.io import pickle_dump
+from yarara.stats.misc import IQ
 from yarara.sts import spec_time_series
 from yarara.util import print_iter
 
@@ -215,6 +217,53 @@ if (
         "matching_empca": 27,
     }
     stage = vec[last_dico] + 1
+
+
+# =============================================================================
+# LOAD DATA IN YARARA
+# =============================================================================
+
+if stage == 0:
+    # sts.yarara_inject_planet()
+    sts.yarara_simbad_query()
+    sts.yarara_analyse_summary()
+    sts.import_table()
+
+    sts.flux_error(ron=11)
+    sts.continuum_error()
+    sts.yarara_exploding_pickle()
+
+    sts.yarara_check_rv_sys()
+    sts.yarara_check_fwhm()
+    plt.close("all")
+
+    sts.yarara_ccf(
+        mask=sts.read_ccf_mask(sts.mask_harps),
+        mask_name=sts.mask_harps,
+        ccf_oversampling=1,
+        plot=True,
+        save=True,
+        rv_range=None,
+    )
+
+    sts.yarara_correct_secular_acc(update_rv=True)
+
+    sts.scale_cmap()
+
+    # sous option
+    sts.suppress_low_snr_spectra(suppress=False)
+
+    # sous option
+    sts.yarara_suppress_doubtful_spectra(suppress=False)
+
+    # sts.supress_time_spectra(num_min=None, num_max=None)
+    # sts.split_instrument(instrument=ins)
+
+    if close_figure:
+        plt.close("all")
+
+    get_time_step("preprocessing")
+    stage = break_func(stage)
 
 
 if stage == 1:

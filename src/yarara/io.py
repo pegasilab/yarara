@@ -16,10 +16,11 @@ from . import pickle_protocol_version
 
 def touch_pickle(filename):
     if not os.path.exists(filename):
-        pickle_dump({},open(filename,'wb'))
+        pickle_dump({}, open(filename, "wb"))
         return {}
     else:
         return pd.read_pickle(filename)
+
 
 def open_pickle(filename):
     if filename.split(".")[-1] == "p":

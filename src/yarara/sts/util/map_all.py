@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import os
-from typing import Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
-from .. import spec_time_series
+if TYPE_CHECKING:
+    from .. import spec_time_series
 
 
 def yarara_map_all(

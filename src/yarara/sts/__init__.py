@@ -105,6 +105,7 @@ class spec_time_series(object):
     from .outliers.cosmics import yarara_correct_cosmics
     from .outliers.mad import yarara_correct_mad
     from .outliers.smooth import yarara_correct_smooth
+    from .plots import yarara_comp_all, yarara_plot_all
     from .processing.activity_index import yarara_activity_index
     from .processing.map import yarara_map
     from .processing.retropropagation_correction import yarara_retropropagation_correction

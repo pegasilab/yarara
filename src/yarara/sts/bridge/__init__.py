@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import glob
 import logging
 import os
 import time
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +17,9 @@ from ...io import pickle_dump, save_pickle, touch_pickle
 from ...paths import root
 from ...stats import IQ, rm_outliers
 from ...util import doppler_r
-from .. import spec_time_series
+
+if TYPE_CHECKING:
+    from .. import spec_time_series
 
 
 def yarara_simbad_query(self: spec_time_series, starname=None) -> None:
@@ -286,7 +291,7 @@ def scale_cmap(self: spec_time_series):
 
 def suppress_low_snr_spectra(self: spec_time_series, suppress: bool = False):
     """
-    Supress spectra under fixed treshold in SNR
+    Suppress spectra under fixed treshold in SNR
 
     Args:
         suppress : True/False to delete of simply hide the files
