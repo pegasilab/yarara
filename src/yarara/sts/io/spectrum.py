@@ -29,16 +29,14 @@ def spectrum(
     """
     Produce a tableXY spectrum by specifying its index number
 
-    Parameters
-    ----------
-    num : index of the spectrum to extract
-    sub_dico : The sub_dictionnary used to  select the continuum
-    continuum : The continuum to select (either linear or cubic)
-    norm : True/False button to normalise the spectrum
+    Args:
+        num : index of the spectrum to extract
+        sub_dico : The sub_dictionnary used to  select the continuum
+        continuum : The continuum to select (either linear or cubic)
+        norm : True/False button to normalize the spectrum
 
-    Returns
-    -------
-    Return the tableXY spectrum object
+    Returns:
+        The tableXY spectrum object
 
     """
 
@@ -51,15 +49,13 @@ def spectrum(
     array = self.import_spectrum(num=num)
     kw = "_planet" * planet
 
-    flux = array["flux" + kw]
-    flux_std = array["flux_err"]
     wave = array["wave"]
-    conti1, continuum = self.import_sts_flux(load=["matching_diff", sub_dico], num=num)
-
+    flux, flux_std, conti1, continuum, continuum_std = self.import_sts_flux(
+        load=["flux" + kw, "flux_err", "matching_diff", sub_dico, "continuum_err"], num=num
+    )
     correction = conti1 / continuum
     spectrum = tableXY(wave, flux * correction * color_corr, flux_std * correction * color_corr)
     if norm:
-        continuum_std = array["continuum_err"]
         flux_norm, flux_norm_std = util.flux_norm_std(flux, flux_std, continuum, continuum_std)
         spectrum_norm = tableXY(wave, flux_norm * color_corr, flux_norm_std * color_corr)
         return spectrum_norm
@@ -71,14 +67,11 @@ def import_spectrum(self: spec_time_series, num: int = 0) -> Dict[str, Any]:
     """
     Import a pickle file of a spectrum to get fast common information shared by all spectra
 
-    Parameters
-    ----------
-    num : index of the spectrum to extract (if None random selection)
+    Args:
+        num: Index of the spectrum to extract (if None random selection)
 
-    Returns
-    -------
-    Return the open pickle file
-
+    Returns:
+        The opened pickle file
     """
 
     directory = self.directory
@@ -95,17 +88,11 @@ def yarara_get_bin_length(self):
     try:
         bin_length = float(
             "".join(
-                glob.glob(self.dir_root + "WORKSPACE/RASSINE*")[0]
-                .split("_B")[1]
-                .split("_D")[0]
+                glob.glob(self.dir_root + "WORKSPACE/RASSINE*")[0].split("_B")[1].split("_D")[0]
             )
         )
     except:
         bin_length = float(
-            "".join(
-                glob.glob(self.dir_root + "TEMP/RASSINE*")[0]
-                .split("_B")[1]
-                .split("_D")[0]
-            )
+            "".join(glob.glob(self.dir_root + "TEMP/RASSINE*")[0].split("_B")[1].split("_D")[0])
         )
     return bin_length

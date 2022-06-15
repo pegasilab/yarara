@@ -4,7 +4,7 @@ import glob
 import logging
 import os
 import time
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,7 +18,7 @@ from ... import analysis
 from ...analysis import tableXY
 from ...io import pickle_dump, save_pickle, touch_pickle
 from ...paths import root
-from ...plots import plot_color_box, transit_draw
+from ...plots import plot_color_box, plot_copy_time, transit_draw
 from ...stats import IQ, rm_outliers
 from ...stats.misc import mad
 from ...stats.nearest import find_nearest
@@ -612,11 +612,10 @@ def yarara_color_template(
 
 def yarara_berv_summary(
     self: spec_time_series,
-    sub_dico="matching_diff",
-    continuum="linear",
-    dbin_berv=0.3,
+    sub_dico: Optional[str] = "matching_diff",
+    dbin_berv: float = 0.3,
     nb_plot=3,
-    telluric_fwhm=3.5,
+    telluric_fwhm: float = 3.5,
 ):
     """
     Produce a berv summary
@@ -642,26 +641,12 @@ def yarara_berv_summary(
         sub_dico = self.dico_actif
     logging.info("---- DICO %s used ----" % (sub_dico))
 
-    all_flux = []
-    all_conti = []
     snr = np.array(tab["snr"])
-    for i, name in enumerate(np.array(tab["filename"])):
-        file = pd.read_pickle(name)
-        if not i:
-            wavelength = file["wave"]
-            self.wave = wavelength
+    fluxes, fluxes_std, all_conti, all_conti_err = self.import_sts_flux(
+        load=["flux", "flux_err", sub_dico, "continuum_err"]
+    )
+    all_flux, all_flux_std = flux_norm_std(fluxes, fluxes_std, all_conti, all_conti_err)
 
-        f = file["flux"]
-        f_std = file["flux_err"]
-        c = file[sub_dico]["continuum_" + continuum]
-        c_std = file["continuum_err"]
-
-        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
-
-        all_flux.append(f_norm)
-        all_conti.append(file["matching_diff"]["continuum_" + continuum])
-
-    all_conti = np.array(all_conti)
     all_flux = np.array(all_flux) * all_conti.copy()
 
     berv = np.array(tab["berv"])
@@ -765,77 +750,6 @@ def yarara_berv_summary(
     plt.savefig(self.dir_root + "IMAGES/berv_statistic_summary.pdf")
 
 
-def yarara_obs_info(
-    self: spec_time_series,
-    kw=[None, None],
-    jdb=None,
-    berv=None,
-    rv=None,
-    airmass=None,
-    texp=None,
-    seeing=None,
-    humidity=None,
-):
-    """
-    Add some observationnal information in the RASSINE files and produce a summary table
-
-    Args:
-        kw: list-like with format [keyword,array]
-        jdb : array-like with same size than the number of files in the directory
-        berv : array-like with same size than the number of files in the directory
-        rv : array-like with same size than the number of files in the directory
-        airmass : array-like with same size than the number of files in the directory
-        texp : array-like with same size than the number of files in the directory
-        seeing : array-like with same size than the number of files in the directory
-        humidity : array-like with same size than the number of files in the directory
-    """
-
-    directory = self.directory
-
-    files = glob.glob(directory + "RASSI*.p")
-    files = np.sort(files)
-
-    nb = len(files)
-
-    if type(kw) == pd.core.frame.DataFrame:  # in case of a pandas dataframe
-        kw = [list(kw.keys()), [i for i in np.array(kw).T]]
-    else:
-        try:
-            if len(kw[1]) == 1:
-                kw[1] = [kw[1][0]] * nb
-        except TypeError:
-            kw[1] = [kw[1]] * nb
-
-        kw[0] = [kw[0]]
-        kw[1] = [kw[1]]
-
-    for i, j in enumerate(files):
-        file = pd.read_pickle(j)
-        for kw1, kw2 in zip(kw[0], kw[1]):
-            if kw1 is not None:
-                if len(kw1.split("ccf_")) - 1:
-                    file["ccf_gaussian"][kw1.split("ccf_")[1]] = kw2[i]
-                else:
-                    file["parameters"][kw1] = kw2[i]
-        if jdb is not None:
-            file["parameters"]["jdb"] = jdb[i]
-        if berv is not None:
-            file["parameters"]["berv"] = berv[i]
-        if rv is not None:
-            file["parameters"]["rv"] = rv[i]
-        if airmass is not None:
-            file["parameters"]["airmass"] = airmass[i]
-        if texp is not None:
-            file["parameters"]["texp"] = texp[i]
-        if seeing is not None:
-            file["parameters"]["seeing"] = seeing[i]
-        if humidity is not None:
-            file["parameters"]["humidity"] = humidity[i]
-        save_pickle(j, file)
-
-    self.yarara_analyse_summary()
-
-
 def snr_statistic(self: spec_time_series, version=1):
     self.import_table()
     if version == 1:
@@ -916,7 +830,7 @@ def dace_statistic(
     mini = np.min(vec.x)
     maxi = np.max(vec.x)
     plt.title(
-        "%s\n  Nb measurements : %.0f | Nb nights : %.0f | Time span : %.0f days \n   Min : %.0f (%s)  |  Max : %.0f (%s)\n   rms : %.2f m/s   |   rms2 : %.2f m/s   |   $\sigma_{\gamma}$ : %.2f m/s\n"
+        "%s\n  Nb measurements : %.0f | Nb nights : %.0f | Time span : %.0f days \n   Min : %.0f (%s)  |  Max : %.0f (%s)\n   rms : %.2f m/s   |   rms2 : %.2f m/s   |   $\\sigma_{\\gamma}$ : %.2f m/s\n"
         % (
             self.starname,
             len(vec.x),
@@ -940,7 +854,13 @@ def dace_statistic(
         return ax.get_ylim()
 
 
-def yarara_transit_def(self: spec_time_series, period=100000, T0=55000, duration=2, auto=False):
+def yarara_transit_def(
+    self: spec_time_series,
+    period: float = 100000.0,
+    T0: float = 55000.0,
+    duration: float = 2.0,
+    auto=False,
+):
     """period in days, T0 transits center in jdb - 2'400'000, duration in hours"""
 
     self.import_table()
@@ -1040,8 +960,8 @@ def yarara_transit_def(self: spec_time_series, period=100000, T0=55000, duration
         plt.savefig(self.dir_root + "IMAGES/Transit_definition.pdf")
 
         plt.show(block=False)
-
-    self.yarara_obs_info(kw=["transit_in", transits])
+    df = pd.DataFrame(transits, columns=["transit_in"])
+    self.yarara_obs_info(df)
 
 
 def yarara_get_first_wave(self: spec_time_series):
@@ -1050,7 +970,7 @@ def yarara_get_first_wave(self: spec_time_series):
         wave_min=3800,
         wave_max=4600,
         plot=False,
-        reference=False,
+        reference="zeros",
     )
     snrs = np.median(m, axis=0) / (mad(m, axis=0) + 1e-6)
     bad_wave = wave[snrs < 1]
@@ -1062,165 +982,26 @@ def yarara_get_first_wave(self: spec_time_series):
     return min_wave
 
 
-def yarara_plot_rcorr_dace(self: spec_time_series, bin_length=1, detrend=2, vmin=0.3):
-    self.import_dace_summary(bin_length=bin_length)
-    table_dace = self.table_dace
-    table_dace["rjd"] = table_dace["jdb"]
-    cols = np.in1d(
-        np.array(
-            [
-                "vrad",
-                "fwhm",
-                "contrast",
-                "v_span",
-                "bis_span",
-                "ca",
-                "ha",
-                "na",
-                "skew",
-                "rhk",
-                "s_mw",
-            ]
-        ),
-        np.array(table_dace.keys()),
-    )
-    cols = np.array(
-        [
-            "vrad",
-            "fwhm",
-            "contrast",
-            "v_span",
-            "bis_span",
-            "ca",
-            "ha",
-            "na",
-            "skew",
-            "rhk",
-            "s_mw",
-        ]
-    )[cols]
-
-    v = []
-    v_col = []
-    for l in cols:
-        vec = tableXY(table_dace["rjd"].astype("float"), table_dace[l].astype("float"))
-        if np.nansum(abs(vec.y)) > 0:
-            vec.replace_nan()
-            v_col.append(l)
-            vec.substract_polyfit(detrend, replace=True)
-            v.append(vec.y)
-
-    v = np.array(v)
-    m = analysis.table(v)
-    plt.figure(figsize=(12, 12))
-    m.r_matrix(name=v_col, absolute=True, vmin=vmin)
-    plt.savefig(
-        self.dir_root
-        + "IMAGES/Proxy_R_matrix_dace_bin%.0f_d%.0f.pdf" % (int(bin_length), int(detrend))
-    )
-
-
-def import_planet(self: spec_time_series):
-    file_test = self.import_spectrum()
-    self.import_table()
-    par = file_test["parameters"]["planet_injected"]
-    rv = []
-    rvi = np.zeros(len(self.table.jdb))
-    for k in range(len(par["amp"])):
-        amp, period, phi = par["amp"][k], par["period"][k], par["phase"][k]
-        logging.info("Planet %.0f : %.1f,%.2f,%.2f" % (k + 1, amp, period, phi))
-        rvj = amp * np.sin(2 * np.pi * (self.table.jdb - np.min(self.table.jdb)) / period + phi)
-        rvi += rvj
-        rv.append(tableXY(self.table.jdb, rvj, np.std(rvj) / 10 + 0 * rvj))
-    self.rv_planet_i = rv
-    planet = myc.tableXY(self.table.jdb, rvi, np.std(rvi) / 10 + 0 * rvi)
-    self.rv_planet = planet
-
-
 def import_dace_sts(
     self: spec_time_series, substract_model=False
 ):  # subtract_model used by default
     self.import_table()
 
-    model = np.array(self.table["rv_shift"]) * 1000
+    model = np.array(self.table["rv_shift"]) * 1000.0
     vector = np.array(self.table["rv_dace"])
 
     coeff = np.argmin(
         [
             mad(vector - model),
-            mad(vector - 0 * model),
+            mad(vector - 0.0 * model),
             mad(vector + model),
         ]
     )
-    print(" [INFO] Coefficient selected :", coeff)
+    logging.info("Coefficient selected:", coeff)
 
     vec = tableXY(
         self.table["jdb"],
         self.table["rv_dace"] + (coeff - 1) * model,
         self.table["rv_dace_std"],
     )
-
-    if self.planet:
-        self.import_planet()
-        vec.y += self.rv_planet.y
-
     return vec
-
-
-def import_dace_summary(self: spec_time_series, bin_length=0):
-    self.import_table()
-    rv = tableXY(
-        np.array(self.table.jdb),
-        np.array(self.table["rv_dace"]) - 1000 * np.array(self.table["rv_shift"]),
-        np.array(self.table["rv_dace_std"]),
-    )
-    rv.recenter(who="Y")
-
-    self.table_dace = pd.read_csv(
-        self.dir_root + "DACE_TABLE/Dace_extracted_table.csv", index_col=0
-    )
-
-    tab = self.table_dace
-
-    dace_rv = tableXY(tab["rjd"], tab["vrad"] - 1000 * tab["model"], tab["svrad"])
-    if bin_length:
-        dace_rv.night_stack(bin_length=bin_length, replace=True)
-    dace_rv, dust = dace_rv.match_x(rv, replace=False)
-
-    matrix = []
-    matrix.append(rv.x)
-    matrix.append(rv.y)
-    matrix.append(rv.yerr)
-    matrix = np.array(matrix)
-
-    table = pd.DataFrame(matrix.T, columns=["jdb", "vrad", "svrad"])
-
-    # for i,j in zip(['fwhm','contrast','bis_span','s_mw','ha','na','ca','rhk'],['sig_fwhm','sig_contrast','sig_bis_span','sig_s','sig_ha','sig_na','sig_ca','sig_rhk']):
-    for i, j in zip(
-        ["fwhm", "contrast", "bis_span", "s_mw", "rhk"],
-        ["sig_fwhm", "sig_contrast", "sig_bis_span", "sig_s", "sig_rhk"],
-    ):
-        dace_X = tableXY(tab["rjd"].copy(), tab[i].copy(), tab[j].copy())
-        if bin_length:
-            dace_X.night_stack(bin_length=bin_length, replace=True)
-        dace_X, dust = dace_X.match_x(rv, replace=False)
-        table[i] = dace_X.y
-        table[j] = dace_X.yerr
-
-    dace_berv = tableXY(tab["rjd"], tab["berv"], tab["svrad"])
-    if bin_length:
-        dace_berv.night_stack(bin_length=bin_length, replace=True)
-    dace_berv, dust = dace_berv.match_x(rv, replace=False)
-
-    table["berv"] = dace_berv.y
-
-    table["sn_caii"] = self.table["snr"]
-    table["ins_name"] = self.table["ins"]
-
-    self.table_dace = table
-
-    input_class = table(table)
-
-    input_class.export_to_dace(
-        self.dir_root + "KEPLERIAN/" + self.starname + "_drs_timeseries.rdb"
-    )

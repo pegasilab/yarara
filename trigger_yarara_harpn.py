@@ -283,47 +283,35 @@ if stage == 1:
     sts.yarara_map_1d_to_2d(instrument=ins)
 
     # ERROR BARS ON FLUX AND CONTINUUM
-    print("\n Add flux errors")
+    print("Add flux errors")
     sts.yarara_non_zero_flux()
     sts.flux_error(ron=11)
     sts.continuum_error()
 
     # BERV SUMMARY
-    sts.yarara_berv_summary(sub_dico="matching_diff", continuum="linear", dbin_berv=3, nb_plot=2)
+    sts.yarara_berv_summary(sub_dico="matching_diff", dbin_berv=3, nb_plot=2)
 
     # ACTIVITY
-    print("\n Compute activity proxy")
-    sts.yarara_activity_index(sub_dico="matching_diff", continuum="linear")
+    logging.info("Compute activity proxy")
+    sts.yarara_activity_index(sub_dico="matching_diff")
 
     # table
-    sts.yarara_obs_info(kw=["instrument", [ins]])
+    sts.yarara_obs_info(pd.DataFrame(data=[ins] * len(sts.table), columns=["instrument"]))
     sts.import_table()
 
-    print("\n Make SNR statistics figure")
+    logging.info("Make SNR statistics figure")
     sts.snr_statistic()
-    print("\n Make DRS RV summary figure")
+    logging.info("Make DRS RV summary figure")
     sts.dace_statistic()
 
     sts.yarara_transit_def(period=100000, T0=0, duration=0.0001, auto=True)
 
-    # CROPING
-    if False:
-        sts.yarara_time_variations(sub_dico="matching_diff", wave_min=3700, wave_max=4000)
-
-        sts.yarara_time_variations(sub_dico="matching_diff", wave_min=6800, wave_max=7000)
-
-    print("\n Crop spectra")
+    logging.info("Crop spectra")
     w0 = sts.yarara_get_first_wave()
     sts.yarara_cut_spectrum(wave_min=w0, wave_max=6865.00)
 
     if close_figure:
         plt.close("all")
-
-    # sts.import_drift_night(ins,bin_length=bin_length, drs_version=drs_version)
-
-    # sts.import_rv_dace(ins, calib_std=0.7, bin_length=bin_length, drs_version=drs_version)
-
-    sts.yarara_plot_rcorr_dace(bin_length=bin_length, detrend=2)
 
     sts.yarara_exploding_pickle()
 
@@ -331,13 +319,7 @@ if stage == 1:
     stage = break_func(stage)
 
     if sts.starname == "Sun":
-        sts.yarara_correct_smooth(
-            sub_dico="matching_diff", continuum="linear", reference="median", window_ang=1
-        )
-
-# if stage == 1:
-#     yarara.stages.load_and_adapt_input_data(sts)
-#     stage = break_func(stage)
+        sts.yarara_correct_smooth(sub_dico="matching_diff", reference="median", window_ang=1)
 
 
 # sts.yarara_inject_planet(amp=[0.4,0.4,0.4,0.4],period=[7.142,27.123,101.543,213.594],phase=[0,0,0,0])

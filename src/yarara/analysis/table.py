@@ -77,7 +77,7 @@ class table(object):
             matrix = self.vec_residues
         else:
             matrix = self.table
-        if type(matrix) == pd.core.frame.DataFrame:
+        if isinstance(matrix, pd.DataFrame):
             if name is None:
                 name = list(matrix.columns)
             matrix = matrix[name]

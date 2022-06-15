@@ -254,7 +254,12 @@ class tableXY(object):
         mean_svrad = np.array(mean_svrad)
 
         if replace:
-            self.x, self.y, self.xerr, self.yerr = mean_jdb, mean_vrad, 0 * mean_svrad, mean_svrad
+            self.x, self.y, self.xerr, self.yerr = (
+                mean_jdb,
+                mean_vrad,
+                0.0 * mean_svrad,
+                mean_svrad,
+            )
         else:
             self.stacked = tableXY(mean_jdb, mean_vrad, mean_svrad)
 
@@ -391,14 +396,14 @@ class tableXY(object):
         markersize: int = 6,
         zorder: int = 1,
         species: Optional[NDArray[np.float64]] = None,
-        alpha: int = 1,
+        alpha: float = 1.0,
         modulo: Optional[float] = None,
         modulo_norm: bool = False,
         cmap: str = "viridis",
         new: bool = False,
-        phase_mod: int = 0,
+        phase_mod: int = 0,  # TODO: really int?
         periodic: bool = False,
-        frac: int = 1,
+        frac: float = 1.0,
         yerr: bool = True,
     ) -> None:
 

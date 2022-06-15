@@ -55,7 +55,7 @@ def plot_copy_time(ax1=None, fmt="isot", time="x", split=0):
     return ax1
 
 
-def transit_draw(P, T0, dt=0):
+def transit_draw(P, T0, dt=0.0):
     ax = plt.gca()
     x1 = ax.get_xlim()[0]
     x2 = ax.get_xlim()[1]
