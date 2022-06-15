@@ -5,11 +5,32 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 from wpca import EMPCA, PCA, WPCA
 
 from ..util import assert_never
+
+
+def rm_diagonal(array, k=0, put_nan=False):
+    diag = np.diag(np.ones(len(array) - abs(k)), k=k)
+    if put_nan:
+        diag[diag == 1] = np.nan
+    mat = np.ones(np.shape(array)) - diag
+    return array * mat
+
+
+def rm_sym_diagonal(array2, k, put_nan=False):
+    array = array2.copy()
+    for j in range(abs(k) + 1):
+        if not j:
+            array = rm_diagonal(array, k=j, put_nan=put_nan)
+            array = rm_diagonal(array, k=-j, put_nan=put_nan)
+        else:
+            array = rm_diagonal(array, k=j, put_nan=put_nan)
+    return array
 
 
 class table(object):
@@ -29,6 +50,117 @@ class table(object):
         self.var: Any = None
         self.var_ratio: Any = None
         self.wpca_model: Any = None
+
+    def r_matrix(
+        self,
+        name=None,
+        absolute=True,
+        cmap="seismic",
+        vmin=None,
+        vmax=None,
+        light_plot=False,
+        angle=45,
+        Plot=True,
+        rm_diagonal=False,
+        paper_plot=False,
+        unit=1,
+        deg_detrend=0,
+        vec_x=None,
+    ):
+
+        if deg_detrend:
+            if vec_x is None:
+                vec_x = np.arange(len(self.table))
+            vec_x -= np.nanmedian(vec_x)
+
+            self.fit_base(np.array([vec_x**i for i in range(deg_detrend + 1)]))
+            matrix = self.vec_residues
+        else:
+            matrix = self.table
+        if type(matrix) == pd.core.frame.DataFrame:
+            if name is None:
+                name = list(matrix.columns)
+            matrix = matrix[name]
+            matrix = np.array(matrix)
+
+            self.name_liste = name
+        else:
+            if (len(matrix.T) > 20) & (len(matrix) < 20):
+                matrix = matrix.T
+
+        if name is None:
+            name = np.arange(len(matrix.T))
+
+        r_matrix = np.array(pd.DataFrame(matrix, columns=name, dtype="float").corr())
+
+        if absolute:
+            self.matrix_corr = abs(r_matrix.copy())
+        else:
+            self.matrix_corr = r_matrix.copy()
+
+        if rm_diagonal:
+            self.matrix_corr = rm_sym_diagonal(self.matrix_corr, k=0, put_nan=True)
+
+        if Plot:
+            if len(r_matrix) > 20:
+                light_plot = True
+
+            if absolute:
+                cmap = "Reds"
+                r_matrix = abs(r_matrix)
+
+            if vmin is None:
+                vmin = -1 + int(absolute)
+
+            if vmax is None:
+                vmax = 1
+
+            plt.imshow(r_matrix, vmin=vmin, vmax=vmax, cmap=cmap)
+            ax = plt.colorbar(pad=[0.05, 0][int(light_plot)])
+            ax.ax.set_ylabel(r"$\mathcal{R}_{pearson}$", fontsize=[15, 20][int(paper_plot)])
+            ax.ax.set_yticklabels(
+                np.round(np.arange(0, 1.1, 0.2), 2), fontsize=[15, 20][int(paper_plot)]
+            )
+            plt.xticks(
+                ticks=np.arange(len(r_matrix)),
+                labels=list(name),
+                rotation=[angle, 90][int(paper_plot)],
+                fontsize=[14, 18][int(paper_plot)],
+            )
+            plt.yticks(
+                ticks=np.arange(len(r_matrix)),
+                labels=list(name),
+                fontsize=[14, 18][int(paper_plot)],
+            )
+            plt.subplots_adjust(left=0.2, right=0.95, top=0.95, bottom=0.20)
+
+            for i in range(len(r_matrix)):
+                for j in range(len(r_matrix)):
+                    if not light_plot:
+                        if unit == 1:
+                            plt.annotate(
+                                "%.2f" % (r_matrix[i, j]),
+                                (i, j),
+                                fontsize=[13, 16][int(paper_plot)],
+                                va="center",
+                                ha="center",
+                            )
+                        else:
+                            plt.annotate(
+                                "%.0f" % (r_matrix[i, j] * 100),
+                                (i, j),
+                                fontsize=[13, 16][int(paper_plot)],
+                                va="center",
+                                ha="center",
+                            )
+                    else:
+                        if (abs(r_matrix[i, j]) > 0.4) & (r_matrix[i, j] != 1):
+                            plt.annotate(
+                                "%.0f" % (abs(r_matrix[i, j]) * 100),
+                                (i - 0.25, j),
+                                fontsize=8,
+                                va="center",
+                            )
 
     def rms_w(self, weights: np.ndarray, axis: Union[Literal[0], Literal[1]] = 1) -> None:
         average = np.average(self.table, weights=weights, axis=axis)

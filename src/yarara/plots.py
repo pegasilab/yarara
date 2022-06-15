@@ -5,6 +5,7 @@ This modules does XXX
 import platform
 from typing import Literal, Optional, Tuple, Union, overload
 
+import astropy.time as Time
 import matplotlib
 import matplotlib.pylab as plt
 import numpy as np
@@ -25,6 +26,48 @@ def init_matplotlib() -> None:
         matplotlib.use("Agg", force=True)
     else:
         matplotlib.use("Qt5Agg", force=True)
+
+
+def plot_copy_time(ax1=None, fmt="isot", time="x", split=0):
+    if ax1 is None:
+        ax1 = plt.gca()
+    if time == "x":
+        x = ax1.get_xticks()[1:-1]
+    else:
+        x0 = Time.Time(ax1.get_xticks()[0], format="mjd").decimalyear
+        x1 = Time.Time(ax1.get_xticks()[-1], format="mjd").decimalyear
+        tm = np.round(x1 - x0, 0)
+
+        x = int(ax1.get_xticks()[0]) + 365.25 / (12 / tm) * np.arange(13)
+
+    ax2 = ax1.twiny()
+
+    ax2.set_xlim(ax1.get_xlim())
+    ax2.set_xticks(x)
+    if fmt == "deci":
+        new_labels = Time.Time(x, format="mjd").decimalyear
+        new_labels = ["%.2f" % (i) for i in new_labels]
+    else:
+        new_labels = Time.Time(x, format="mjd").isot
+        new_labels = [i.split("T")[split] for i in new_labels]
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(new_labels)
+    return ax1
+
+
+def transit_draw(P, T0, dt=0):
+    ax = plt.gca()
+    x1 = ax.get_xlim()[0]
+    x2 = ax.get_xlim()[1]
+    n1 = int((x1 - T0) / P)
+    n2 = int((x2 - T0) / P)
+    if n2 < n1:
+        n1, n2 = n2, n1
+    for j in np.arange(n1, n2 + 1):
+        plt.axvline(x=j * P + T0, color="k", alpha=0.7)
+
+        if dt is not None:
+            plt.axvspan(xmin=j * P + T0 - dt / 2, xmax=j * P + T0 + dt / 2, color="k", alpha=0.4)
 
 
 def plot_color_box(

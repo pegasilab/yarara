@@ -18,6 +18,7 @@ from ..mathfun import gaussian, sinus
 from ..stats import find_nearest, identify_nearest, local_max, mad
 from ..stats import rm_outliers as rm_out
 from ..stats import smooth
+from ..stats.nearest import match_nearest
 from ..util import assert_never, ccf_fun, doppler_r
 
 
@@ -114,6 +115,148 @@ class tableXY(object):
         self.y_backup: Any = None
         self.xerr_backup: Any = None
         self.yerr_backup: Any = None
+
+    def match_x(self, table_xy, replace=False):
+        match = match_nearest(self.x, table_xy.x)[:, 0:2].astype("int")
+        if replace:
+            self.x, self.y, self.xerr, self.yerr = (
+                self.x[match[:, 0]],
+                self.y[match[:, 0]],
+                self.xerr[match[:, 0]],
+                self.yerr[match[:, 0]],
+            )
+            table_xy.x, table_xy.y, table_xy.xerr, table_xy.yerr = (
+                table_xy.x[match[:, 1]],
+                table_xy.y[match[:, 1]],
+                table_xy.xerr[match[:, 1]],
+                table_xy.yerr[match[:, 1]],
+            )
+        else:
+            v1 = tableXY(
+                self.x[match[:, 0]],
+                self.y[match[:, 0]],
+                self.xerr[match[:, 0]],
+                self.yerr[match[:, 0]],
+            )
+            v2 = tableXY(
+                table_xy.x[match[:, 1]],
+                table_xy.y[match[:, 1]],
+                table_xy.xerr[match[:, 1]],
+                table_xy.yerr[match[:, 1]],
+            )
+            return v1, v2
+
+    def myscatter(
+        self,
+        num=True,
+        liste=None,
+        factor=30,
+        color="b",
+        alpha=1,
+        x_offset=0,
+        y_offset=0,
+        color_text="k",
+        modulo=None,
+    ):
+        n = np.arange(len(self.x)).astype("str")
+        if modulo is not None:
+            newx = self.x % modulo
+        else:
+            newx = self.x
+        plt.scatter(np.array(newx), np.array(self.y), color=color, alpha=alpha)
+        ax = plt.gca()
+        dx = (ax.get_xlim()[1] - ax.get_xlim()[0]) / factor
+        dy = (ax.get_ylim()[1] - ax.get_ylim()[0]) / factor
+        if num:
+            for i, txt in enumerate(n):
+                plt.annotate(
+                    txt,
+                    (np.array(newx)[i] + x_offset, np.array(self.y)[i] + y_offset),
+                    color=color_text,
+                )
+        if liste is not None:
+            for i, txt in enumerate(liste):
+                plt.annotate(
+                    txt,
+                    (np.array(newx)[i] + dx + x_offset, np.array(self.y)[i] + dy + y_offset),
+                    color=color_text,
+                )
+
+    def recenter(self, who: Literal["X", "Y", "x", "y", "both"] = "both", weight=False):
+        if (who == "X") | (who == "both") | (who == "x"):
+            self.xmean = np.nanmean(self.x)
+            self.x = self.x - np.nanmean(self.x)
+        if (who == "Y") | (who == "both") | (who == "y"):
+            self.ymean = np.nanmean(self.y)
+            self.y = self.y - np.nanmean(self.y)
+
+    def species_recenter(self, species, ref=None, replace=True):
+
+        spe = np.unique(species)
+        shift = np.zeros(len(self.y))
+
+        if (len(spe) > 1) & (len(species) == len(self.y)):
+            val_median = np.array([np.nanmedian(self.y[np.where(species == s)[0]]) for s in spe])
+
+            if ref is None:
+                ref = 0
+            else:
+                ref = val_median[ref]
+
+            val_median -= ref
+
+            for k, s in enumerate(spe):
+                shift[species == s] += val_median[k]
+        else:
+            shift += np.nanmedian(self.y)
+
+        newy = self.y - shift
+
+        self.species = species
+        if replace == True:
+            self.y = newy
+        else:
+            self.species_recentered = tableXY(self.x, newy, self.xerr, self.yerr)
+
+    def night_stack(self, db=0, bin_length=1, replace=False):
+
+        jdb = self.x
+        vrad = self.y
+        vrad_std = self.yerr.copy()
+
+        if not np.sum(vrad_std):  # to avoid null vector
+            vrad_std += 1
+
+        vrad_std[vrad_std == 0] = np.nanmax(vrad_std[vrad_std != 0] * 10)
+
+        weights = 1 / (vrad_std) ** 2
+
+        if bin_length:
+            groups = ((jdb - db) // bin_length).astype("int")
+            groups -= groups[0]
+            group = np.unique(groups)
+        else:
+            group = np.arange(len(jdb))
+            groups = np.arange(len(jdb))
+
+        mean_jdb = []
+        mean_vrad = []
+        mean_svrad = []
+
+        for j in group:
+            g = np.where(groups == j)[0]
+            mean_jdb.append(np.sum(jdb[g] * weights[g]) / np.sum(weights[g]))
+            mean_svrad.append(1 / np.sqrt(np.sum(weights[g])))
+            mean_vrad.append(np.sum(vrad[g] * weights[g]) / np.sum(weights[g]))
+
+        mean_jdb = np.array(mean_jdb)
+        mean_vrad = np.array(mean_vrad)
+        mean_svrad = np.array(mean_svrad)
+
+        if replace:
+            self.x, self.y, self.xerr, self.yerr = mean_jdb, mean_vrad, 0 * mean_svrad, mean_svrad
+        else:
+            self.stacked = tableXY(mean_jdb, mean_vrad, mean_svrad)
 
     def rms_w(self) -> None:
         if len(self.x) > 1:

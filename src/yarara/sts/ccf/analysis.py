@@ -165,7 +165,7 @@ def yarara_ccf(
         wave_min=None,
         wave_max=None,
         plot=False,
-        reference=False,
+        reference="zeros",
         substract_map=substract_map,
         add_map=add_map,
         correction_factor=False,

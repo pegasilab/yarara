@@ -122,4 +122,3 @@ def yarara_star_info(
         self.star_info,
         open(self.dir_root + "STAR_INFO/Stellar_info_" + self.starname + ".p", "wb"),
     )
-

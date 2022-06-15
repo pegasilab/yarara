@@ -4,19 +4,25 @@ import glob
 import logging
 import os
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from astropy.io import fits
+from astropy.time import Time
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
+from ... import analysis
 from ...analysis import tableXY
 from ...io import pickle_dump, save_pickle, touch_pickle
 from ...paths import root
+from ...plots import plot_color_box, transit_draw
 from ...stats import IQ, rm_outliers
-from ...util import doppler_r
+from ...stats.misc import mad
+from ...stats.nearest import find_nearest
+from ...util import doppler_r, flux_norm_std, map_rnr
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -465,3 +471,756 @@ def suppress_time_RV(self: spec_time_series, liste):
             logging.info("CCF table modifed")
         except:
             logging.error("CCF cannot be modified")
+
+
+def yarara_map_1d_to_2d(self: spec_time_series, instrument="HARPS03"):
+    self.import_material()
+    mat = self.material
+    wave = np.array(mat["wave"])
+    wave_matrix = fits.open(root + "/Python/Material/" + instrument + "_WAVE_MATRIX_A.fits")[
+        0
+    ].data
+
+    jdb = (
+        fits.open(root + "/Python/Material/" + instrument + "_WAVE_MATRIX_A.fits")[0].header[
+            "MJD-OBS"
+        ]
+        + 0.5
+    )
+    berv_file = self.yarara_get_berv_value(jdb)
+    shape = np.shape(wave_matrix)
+    wave_matrix = np.reshape(doppler_r(np.ravel(wave_matrix), 0 * berv_file * 1000)[0], shape)
+    dim1, dim2 = np.shape(wave_matrix)
+    dim1 += 1
+    dim2 += 1
+
+    try:
+        blaze = fits.open(root + "/Python/Material/" + instrument + "_BLAZE.fits")[0].data
+    except:
+        blaze = 0 * wave_matrix
+
+    mapping_pixels = np.zeros((len(wave), len(wave_matrix)))
+    mapping_orders = np.zeros((len(wave), len(wave_matrix)))
+    mapping_blaze = np.zeros((len(wave), len(wave_matrix)))
+
+    index = np.arange(len(wave))
+    for order in tqdm(range(len(wave_matrix))):
+        index_cut = index[
+            (wave > np.min(wave_matrix[order])) & (wave < np.max(wave_matrix[order]))
+        ]
+        wave_cut = wave[index_cut]
+        match = find_nearest(wave_matrix[order], wave_cut)
+        mapping_orders[index_cut, order] = order + 1
+        mapping_pixels[index_cut, order] = match[0] + 1
+        mapping_blaze[index_cut, order] = blaze[order, match[0]]
+
+    max_overlapping = np.max(np.sum(mapping_orders != 0, axis=1))
+    logging.info("Maximum %.0f orders overlapped", max_overlapping)
+
+    sort = np.argsort(mapping_pixels, axis=1)[:, ::-1]
+    map_pix = np.array([mapping_pixels[i, sort[i]][0:max_overlapping] for i in range(len(sort))])
+    map_ord = np.array([mapping_orders[i, sort[i]][0:max_overlapping] for i in range(len(sort))])
+    map_blaze = np.array([mapping_blaze[i, sort[i]][0:max_overlapping] for i in range(len(sort))])
+    blaze_correction = np.sqrt(map_blaze[:, 0] + map_blaze[:, 1])
+    blaze_correction[blaze_correction == 0] = 1
+    blaze_correction = 1 / np.sqrt(blaze_correction)
+
+    zone_merged = np.sum(map_pix != 0, axis=1) - 1
+
+    coded_pixels = np.zeros(len(wave))
+    coded_orders = np.zeros(len(wave))
+
+    logging.info("Encoding pixels and orders by R%.0f to R mapping\n", max_overlapping)
+    time.sleep(1)
+
+    for i in tqdm(range(len(wave))):
+        coded_pixels[i] = map_rnr(map_pix[i], val_max=dim2, n=max_overlapping)
+        coded_orders[i] = map_rnr(map_ord[i], val_max=dim1, n=max_overlapping)
+
+    mat["pixels_rnr"] = coded_pixels
+    mat["orders_rnr"] = coded_orders
+    mat["merged"] = zone_merged
+    mat["blaze_correction"] = blaze_correction
+
+    pickle_dump(mat, open(self.directory + "Analyse_material.p", "wb"))
+
+
+def yarara_flux_constant(self: spec_time_series):
+    """
+    Compute the flux constant which allow to preserve the bolometric integrated flux
+    """
+
+    directory = self.directory
+
+    files = glob.glob(directory + "RASSI*.p")
+    files = np.sort(files)
+
+    all_flux = []
+    snr = []
+
+    for i, j in enumerate(files):
+        file = pd.read_pickle(j)
+        all_flux.append(file["flux"])
+        snr.append(file["parameters"]["SNR_5500"])
+
+    all_flux = np.array(all_flux)
+    snr = np.array(snr)
+
+    constants = np.sum(all_flux, axis=1)
+    constants = constants / constants[snr.argmax()]
+
+    for i, j in enumerate(files):
+        file = pd.read_pickle(j)
+        file["parameters"]["flux_balance"] = constants[i]
+        pickle_dump(file, open(j, "wb"))
+
+    self.yarara_analyse_summary()
+
+
+def yarara_color_template(
+    self: spec_time_series,
+    sub_dico: str = "matching_anchors",
+    continuum: Literal["linear"] = "linear",
+):
+    """
+    Define the color template used in the weighting of the lines for the CCF.
+    The color is defined as the matching_anchors continuum of the best SNR spectra.
+    The product is saved in the Material file.
+
+    Args:
+        sub_dico : The sub_dictionnary used to  select the continuum
+        continuum : The continuum to select (can only be linear)
+    """
+
+    self.import_table()
+    self.import_material()
+    load = self.material
+    tab = self.table
+    snr = np.array(tab["snr"]).argmax()
+
+    file_ref = self.import_spectrum(num=int(snr))
+    wave = file_ref["wave"]
+    continuum_ref = file_ref[sub_dico]["continuum_" + continuum]
+
+    load["wave"] = wave
+    load["color_template"] = continuum_ref
+    load["master_snr_curve"] = np.sqrt(
+        continuum_ref
+    )  # assuming flux units are in photon noise units
+    pickle_dump(load, open(self.directory + "Analyse_material.p", "wb"))
+
+
+def yarara_berv_summary(
+    self: spec_time_series,
+    sub_dico="matching_diff",
+    continuum="linear",
+    dbin_berv=0.3,
+    nb_plot=3,
+    telluric_fwhm=3.5,
+):
+    """
+    Produce a berv summary
+
+    Parameters
+    ----------
+
+    sub_dico : The sub_dictionnary used to  select the continuum
+    continuum : The continuum to select (either linear or cubic)
+    telluric_tresh : Treshold used to cover the position of the contaminated wavelength
+    wave_min : The minimum xlim axis
+    wave_max : The maximum xlim axis
+
+    """
+
+    logging.info("\n---- RECIPE : PRODUCE BERV SUMMARY ----\n")
+
+    self.import_table()
+    self.import_material()
+    tab = self.table
+
+    if sub_dico is None:
+        sub_dico = self.dico_actif
+    logging.info("---- DICO %s used ----" % (sub_dico))
+
+    all_flux = []
+    all_conti = []
+    snr = np.array(tab["snr"])
+    for i, name in enumerate(np.array(tab["filename"])):
+        file = pd.read_pickle(name)
+        if not i:
+            wavelength = file["wave"]
+            self.wave = wavelength
+
+        f = file["flux"]
+        f_std = file["flux_err"]
+        c = file[sub_dico]["continuum_" + continuum]
+        c_std = file["continuum_err"]
+
+        f_norm, f_norm_std = flux_norm_std(f, f_std, c, c_std)
+
+        all_flux.append(f_norm)
+        all_conti.append(file["matching_diff"]["continuum_" + continuum])
+
+    all_conti = np.array(all_conti)
+    all_flux = np.array(all_flux) * all_conti.copy()
+
+    berv = np.array(tab["berv"])
+    rv_shift = np.array(tab["rv_shift"])
+    berv = berv - rv_shift
+
+    window = np.arange(-350, 351, 1)
+    window = np.where(
+        abs(window) < telluric_fwhm * 10 / 2, 1, 0
+    )  # compute the contamination for the berv observations
+    windows = np.array([np.roll(window, int(i)) for i in berv * 10])
+    windows_contam = int(100 * sum(np.median(windows, axis=0)) / sum(window))
+
+    qc = int(windows_contam < 25)  # less than 25% of the telluric covered the full time
+    check = ["r", "g"][qc]
+
+    berv_bin = np.arange(
+        np.min(np.round(berv, 0)) - dbin_berv,
+        np.max(np.round(berv, 0)) + dbin_berv + 0.01,
+        dbin_berv,
+    )
+    mask_bin = (berv > berv_bin[0:-1][:, np.newaxis]) & (berv < berv_bin[1:][:, np.newaxis])
+    sum_mask = mask_bin[np.sum(mask_bin, axis=1) != 0]
+    if sum(np.sum(sum_mask, axis=1) != 0) < 5:  # need ast least 5 bins
+        dbin_berv = np.round((np.max(berv) - np.min(berv)) / 15, 1)
+        print("Bin size changed for %.1f km/s because not enough bins" % (dbin_berv))
+        if not dbin_berv:
+            dbin_berv = 0.05
+        berv_bin = np.arange(
+            np.min(np.round(berv, 0)) - dbin_berv,
+            np.max(np.round(berv, 0)) + dbin_berv + 0.01,
+            dbin_berv,
+        )
+        mask_bin = (berv > berv_bin[0:-1][:, np.newaxis]) & (berv < berv_bin[1:][:, np.newaxis])
+
+    plt.figure(figsize=(6 * nb_plot, 6))
+    plt.subplot(1, nb_plot, 1)
+    self.yarara_get_berv_value(0, Draw=True, new=False, save_fig=False, light_graphic=True)
+
+    ax = plt.gca()
+    for j in berv_bin:
+        plt.axhline(y=j, color="k", alpha=0.2)
+    plt.axhline(y=0, color="k", ls=":")
+
+    berv_bin = berv_bin[:-1][np.sum(mask_bin, axis=1) != 0] + dbin_berv / 2
+    mask_bin = mask_bin[np.sum(mask_bin, axis=1) != 0]
+    logging.info("Nb bins full : %.0f", (sum(np.sum(mask_bin, axis=1) != 0)))
+
+    all_conti_ref = []
+    snr_binned = []
+    snr_stacked = []
+    all_snr = []
+    for j in range(len(mask_bin)):
+        all_flux[j] = np.sum(all_flux[mask_bin[j]], axis=0)
+        all_conti[j] = np.sum(all_conti[mask_bin[j]], axis=0)
+        all_conti_ref.append(np.mean(all_conti[mask_bin[j]], axis=0))
+        snr_binned.append(np.sqrt(np.mean((snr[mask_bin[j]]) ** 2)))
+        snr_stacked.append(np.sqrt(np.sum((snr[mask_bin[j]]) ** 2)))
+        all_snr.append(list(snr[mask_bin[j]]))
+    all_flux = all_flux[0 : len(mask_bin)]
+    all_conti = all_conti[0 : len(mask_bin)]
+    all_conti_ref = np.array(all_conti_ref)
+    snr_binned = np.array(snr_binned)
+
+    if nb_plot == 3:
+        plt.subplot(1, nb_plot, 2)
+        plt.boxplot(
+            all_snr,
+            positions=berv_bin,
+            widths=dbin_berv / 2,
+            vert=False,
+            labels=[len(all_snr[j]) for j in range(len(all_snr))],
+        )
+        plt.scatter(snr_binned, berv_bin, marker="x", color="r")
+        plt.ylabel("Nb spectra", fontsize=16)
+
+        # plt.tick_params(labelleft=False)
+        plt.xlabel("SNR", fontsize=16)
+        plt.ylim(ax.get_ylim())
+
+    plt.subplot(1, nb_plot, nb_plot, sharey=ax)
+    plt.axhline(y=0, color="k", ls=":")
+    plt.title("Window contam covered = %.0f %%" % (windows_contam))
+    plot_color_box(color=check)
+
+    self.yarara_star_info(Contam_BERV=["fixed", int(windows_contam)])
+
+    plt.plot(snr_stacked, berv_bin, "bo-", alpha=0.3)
+    curve = tableXY(snr_stacked, berv_bin)
+    curve.myscatter(
+        num=False,
+        liste=[len(all_snr[j]) for j in range(len(all_snr))],
+        color="k",
+        factor=50,
+    )
+    plt.xlabel("SNR stacked", fontsize=16)
+    plt.ylabel("BERV [km/s]", fontsize=16)
+
+    plt.subplots_adjust(left=0.07, right=0.97, top=0.93, bottom=0.10)
+
+    plt.savefig(self.dir_root + "IMAGES/berv_statistic_summary.pdf")
+
+
+def yarara_obs_info(
+    self: spec_time_series,
+    kw=[None, None],
+    jdb=None,
+    berv=None,
+    rv=None,
+    airmass=None,
+    texp=None,
+    seeing=None,
+    humidity=None,
+):
+    """
+    Add some observationnal information in the RASSINE files and produce a summary table
+
+    Args:
+        kw: list-like with format [keyword,array]
+        jdb : array-like with same size than the number of files in the directory
+        berv : array-like with same size than the number of files in the directory
+        rv : array-like with same size than the number of files in the directory
+        airmass : array-like with same size than the number of files in the directory
+        texp : array-like with same size than the number of files in the directory
+        seeing : array-like with same size than the number of files in the directory
+        humidity : array-like with same size than the number of files in the directory
+    """
+
+    directory = self.directory
+
+    files = glob.glob(directory + "RASSI*.p")
+    files = np.sort(files)
+
+    nb = len(files)
+
+    if type(kw) == pd.core.frame.DataFrame:  # in case of a pandas dataframe
+        kw = [list(kw.keys()), [i for i in np.array(kw).T]]
+    else:
+        try:
+            if len(kw[1]) == 1:
+                kw[1] = [kw[1][0]] * nb
+        except TypeError:
+            kw[1] = [kw[1]] * nb
+
+        kw[0] = [kw[0]]
+        kw[1] = [kw[1]]
+
+    for i, j in enumerate(files):
+        file = pd.read_pickle(j)
+        for kw1, kw2 in zip(kw[0], kw[1]):
+            if kw1 is not None:
+                if len(kw1.split("ccf_")) - 1:
+                    file["ccf_gaussian"][kw1.split("ccf_")[1]] = kw2[i]
+                else:
+                    file["parameters"][kw1] = kw2[i]
+        if jdb is not None:
+            file["parameters"]["jdb"] = jdb[i]
+        if berv is not None:
+            file["parameters"]["berv"] = berv[i]
+        if rv is not None:
+            file["parameters"]["rv"] = rv[i]
+        if airmass is not None:
+            file["parameters"]["airmass"] = airmass[i]
+        if texp is not None:
+            file["parameters"]["texp"] = texp[i]
+        if seeing is not None:
+            file["parameters"]["seeing"] = seeing[i]
+        if humidity is not None:
+            file["parameters"]["humidity"] = humidity[i]
+        save_pickle(j, file)
+
+    self.yarara_analyse_summary()
+
+
+def snr_statistic(self: spec_time_series, version=1):
+    self.import_table()
+    if version == 1:
+        print(self.table["snr"].describe())
+        snr = np.array(self.table["snr"])
+    else:
+        print(self.table["snr_computed"].describe())
+        snr = np.array(self.table["snr_computed"])
+    plt.figure(figsize=(8, 7))
+    plt.title(
+        "\n Nb spectra : %.0f\nMin : %.0f   |   Q1 : %.0f   |   Q2 : %.0f   |   Q3 : %.0f   |   Max : %.0f\n"
+        % (
+            len(snr),
+            np.min(snr),
+            np.percentile(snr, 25),
+            np.percentile(snr, 50),
+            np.percentile(snr, 75),
+            np.max(snr),
+        ),
+        fontsize=16,
+    )
+    plt.hist(snr, bins=40, histtype="step", color="k")
+    plt.hist(snr, bins=40, alpha=0.2, color="b")
+    plt.axvline(x=np.median(snr), ls="-", color="k")
+    plt.axvline(
+        x=np.percentile(snr, 16),
+        ls=":",
+        color="k",
+        label=r"$16^{th}$ percentile = %.0f" % (np.percentile(snr, 16)),
+    )
+    plt.axvline(
+        x=np.percentile(snr, 84),
+        ls=":",
+        color="k",
+        label=r"$84^{th}$ percentile = %.0f" % (np.percentile(snr, 84)),
+    )
+    plt.legend(prop={"size": 14})
+
+    crit = int(np.percentile(snr, 50) > 75)
+    check = ["r", "g"][crit]  # median higher than snr 75 in at 5500 angstrom
+    plt.xlabel(r"$SNR_{5500}$", fontsize=16, fontweight="bold", color=check)
+    plot_color_box(color=check)
+
+    plt.savefig(self.dir_root + "IMAGES/snr_statistic_%.0f.pdf" % (version))
+
+
+def dace_statistic(
+    self: spec_time_series, substract_model=False, ymin=None, ymax=None, return_ylim=False
+):
+    self.import_table()
+    vec = self.import_dace_sts(substract_model=substract_model)
+    # vec.recenter(who='Y')
+
+    species = np.array(self.table["ins"])
+    vec.species_recenter(species=species)
+
+    vec.substract_polyfit(2, replace=False)
+    vec.rms_w()
+    vec.detrend_poly.rms_w()
+    vec.night_stack()
+
+    plt.figure(figsize=(15, 6))
+    vec.plot(color="gray", alpha=0.25, capsize=0, label="rms : %.2f m/s" % (vec.rms))
+    vec.detrend_poly.plot(
+        color="k",
+        capsize=0,
+        label="rms2 : %.2f m/s" % (vec.detrend_poly.rms),
+        species=species,
+    )
+    plt.xlabel(r"Time BJD [days]", fontsize=16)
+    plt.ylabel(r"RV [m/s]", fontsize=16)
+    plt.legend(prop={"size": 14})
+    plot_copy_time()
+
+    if ymin is not None:
+        plt.ylim(ymin, ymax)
+
+    mini = np.min(vec.x)
+    maxi = np.max(vec.x)
+    plt.title(
+        "%s\n  Nb measurements : %.0f | Nb nights : %.0f | Time span : %.0f days \n   Min : %.0f (%s)  |  Max : %.0f (%s)\n   rms : %.2f m/s   |   rms2 : %.2f m/s   |   $\sigma_{\gamma}$ : %.2f m/s\n"
+        % (
+            self.starname,
+            len(vec.x),
+            len(vec.stacked.x),
+            maxi - mini,
+            mini,
+            Time(mini + 2400000, format="jd").iso.split(" ")[0],
+            maxi,
+            Time(maxi + 2400000, format="jd").iso.split(" ")[0],
+            vec.rms,
+            vec.detrend_poly.rms,
+            np.nanmedian(vec.yerr),
+        ),
+        fontsize=16,
+        va="top",
+    )
+    plt.subplots_adjust(left=0.06, right=0.96, top=0.72)
+    plt.savefig(self.dir_root + "IMAGES/RV_statistic.pdf")
+    if return_ylim:
+        ax = plt.gca()
+        return ax.get_ylim()
+
+
+def yarara_transit_def(self: spec_time_series, period=100000, T0=55000, duration=2, auto=False):
+    """period in days, T0 transits center in jdb - 2'400'000, duration in hours"""
+
+    self.import_table()
+    self.import_star_info()
+
+    time = np.sort(np.array(self.table.jdb))
+
+    if auto:
+        table_transit = pd.read_csv(root + "/Python/Material/transits.csv", index_col=0)
+        star_transit_properties = table_transit.loc[table_transit["starname"] == self.starname]
+        if len(star_transit_properties):
+            period = np.array(star_transit_properties["period"]).astype("float")
+            T0 = np.array(star_transit_properties["T0"]).astype("float")
+            duration = np.array(star_transit_properties["dt"]).astype("float")
+            teff = int(star_transit_properties["Teff"].values[0])
+            fwhm = int(star_transit_properties["FWHM"].values[0])
+            if teff:
+                print(
+                    "\n [INFO] Effective temperature upated from %.0f to %.0f K"
+                    % (self.star_info["Teff"]["fixed"], teff)
+                )
+                self.yarara_star_info(Teff=["fixed", int(teff)])
+            if fwhm:
+                print(
+                    "\n [INFO] FWHM upated from %.0f to %.0f km/s"
+                    % (self.star_info["FWHM"]["fixed"], fwhm)
+                )
+                self.yarara_star_info(Fwhm=["fixed", int(fwhm)])
+                self.fwhm = fwhm
+
+            for p, t0, dt in zip(period, T0, duration):
+                print(
+                    "\n [INFO] Star %s found in the table : P = %.2f days | T0 = %.2f JDB | T14 = %.2f hours | Teff = %.0f K | FWHM = %.0f km/s"
+                    % (self.starname, p, t0, dt, teff, fwhm)
+                )
+        else:
+            print("\n [WARNING] Star %s not found in the transits.csv table" % (self.starname))
+            if (period != 100000) & (period != 0):
+                period = np.array([period])
+                T0 = np.array([T0])
+                duration = np.array([duration])
+            else:
+                period = np.array([])
+                T0 = np.array([])
+                duration = np.array([])
+    else:
+        if (period != 100000) & (period != 0):
+            period = np.array([period])
+            T0 = np.array([T0])
+            duration = np.array([duration])
+        else:
+            period = np.array([])
+            T0 = np.array([])
+            duration = np.array([])
+
+    duration /= 24
+
+    transits = np.zeros(len(time))
+
+    c = 0
+    for p, t0, dt in zip(period, T0, duration):
+        c += 1
+        phases = ((time - t0) % p + p / 2) % p - p / 2
+        transits += c * (abs(phases) < (dt / 2)).astype("int")
+
+    if np.sum(transits):
+        plt.figure(figsize=(15, 5))
+        plt.subplot(2, 1, 1)
+        plt.ylabel("SNR", fontsize=14)
+        plt.scatter(time, self.table.snr, c=transits, zorder=10)
+
+        transit_draw(period, T0, duration)
+
+        length = (np.max(time) - np.min(time)) * 0.1
+        plt.xlim(np.min(time) - length, np.max(time) + length)
+
+        plt.title(
+            "%s In/Out spectra : %.0f/%.0f"
+            % (
+                self.starname,
+                sum(transits != 0),
+                len(transits) - sum(transits != 0),
+            )
+        )
+        ax = plt.gca()
+
+        plt.subplot(2, 1, 2, sharex=ax)
+        plt.xlabel("Jdb - 2,400,000 [days]", fontsize=14)
+        plt.ylabel("RV", fontsize=14)
+        plt.scatter(time, self.table.rv_dace, c=transits, zorder=10)
+
+        transit_draw(period, T0, duration)
+
+        length = (np.max(time) - np.min(time)) * 0.1
+        plt.xlim(np.min(time) - length, np.max(time) + length)
+
+        plt.savefig(self.dir_root + "IMAGES/Transit_definition.pdf")
+
+        plt.show(block=False)
+
+    self.yarara_obs_info(kw=["transit_in", transits])
+
+
+def yarara_get_first_wave(self: spec_time_series):
+    m, m_std, wave = self.yarara_map(
+        sub_dico="matching_diff",
+        wave_min=3800,
+        wave_max=4600,
+        plot=False,
+        reference=False,
+    )
+    snrs = np.median(m, axis=0) / (mad(m, axis=0) + 1e-6)
+    bad_wave = wave[snrs < 1]
+    if len(bad_wave):
+        min_wave = np.percentile(bad_wave, 95)
+    else:
+        min_wave = np.nanmin(wave)
+    logging.info("Minimum wavelength such than SNR>1 defined at %.2f AA", min_wave)
+    return min_wave
+
+
+def yarara_plot_rcorr_dace(self: spec_time_series, bin_length=1, detrend=2, vmin=0.3):
+    self.import_dace_summary(bin_length=bin_length)
+    table_dace = self.table_dace
+    table_dace["rjd"] = table_dace["jdb"]
+    cols = np.in1d(
+        np.array(
+            [
+                "vrad",
+                "fwhm",
+                "contrast",
+                "v_span",
+                "bis_span",
+                "ca",
+                "ha",
+                "na",
+                "skew",
+                "rhk",
+                "s_mw",
+            ]
+        ),
+        np.array(table_dace.keys()),
+    )
+    cols = np.array(
+        [
+            "vrad",
+            "fwhm",
+            "contrast",
+            "v_span",
+            "bis_span",
+            "ca",
+            "ha",
+            "na",
+            "skew",
+            "rhk",
+            "s_mw",
+        ]
+    )[cols]
+
+    v = []
+    v_col = []
+    for l in cols:
+        vec = tableXY(table_dace["rjd"].astype("float"), table_dace[l].astype("float"))
+        if np.nansum(abs(vec.y)) > 0:
+            vec.replace_nan()
+            v_col.append(l)
+            vec.substract_polyfit(detrend, replace=True)
+            v.append(vec.y)
+
+    v = np.array(v)
+    m = analysis.table(v)
+    plt.figure(figsize=(12, 12))
+    m.r_matrix(name=v_col, absolute=True, vmin=vmin)
+    plt.savefig(
+        self.dir_root
+        + "IMAGES/Proxy_R_matrix_dace_bin%.0f_d%.0f.pdf" % (int(bin_length), int(detrend))
+    )
+
+
+def import_planet(self: spec_time_series):
+    file_test = self.import_spectrum()
+    self.import_table()
+    par = file_test["parameters"]["planet_injected"]
+    rv = []
+    rvi = np.zeros(len(self.table.jdb))
+    for k in range(len(par["amp"])):
+        amp, period, phi = par["amp"][k], par["period"][k], par["phase"][k]
+        logging.info("Planet %.0f : %.1f,%.2f,%.2f" % (k + 1, amp, period, phi))
+        rvj = amp * np.sin(2 * np.pi * (self.table.jdb - np.min(self.table.jdb)) / period + phi)
+        rvi += rvj
+        rv.append(tableXY(self.table.jdb, rvj, np.std(rvj) / 10 + 0 * rvj))
+    self.rv_planet_i = rv
+    planet = myc.tableXY(self.table.jdb, rvi, np.std(rvi) / 10 + 0 * rvi)
+    self.rv_planet = planet
+
+
+def import_dace_sts(
+    self: spec_time_series, substract_model=False
+):  # subtract_model used by default
+    self.import_table()
+
+    model = np.array(self.table["rv_shift"]) * 1000
+    vector = np.array(self.table["rv_dace"])
+
+    coeff = np.argmin(
+        [
+            mad(vector - model),
+            mad(vector - 0 * model),
+            mad(vector + model),
+        ]
+    )
+    print(" [INFO] Coefficient selected :", coeff)
+
+    vec = tableXY(
+        self.table["jdb"],
+        self.table["rv_dace"] + (coeff - 1) * model,
+        self.table["rv_dace_std"],
+    )
+
+    if self.planet:
+        self.import_planet()
+        vec.y += self.rv_planet.y
+
+    return vec
+
+
+def import_dace_summary(self: spec_time_series, bin_length=0):
+    self.import_table()
+    rv = tableXY(
+        np.array(self.table.jdb),
+        np.array(self.table["rv_dace"]) - 1000 * np.array(self.table["rv_shift"]),
+        np.array(self.table["rv_dace_std"]),
+    )
+    rv.recenter(who="Y")
+
+    self.table_dace = pd.read_csv(
+        self.dir_root + "DACE_TABLE/Dace_extracted_table.csv", index_col=0
+    )
+
+    tab = self.table_dace
+
+    dace_rv = tableXY(tab["rjd"], tab["vrad"] - 1000 * tab["model"], tab["svrad"])
+    if bin_length:
+        dace_rv.night_stack(bin_length=bin_length, replace=True)
+    dace_rv, dust = dace_rv.match_x(rv, replace=False)
+
+    matrix = []
+    matrix.append(rv.x)
+    matrix.append(rv.y)
+    matrix.append(rv.yerr)
+    matrix = np.array(matrix)
+
+    table = pd.DataFrame(matrix.T, columns=["jdb", "vrad", "svrad"])
+
+    # for i,j in zip(['fwhm','contrast','bis_span','s_mw','ha','na','ca','rhk'],['sig_fwhm','sig_contrast','sig_bis_span','sig_s','sig_ha','sig_na','sig_ca','sig_rhk']):
+    for i, j in zip(
+        ["fwhm", "contrast", "bis_span", "s_mw", "rhk"],
+        ["sig_fwhm", "sig_contrast", "sig_bis_span", "sig_s", "sig_rhk"],
+    ):
+        dace_X = tableXY(tab["rjd"].copy(), tab[i].copy(), tab[j].copy())
+        if bin_length:
+            dace_X.night_stack(bin_length=bin_length, replace=True)
+        dace_X, dust = dace_X.match_x(rv, replace=False)
+        table[i] = dace_X.y
+        table[j] = dace_X.yerr
+
+    dace_berv = tableXY(tab["rjd"], tab["berv"], tab["svrad"])
+    if bin_length:
+        dace_berv.night_stack(bin_length=bin_length, replace=True)
+    dace_berv, dust = dace_berv.match_x(rv, replace=False)
+
+    table["berv"] = dace_berv.y
+
+    table["sn_caii"] = self.table["snr"]
+    table["ins_name"] = self.table["ins"]
+
+    self.table_dace = table
+
+    input_class = table(table)
+
+    input_class.export_to_dace(
+        self.dir_root + "KEPLERIAN/" + self.starname + "_drs_timeseries.rdb"
+    )

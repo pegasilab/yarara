@@ -69,15 +69,28 @@ class spec_time_series(object):
     from .activity import yarara_correct_activity
     from .bridge import (
         continuum_error,
+        dace_statistic,
         flux_error,
+        import_dace_sts,
+        import_dace_summary,
+        import_planet,
         scale_cmap,
+        snr_statistic,
         suppress_low_snr_spectra,
         suppress_time_RV,
+        yarara_berv_summary,
         yarara_check_fwhm,
         yarara_check_rv_sys,
+        yarara_color_template,
         yarara_correct_secular_acc,
+        yarara_flux_constant,
+        yarara_get_first_wave,
+        yarara_map_1d_to_2d,
+        yarara_obs_info,
+        yarara_plot_rcorr_dace,
         yarara_simbad_query,
         yarara_suppress_doubtful_spectra,
+        yarara_transit_def,
     )
     from .ccf.analysis import yarara_ccf
     from .ccf.io import read_ccf_mask, yarara_ccf_save
