@@ -1,22 +1,22 @@
 {
-    "editor.formatOnSave": true,
-    "python.formatting.provider": "black",
     "[python]": {
+        "editor.rulers": [99],
         "editor.codeActionsOnSave": {
             "source.organizeImports": true
-        }
+        },
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
     },
     "python.analysis.indexing": true,
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.diagnosticSeverityOverrides": {
         "reportTypedDictNotRequiredAccess": "none",
-        "reportUnboundVariable": "error", // TODO: reenable
+        "reportUnboundVariable": "error",
         "reportGeneralTypeIssues": "error",
     },
     "python.analysis.diagnosticMode": "workspace",
     "autoDocstring.guessTypes": false,
     "autoDocstring.docstringFormat": "google-notypes",
-    //    "python.linting.mypyEnabled": true,
     "files.exclude": {
         ".venv/": true,
         "**/__pycache__": true,
