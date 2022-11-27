@@ -13,11 +13,12 @@ python -m venv .venv # to create the virtual environment that Poetry will use
 poetry install --all-extras # remove --all-extras if you do not want to build the docs
 ```
 
+All the remaining commands below are run from the /Python subdirectory.
+
 ## To try it
 
 ```bash
-cd Python # (if not done already)
-poetry run ./run_HD110315.sh
+poetry run test/bats/bin/bats test/test_HD110315.bats # will run the full pipeline including RASSINE
 ```
 
 ## To build the docs
@@ -29,4 +30,4 @@ cd Python # (if not done already)
 poetry run make -C docs clean html
 ```
 
-The files are then in `Python/docs/build/html`.
+The files are then in `docs/build/html`.
