@@ -4,6 +4,7 @@ YARARA working copy
 ## To install
 
 ```bash
+git clone git@github.com:pegasilab/yarara.git
 cd yarara
 git submodule update --init # will also pull the HD110315 data for tests
 cd Python
