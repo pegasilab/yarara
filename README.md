@@ -8,6 +8,7 @@ cd yarara
 git submodule update --init # will also pull the HD110315 data for tests
 cd Python
 python -m venv .venv # to create the virtual environment that Poetry will use
+.venv/bin/python -m pip install --upgrade pip #upgrade the pip version to latest one
 poetry install --all-extras # remove --all-extras if you do not want to build the docs
 ```
 
