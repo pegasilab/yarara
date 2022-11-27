@@ -10,6 +10,7 @@ import matplotlib.colors as mplcolors
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from numpy import ndarray
 from numpy.typing import NDArray
 from tqdm import tqdm
 
@@ -33,7 +34,7 @@ def yarara_correct_mad(
     k_mad: int = 2,
     n_iter: int = 1,
     ext: str = "0",
-) -> NDArray[np.float64]:
+) -> ndarray:
     """
     Suppress flux value outside k-sigma mad clipping
 

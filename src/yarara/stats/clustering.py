@@ -4,15 +4,16 @@ This modules does XXX
 from typing import List, Tuple, Union
 
 import numpy as np
+from numpy import ndarray
 from numpy.typing import NDArray
 
 
 def flat_clustering(
     length: int,
-    cluster_output: np.ndarray,
+    cluster_output: ndarray,
     extended: int = 0,
-    elevation_: Union[int, NDArray[np.int64]] = 1,
-) -> np.ndarray:
+    elevation_: int = 1,  # TODO: really a integer and not an array
+) -> ndarray:
     vec = np.arange(length)
     if isinstance(elevation_, int):
         elevation = np.ones(len(cluster_output)) * elevation_  # type: ignore
@@ -29,8 +30,8 @@ def flat_clustering(
 
 
 def clustering(
-    array: NDArray[np.float64], tresh: Union[int, float], num: Union[int, float]
-) -> Tuple[NDArray[np.float64], NDArray[np.int64]]:
+    array: ndarray, tresh: Union[float, int], num: Union[float, int]
+) -> Tuple[ndarray, ndarray]:
     difference = abs(np.diff(array))
     cluster = difference < tresh
     if len(cluster) > 0:

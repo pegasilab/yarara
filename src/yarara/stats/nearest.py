@@ -1,18 +1,20 @@
 """
 This modules does XXX
 """
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 
 import numpy as np
+from numpy import float64, int64, ndarray
 from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
 
+# TODO: both to ArrayLike
 def find_nearest(
-    array: NDArray[np.float64], value: Any, dist_abs: bool = True
-) -> Tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.float64]]:
+    array: ndarray, value: Union[float, int64, int, float64, ndarray], dist_abs: bool = True
+) -> Tuple[ndarray, ndarray, ndarray]:
     if type(array) != np.ndarray:
-        array = np.array(array)
+        array = np.array(array)  # TODO: -> np.asarray
     if type(value) != np.ndarray:
         value = np.array([value])
 
@@ -25,7 +27,7 @@ def find_nearest(
     return idx, array[idx], distance
 
 
-def identify_nearest(array1: np.ndarray, array2: np.ndarray) -> np.ndarray:
+def identify_nearest(array1: ndarray, array2: ndarray) -> ndarray:
     """identify the closest elements in array2 of array1"""
     array1 = np.sort(array1)
     array2 = np.sort(array2)
@@ -41,10 +43,10 @@ def identify_nearest(array1: np.ndarray, array2: np.ndarray) -> np.ndarray:
 
 
 def match_nearest(
-    array1_: ArrayLike, array2_: ArrayLike, fast: bool = True, max_dist: None = None
-) -> np.ndarray:
+    array1_: ndarray, array2_: ndarray, fast: bool = True, max_dist: None = None
+) -> ndarray:
     """return a table [idx1,idx2,num1,num2,distance] matching the closest element from two arrays. Remark : algorithm very slow by conception if the arrays are too large."""
-    array1 = np.array(array1_)
+    array1 = np.array(array1_)  # TODO: asarray
     array2 = np.array(array2_)
     if not (np.product(~np.isnan(array1)) * np.product(~np.isnan(array2))):
         print(

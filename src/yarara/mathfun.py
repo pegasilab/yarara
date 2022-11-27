@@ -20,22 +20,22 @@ def voigt(x, amp, cen, wid, wid2):
 
 def sinus(
     x: ndarray,
-    amp: Union[int, float64],
+    amp: Union[float64, int],
     period: Union[float, float64],
-    phase: Union[int, float64],
+    phase: Union[float64, int],
     a: int,
     b: int,
-    c: Union[int, float64],
+    c: Union[float64, int],
 ) -> ndarray:
     return amp * np.sin(x * 2 * np.pi / period + phase) + a * x**2 + b * x + c
 
 
 def gaussian(
     x: ndarray,
-    cen: Union[int, float64],
-    amp: Union[float, float64],
-    offset: Union[int, float64],
-    wid: Union[int, float64],
+    cen: float64,
+    amp: float64,
+    offset: float64,
+    wid: float64,
 ) -> ndarray:
     return amp * np.exp(-((x - cen) ** 2) / (2 * wid**2)) + offset
 

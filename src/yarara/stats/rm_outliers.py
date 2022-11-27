@@ -4,6 +4,7 @@ This modules does XXX
 from typing import Literal, Tuple, Union, overload
 
 import numpy as np
+from numpy import ndarray
 from numpy.typing import ArrayLike, NDArray
 
 from ..util import assert_never
@@ -11,36 +12,33 @@ from ..util import assert_never
 
 @overload
 def rm_outliers(
-    array_: ArrayLike,
-    return_borders: Literal[False] = False,
-    m: float = 1.5,
-    kind: Union[Literal["inter"], Literal["sigma"], Literal["mad"]] = "sigma",
+    array_: ndarray,
+    return_borders: bool = False,
+    m: int = 1.5,  # TODO: float
+    kind: str = "sigma",
     axis: int = 0,
-) -> Tuple[NDArray[np.bool_], NDArray[np.float64]]:
+) -> Tuple[ndarray, ndarray]:
     pass
 
 
 @overload
 def rm_outliers(
-    array_: ArrayLike,
-    return_borders: Literal[True],
-    m: float = 1.5,
-    kind: Union[Literal["inter"], Literal["sigma"], Literal["mad"]] = "sigma",
+    array_: ndarray,
+    return_borders: bool,
+    m: int = 1.5,
+    kind: str = "sigma",
     axis: int = 0,
-) -> Tuple[NDArray[np.bool_], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+) -> Tuple[ndarray, ndarray]:
     pass
 
 
 def rm_outliers(
-    array_: ArrayLike,
+    array_: ndarray,
     return_borders: bool = False,
-    m: float = 1.5,
-    kind: Union[Literal["inter"], Literal["sigma"], Literal["mad"]] = "sigma",
+    m: int = 1.5,
+    kind: str = "sigma",
     axis: int = 0,
-) -> Union[
-    Tuple[NDArray[np.bool_], NDArray[np.float64]],
-    Tuple[NDArray[np.bool_], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]],
-]:
+) -> Tuple[ndarray, ndarray]:
     array = np.array(array_)
 
     sup = np.inf

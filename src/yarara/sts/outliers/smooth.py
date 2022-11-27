@@ -19,13 +19,11 @@ if TYPE_CHECKING:
 
 def yarara_correct_smooth(
     self: spec_time_series,
-    sub_dico: Optional[str] = "matching_diff",
-    reference: Union[
-        int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]
-    ] = "median",
+    sub_dico: str = "matching_diff",
+    reference: str = "median",
     wave_min: float = 4200.0,
     wave_max: float = 4300.0,
-    window_ang: float = 5.0,
+    window_ang: int = 5.0,
 ) -> None:
 
     print_box("\n---- RECIPE : CORRECTION SMOOTH ----\n")

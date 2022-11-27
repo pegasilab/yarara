@@ -28,15 +28,13 @@ if TYPE_CHECKING:
 def yarara_correct_telluric_gradient(
     self: spec_time_series,
     sub_dico_detection: str = "matching_fourier",
-    sub_dico_correction: Optional[str] = "matching_oxygen",  # was None
+    sub_dico_correction: None = "matching_oxygen",  # was None
     wave_min_train: float = 4200.0,
     wave_max_train: float = 5000.0,
-    wave_min_correction: float = 4400,
-    wave_max_correction: float = 6600,
+    wave_min_correction: int = 4400,  # TODO: put a float default
+    wave_max_correction: int = 6600,
     smooth_map: int = 1,
-    reference: Union[
-        int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]
-    ] = "master",
+    reference: str = "master",
     inst_resolution: int = 110000,
     equal_weight: bool = True,
     nb_pca_comp: int = 20,

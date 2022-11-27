@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, List, Literal, Optional, Sequence, Tuple,
 
 import matplotlib.pylab as plt
 import numpy as np
+from numpy import float64, ndarray
 from numpy.typing import NDArray
 from tqdm import tqdm
 
@@ -34,20 +35,18 @@ def yarara_map(
     sub_dico: str = "matching_diff",
     planet: bool = False,
     unit: float = 1.0,
-    wave_min: Optional[float] = 4000.0,  # was None
-    wave_max: Optional[float] = 4300.0,  # was None
+    wave_min: Optional[Union[float64, float, int]] = 4000.0,  # was None
+    wave_max: Optional[Union[float64, float, int]] = 4300.0,  # was None
     index: str = "index",
     ratio: bool = False,
-    reference: Union[
-        int, NDArray[np.float64], Literal["snr", "median", "master", "zeros"]
-    ] = "median",
+    reference: str = "median",
     new: bool = True,
     plot: bool = True,
-    substract_map: Sequence[str] = [],
-    add_map: Sequence[str] = [],
+    substract_map: List[Any] = [],
+    add_map: List[Any] = [],
     correction_factor: bool = True,
     p_noise: float = 1 / np.inf,
-) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+) -> Tuple[ndarray, ndarray, ndarray]:
 
     """
     Display the time-series spectra with proxies and its correlation

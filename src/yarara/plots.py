@@ -10,7 +10,7 @@ import matplotlib
 import matplotlib.pylab as plt
 import numpy as np
 from matplotlib.axes import Axes
-from numpy import ndarray
+from numpy import float64, ndarray
 from scipy import ndimage
 
 from .stats import IQ, smooth2d
@@ -74,17 +74,13 @@ def plot_color_box(
     color: str = "r",
     font: str = "bold",
     lw: int = 2,
-    ax: Optional[Axes] = None,
-    side_: Union[
-        Literal["top"], Literal["bottom"], Literal["left"], Literal["right"], Literal["all"]
-    ] = "all",
+    side_: str = "all",
     ls: str = "-",
 ) -> None:
     if ls == "-":
         ls = "solid"
 
-    if ax is None:
-        ax = plt.gca()
+    ax = plt.gca()
 
     if side_ == "all":
         side = ["top", "bottom", "left", "right"]
@@ -112,12 +108,12 @@ def my_colormesh(
     x: ndarray,
     y: ndarray,
     z: ndarray,
-    return_output: Literal[False] = False,
+    return_output: bool = False,
     cmap: str = "seismic",
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
+    vmin: Optional[Union[float, float64]] = None,
+    vmax: Optional[Union[float, float64]] = None,
     zoom: int = 1,
-    shading: Optional[Literal["flat", "nearest", "gouraud", "auto"]] = "auto",
+    shading: str = "auto",
     order: int = 3,
     smooth_box: int = 1,
 ) -> None:
@@ -129,15 +125,15 @@ def my_colormesh(
     x: ndarray,
     y: ndarray,
     z: ndarray,
-    return_output: Literal[True],
+    return_output: bool,
     cmap: str = "seismic",
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
+    vmin: Optional[Union[float, float64]] = None,
+    vmax: Optional[Union[float, float64]] = None,
     zoom: int = 1,
-    shading: Optional[Literal["flat", "nearest", "gouraud", "auto"]] = "auto",
+    shading: str = "auto",
     order: int = 3,
     smooth_box: int = 1,
-) -> Tuple[ndarray, ndarray, ndarray]:
+) -> None:
     pass
 
 
@@ -147,13 +143,13 @@ def my_colormesh(
     z: ndarray,
     return_output: bool = False,
     cmap: str = "seismic",
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
+    vmin: Optional[Union[float, float64]] = None,
+    vmax: Optional[Union[float, float64]] = None,
     zoom: int = 1,
-    shading: Optional[Literal["flat", "nearest", "gouraud", "auto"]] = "auto",
+    shading: str = "auto",
     order: int = 3,
     smooth_box: int = 1,
-) -> Optional[Tuple[ndarray, ndarray, ndarray]]:
+) -> None:
 
     dx = x[-1] - x[-2]
     dy = y[-1] - y[-2]

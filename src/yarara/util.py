@@ -1,18 +1,18 @@
 """
 This modules does XXX
 """
-from typing import Iterable, NoReturn, Optional, Sequence, Tuple, Union, overload
+from typing import List, Iterable, NoReturn, Optional, Sequence, Tuple, Union, overload
 
 import numpy as np
 from colorama import Fore
-from numpy import float32, float64, ndarray
+from numpy import int64, float32, float64, ndarray
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
 
 def string_contained_in(
-    array: Union[np.ndarray, Sequence[str]], string: str, inv=False
-) -> Tuple[np.ndarray, np.ndarray]:
+    array: List[str], string: str, inv: bool=False
+) -> Tuple[ndarray, ndarray]:
     """
 
     Args:
@@ -122,7 +122,7 @@ def my_ruler(mini, maxi, dmini, dmaxi):
     return a
 
 
-def map_rnr(array: ndarray, val_max: Optional[float] = None, n: int = 2) -> ndarray:
+def map_rnr(array: ndarray, val_max: Optional[int] = None, n: Union[int64, int] = 2) -> ndarray:
     """val_max must be strictly larger than all number in the array, n smaller than 10"""
     if type(array) != np.ndarray:
         array = np.hstack([array])
@@ -185,7 +185,7 @@ def ccf_fun(
     spec1: ndarray,
     spec2: ndarray,
     extended: int = 1500,
-    rv_range: float = 45.0,
+    rv_range: Union[float, int] = 45.0,
     oversampling: int = 10,
     spec1_std: Optional[ndarray] = None,
 ) -> Tuple[ndarray, ndarray, ndarray]:
@@ -293,7 +293,7 @@ def print_box(sentence: str) -> None:
     print("\n")
 
 
-def doppler_r(lamb: Union[ndarray, float], v: Union[ndarray, float]) -> Tuple[ndarray, ndarray]:
+def doppler_r(lamb: Union[float64, float, ndarray], v: Union[float64, float, int]) -> Tuple[ndarray, ndarray]:
     """Relativistic Doppler. Take (wavelength, velocity in [m/s]) and return lambda observed and lambda source"""
     c = 299.792e6
     button = False

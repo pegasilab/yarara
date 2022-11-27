@@ -3,10 +3,11 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 import pandas as pd
+from numpy import float64
 from tqdm import tqdm
 
 from ... import io
@@ -17,7 +18,9 @@ if TYPE_CHECKING:
 
 
 def yarara_cut_spectrum(
-    self: spec_time_series, wave_min: Optional[float] = None, wave_max: Optional[float] = None
+    self: spec_time_series,
+    wave_min: Optional[float64] = None,
+    wave_max: Optional[Union[float, int]] = None,
 ) -> None:
     """Cut the spectrum time-series borders to reach the specified wavelength limits (included)
 

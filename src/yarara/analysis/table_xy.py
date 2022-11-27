@@ -10,7 +10,9 @@ import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from lmfit import Model, Parameters
+from numpy import float64, ndarray
 from numpy.typing import ArrayLike, NDArray
+from pandas.core.series import Series
 from scipy.interpolate import interp1d
 from statsmodels.stats.weightstats import DescrStatsW
 
@@ -45,8 +47,8 @@ class tableXY(object):
 
     def __init__(
         self,
-        x: Optional[ArrayLike],
-        y: ArrayLike,
+        x: Union[List[float64], Series, ndarray],
+        y: Union[List[float64], Series, List[Union[float64, float]], ndarray],
         *errs: ArrayLike,
     ) -> None:
         """Creates a tableXY
@@ -148,16 +150,16 @@ class tableXY(object):
 
     def myscatter(
         self,
-        num=True,
-        liste=None,
-        factor=30,
-        color="b",
-        alpha=1,
-        x_offset=0,
-        y_offset=0,
-        color_text="k",
-        modulo=None,
-    ):
+        num: bool = True,
+        liste: Optional[List[int]] = None,
+        factor: int = 30,
+        color: str = "b",
+        alpha: int = 1,
+        x_offset: int = 0,
+        y_offset: int = 0,
+        color_text: str = "k",
+        modulo: None = None,
+    ) -> None:
         n = np.arange(len(self.x)).astype("str")
         if modulo is not None:
             newx = self.x % modulo
@@ -190,7 +192,7 @@ class tableXY(object):
             self.ymean = np.nanmean(self.y)
             self.y = self.y - np.nanmean(self.y)
 
-    def species_recenter(self, species, ref=None, replace=True):
+    def species_recenter(self, species: ndarray, ref: None = None, replace: bool = True) -> None:
 
         spe = np.unique(species)
         shift = np.zeros(len(self.y))
@@ -218,7 +220,7 @@ class tableXY(object):
         else:
             self.species_recentered = tableXY(self.x, newy, self.xerr, self.yerr)
 
-    def night_stack(self, db=0, bin_length=1, replace=False):
+    def night_stack(self, db: int = 0, bin_length: int = 1, replace: bool = False) -> None:
 
         jdb = self.x
         vrad = self.y
@@ -271,7 +273,7 @@ class tableXY(object):
             self.rms = 0
             self.weighted_average = self.y[0]
 
-    def copy(self) -> tableXY:
+    def copy(self) -> "tableXY":
         return tableXY(self.x.copy(), self.y.copy(), self.xerr.copy(), self.yerr.copy())
 
     def switch(self):
@@ -279,7 +281,7 @@ class tableXY(object):
         self.x, self.y = self.y, self.x
         self.xerr, self.yerr = self.yerr, self.xerr
 
-    def order(self, order: Optional[ArrayLike] = None) -> None:
+    def order(self, order: None = None) -> None:
         if order is None:
             order = self.x.argsort()
         else:
@@ -295,8 +297,8 @@ class tableXY(object):
 
     def clip(
         self,
-        min: List[Optional[Union[float, int]]] = [None, None],
-        max: List[Optional[Union[float, int]]] = [None, None],
+        min: List[Optional[Union[float64, int, float]]] = [None, None],
+        max: List[Optional[Union[float64, int, float]]] = [None, None],
         replace: bool = True,
         invers: bool = False,
     ) -> None:
@@ -350,14 +352,14 @@ class tableXY(object):
         self.yerr[np.isnan(self.yerr)] = np.random.randn(sum(np.isnan(self.yerr)))
         self.xerr[np.isnan(self.xerr)] = np.random.randn(sum(np.isnan(self.xerr)))
 
-    def suppress_mask(self, mask: np.ndarray) -> None:
+    def suppress_mask(self, mask: ndarray) -> None:
         self.x = self.x[mask]
         self.y = self.y[mask]
         self.xerr = self.xerr[mask]
         self.yerr = self.yerr[mask]
 
     def center_symmetrise(
-        self, center: np.ndarray, replace: bool = False, Plot: bool = False
+        self, center: ndarray, replace: bool = False, Plot: bool = False
     ) -> None:
         x = self.x
         kernel = self.copy()
@@ -387,7 +389,7 @@ class tableXY(object):
         self,
         Show: bool = False,
         color: str = "k",
-        label: Optional[str] = "",
+        label: str = "",
         ls: str = "",
         offset: int = 0,
         mask: None = None,
@@ -395,9 +397,9 @@ class tableXY(object):
         fmt: str = "o",
         markersize: int = 6,
         zorder: int = 1,
-        species: Optional[NDArray[np.float64]] = None,
+        species: Optional[ndarray] = None,
         alpha: float = 1.0,
-        modulo: Optional[float] = None,
+        modulo: Optional[Union[float, float64]] = None,
         modulo_norm: bool = False,
         cmap: str = "viridis",
         new: bool = False,
@@ -541,7 +543,7 @@ class tableXY(object):
     def smooth(
         self,
         box_pts: int = 5,
-        shape: Union[int, Literal["savgol", "rectangular", "gaussian"]] = "rectangular",
+        shape: str = "rectangular",
         replace: bool = True,
     ) -> None:
         self.y_smoothed = smooth(self.y, box_pts, shape=shape)
@@ -566,7 +568,9 @@ class tableXY(object):
             self.y_backup = self.y
             self.y = new.y
 
-    def substract_polyfit(self, deg: int, replace: bool = False, Draw: bool = False) -> None:
+    def substract_polyfit(
+        self, deg: Union[float64, int], replace: bool = False, Draw: bool = False
+    ) -> None:
         model = None
         self.replace_nan()
 
@@ -687,11 +691,9 @@ class tableXY(object):
 
     def rm_outliers(
         self,
-        who: Union[
-            Literal["X"], Literal["Xerr"], Literal["Y"], Literal["Yerr"], Literal["both"]
-        ] = "Y",
+        who: str = "Y",
         m: int = 2,
-        kind: Union[Literal["inter"], Literal["sigma"], Literal["mad"]] = "inter",
+        kind: str = "inter",
         replace: bool = True,
     ) -> None:
 
@@ -717,7 +719,7 @@ class tableXY(object):
 
     def fit_gaussian(
         self,
-        guess: Optional[ArrayLike] = None,
+        guess: None = None,
         Plot: bool = True,
         color: str = "r",
         free_offset: bool = True,
@@ -745,12 +747,12 @@ class tableXY(object):
     # TODO: remove the "scale" argument
     def interpolate(
         self,
-        new_grid: Union[np.ndarray, Literal["auto"], int] = "auto",
+        new_grid: Union[str, ndarray] = "auto",
         method: str = "cubic",
         replace: bool = True,
         interpolate_x: bool = True,
         fill_value: Union[float, str] = "extrapolate",
-        scale: Literal["lin"] = "lin",
+        scale: str = "lin",
     ) -> None:
         if isinstance(new_grid, int):
             new_grid = np.linspace(self.x.min(), self.x.max(), new_grid * len(self.x))

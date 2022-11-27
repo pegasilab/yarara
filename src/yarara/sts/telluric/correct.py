@@ -32,10 +32,10 @@ def yarara_correct_telluric_proxy(
     reference: str = "master",
     smooth_corr: int = 1,
     proxies_corr: List[str] = ["h2o_depth", "h2o_fwhm"],
-    proxies_detrending_: Optional[ArrayLike] = None,
-    wave_min_correction_: Optional[float] = 4400.0,
-    wave_max_correction_: Optional[float] = None,
-    min_r_corr_: Optional[float] = 0.40,
+    proxies_detrending_: None = None,
+    wave_min_correction_: Union[float, int] = 4400.0,
+    wave_max_correction_: None = None,  # TODO: correct before
+    min_r_corr_: float = 0.40,
     sigma_ext: int = 2,
 ) -> None:
 

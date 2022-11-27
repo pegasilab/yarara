@@ -26,12 +26,10 @@ if TYPE_CHECKING:
 def yarara_correct_oxygen(
     self: spec_time_series,
     sub_dico: str = "matching_telluric",
-    reference: Union[
-        int, Literal["snr"], Literal["median"], Literal["master"], Literal["zeros"]
-    ] = "master",
+    reference: str = "master",
     wave_min: float = 5760.0,
     wave_max: float = 5850.0,
-    oxygene_bands: Sequence[Sequence[float]] = [
+    oxygene_bands: List[List[int]] = [  # TODO: check callers and put float
         [5787.0, 5835.0],
         [6275.0, 6340.0],
         [6800.0, 6950.0],

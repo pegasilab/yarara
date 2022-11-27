@@ -6,9 +6,10 @@ from typing import Any, List, Literal, Optional, Tuple, Union, overload
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
+from numpy import float64, ndarray
 
 
-def mad(array: NDArray[np.float64], axis: int = 0, sigma_conv: bool = True) -> float:
+def mad(array: ndarray, axis: int = 0, sigma_conv: bool = True) -> Union[float64, ndarray]:
     """"""
     if axis == 0:
         step = abs(array - np.nanmedian(array, axis=axis))
@@ -22,7 +23,7 @@ def combination(items):
     return output
 
 
-def local_max(spectre: NDArray[np.float64], vicinity: int) -> NDArray[np.float64]:
+def local_max(spectre: ndarray, vicinity: int) -> ndarray:
     vec_base = spectre[vicinity:-vicinity]
     maxima = np.ones(len(vec_base))
     for k in range(1, vicinity):
@@ -40,12 +41,12 @@ def local_max(spectre: NDArray[np.float64], vicinity: int) -> NDArray[np.float64
     return np.array([index, flux])
 
 
-def IQ(array_: ArrayLike, axis: Optional[int] = None) -> Union[NDArray[np.float64], float]:
+def IQ(array_: Union[List[Union[float64, float]], ndarray, List[float64]], axis: Optional[int] = None) -> Union[float64, ndarray]:
     array = np.array(array_)
     return np.nanpercentile(array, 75, axis=axis) - np.nanpercentile(array, 25, axis=axis)
 
 
-def merge_borders(cluster_output: np.ndarray) -> np.ndarray:
+def merge_borders(cluster_output: ndarray) -> ndarray:
     matrix1 = cluster_output.copy()
     for j in range(10):  # to converge
         matrix = matrix1.copy()

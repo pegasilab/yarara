@@ -8,6 +8,7 @@ from typing import Any, Literal, Optional, Tuple, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from numpy import ndarray
 from numpy.typing import NDArray
 from wpca import EMPCA, PCA, WPCA
 
@@ -36,7 +37,7 @@ def rm_sym_diagonal(array2, k, put_nan=False):
 class table(object):
     """this classe has been establish with pandas DataFrame"""
 
-    def __init__(self, array: NDArray[np.float64]) -> None:
+    def __init__(self, array: ndarray) -> None:
         self.table: NDArray[np.float64] = array
         self.dim: Tuple[int, ...] = np.shape(array)
 
@@ -162,7 +163,7 @@ class table(object):
                                 va="center",
                             )
 
-    def rms_w(self, weights: np.ndarray, axis: Union[Literal[0], Literal[1]] = 1) -> None:
+    def rms_w(self, weights: ndarray, axis: int = 1) -> None:
         average = np.average(self.table, weights=weights, axis=axis)
 
         data_recentered: np.ndarray = np.array([])
@@ -178,8 +179,8 @@ class table(object):
 
     def WPCA(
         self,
-        pca_type: Union[Literal["pca"], Literal["wpca"], Literal["empca"]],
-        weight: Optional[np.ndarray] = None,
+        pca_type: str,
+        weight: Optional[ndarray] = None,
         comp_max: Optional[int] = None,
     ) -> None:
         """from https://github.com/jakevdp/wpca/blob/master/WPCA-Example.ipynb
@@ -235,7 +236,7 @@ class table(object):
         self.wpca_model = pca
 
     def fit_base(
-        self, base_vec: np.ndarray, weight: Optional[np.ndarray] = None, num_sim: int = 1
+        self, base_vec: ndarray, weight: Optional[ndarray] = None, num_sim: int = 1
     ) -> None:
         """weights define as 1/sigma**2 self.table = MxT, base_vec = NxT, N the number of basis element"""
 

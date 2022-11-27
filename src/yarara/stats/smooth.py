@@ -9,11 +9,12 @@ from numpy.typing import NDArray
 from scipy import signal
 from scipy.signal import savgol_filter
 from scipy.stats import norm
+from numpy import ndarray
 
 
 def smooth2d(
-    y: NDArray[np.float64], box_pts: int, borders: bool = True, mode: str = "same"
-) -> NDArray[np.float64]:
+    y: ndarray, box_pts: int, borders: bool = True, mode: str = "same"
+) -> ndarray:
     if box_pts > 1:
         box = 1 / (box_pts**2) * np.ones(box_pts) * np.ones(box_pts)[:, np.newaxis]
         y_smooth = signal.convolve2d(y, box, mode=mode)
@@ -37,10 +38,10 @@ def smooth2d(
 
 
 def smooth(
-    y: NDArray[np.float64],
+    y: ndarray,
     box_pts: int,
-    shape: Union[int, Literal["savgol", "rectangular", "gaussian"]] = "rectangular",
-) -> NDArray[np.float64]:  # rectangular kernel for the smoothing
+    shape: Union[int, str] = "rectangular",
+) -> ndarray:  # rectangular kernel for the smoothing
     box2_pts = int(2 * box_pts - 1)
     if isinstance(shape, int):
         y_smooth = np.ravel(

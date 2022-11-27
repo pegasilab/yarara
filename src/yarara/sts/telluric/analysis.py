@@ -22,11 +22,11 @@ def yarara_telluric(
     sub_dico: str = "matching_anchors",
     suppress_broad: bool = True,
     delta_window: int = 5,
-    telluric_tag: Union[Literal["h2o"], Literal["o2"], Literal["telluric"]] = "telluric",
+    telluric_tag: str = "telluric",
     weighted: bool = False,
-    reference: Union[bool, Literal["norm"], Literal["master_snr"]] = True,
+    reference: str = True,
     ratio: bool = False,
-    normalisation: Union[Literal["left"], Literal["slope"]] = "slope",
+    normalisation: str = "slope",
     ccf_oversampling: int = 3,
 ) -> None:
 

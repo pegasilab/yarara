@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union, overload
 
 import numpy as np
 import pandas as pd
+from numpy import ndarray
 
 from ...io import pickle_dump
 
@@ -16,23 +17,23 @@ if TYPE_CHECKING:
 
 @overload
 def yarara_non_zero_flux(
-    self: spec_time_series, spectrum: None = None, min_value: Optional[float] = None
-) -> None:
+    self: spec_time_series, spectrum: Optional[ndarray] = None, min_value: None = None
+) -> Optional[ndarray]:
     pass
 
 
 @overload
 def yarara_non_zero_flux(
-    self: spec_time_series, spectrum: np.ndarray, min_value: Optional[float] = None
-) -> np.ndarray:
+    self: spec_time_series, spectrum: Optional[ndarray], min_value: None = None
+) -> Optional[ndarray]:
     pass
 
 
 def yarara_non_zero_flux(
     self: spec_time_series,
-    spectrum: Optional[np.ndarray] = None,
-    min_value: Optional[float] = None,
-) -> Optional[np.ndarray]:
+    spectrum: Optional[ndarray] = None,
+    min_value: None = None,
+) -> Optional[ndarray]:
     file_test = self.import_spectrum()
     hole_left = file_test["parameters"]["hole_left"]
     hole_right = file_test["parameters"]["hole_right"]
