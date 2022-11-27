@@ -26,7 +26,6 @@ poetry run test/bats/bin/bats test/test_HD110315.bats # will run the full pipeli
 Launch, in the `Python/` code folder (i.e. the one containing `pyproject.toml`):
 
 ```bash
-cd Python # (if not done already)
 poetry run make -C docs clean html
 ```
 
