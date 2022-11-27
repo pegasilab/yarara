@@ -4,6 +4,7 @@ YARARA working copy
 ## To install
 
 ```bash
+cd yarara
 git submodule update --init # will also pull the HD110315 data for tests
 cd Python
 poetry install --all-extras # remove --all-extras if you do not want to build the docs
