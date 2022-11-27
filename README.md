@@ -6,6 +6,7 @@ YARARA working copy
 ```bash
 cd Python
 poetry install --all-extras # remove --all-extras if you do not want to build the docs
+git submodule update --init # will also pull the HD110315 data for tests
 ```
 
 ## To try it
