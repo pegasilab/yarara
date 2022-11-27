@@ -95,7 +95,7 @@ if len(sys.argv) > 1:
 
 cwd = os.getcwd()
 root = "/".join(cwd.split("/")[:-1])
-directory_yarara = root + "/Yarara/"
+directory_yarara = root + "/spectra/"
 directory_to_dace = directory_yarara + star + "/data/s1d/spectroDownload"
 directory_rassine = "/".join(directory_to_dace.split("/")[0:-1]) + "/" + ins
 directory_reduced_rassine = directory_rassine + "/STACKED/"

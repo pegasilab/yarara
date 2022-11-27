@@ -132,14 +132,14 @@ class spec_time_series(object):
 
     def __init__(self, directory: str) -> None:
         if len(directory.split("/")) == 1:
-            directory = root + "/Yarara/" + directory + "/data/s1d/HARPS03/WORKSPACE/"
+            directory = root + "/spectra/" + directory + "/data/s1d/HARPS03/WORKSPACE/"
         if directory[-1] != "/":
             directory = directory + "/"
 
         self.directory = directory
-        self.starname = directory.split("/Yarara/")[-1].split("/")[0].split("=")[0]
+        self.starname = directory.split("/spectra/")[-1].split("/")[0].split("=")[0]
         self.dir_root = directory.split("WORKSPACE/")[0]
-        self.dir_yarara = directory.split("Yarara/")[0] + "Yarara/"
+        self.dir_yarara = directory.split("spectra/")[0] + "spectra/"
         self.cmap = "plasma"
 
         # color code of the spec time series residuals in flux normalized units
