@@ -4,9 +4,6 @@
 [submodule "MASK_CCF"]
 	path = Python/MASK_CCF
 	url = git@github.com:denisrosset/YARARA-mask-ccf.git
-[submodule "Yarara/HD110315"]
-	path = spectra/HD110315
-	url = git@github.com:pegasilab/HD110315_after_rassine.git
 [submodule "test/bats"]
 	path = Python/test/bats
 	url = https://github.com/bats-core/bats-core.git
