@@ -32,3 +32,7 @@ setup_file() {
 @test "HD110315 matching_diff" {
     ./run_rassine.sh -l WARNING -c harpn.ini ../spectra/HD110315/data/s1d/HARPN matching_diff
 }
+
+@test "YARARA" {
+    python trigger_yarara_harpn.py -b 0 -e 15
+}
