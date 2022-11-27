@@ -3,7 +3,7 @@ from typing import Literal, Optional, Union
 import matplotlib.pylab as plt
 import numpy as np
 
-from yarara.io import pickle_dump
+from yarara.iofun import pickle_dump
 
 from ..sts import spec_time_series
 

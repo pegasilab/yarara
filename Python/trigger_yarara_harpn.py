@@ -21,7 +21,7 @@ import pandas as pd
 
 import yarara.stages
 from yarara.analysis.table_xy import tableXY
-from yarara.io import pickle_dump
+from yarara.iofun import pickle_dump
 from yarara.stats.misc import IQ
 from yarara.sts import spec_time_series
 from yarara.util import print_iter
@@ -105,8 +105,6 @@ directory_workspace = directory_rassine + "/WORKSPACE/"
 # TABLE
 # =============================================================================
 #
-# stage = -2 (preprocessing importation from dace)
-# stage = -1 (launch trigger RASSINE)
 # stage = 0  (optionnal functions to be run only once manually)
 # stage = 1 (basic operation and statistics)
 # stage = 2 (cosmics correction)
@@ -134,7 +132,6 @@ directory_workspace = directory_rassine + "/WORKSPACE/"
 begin = time.time()
 all_time = [begin]
 time_step: Dict[Union[str, int], Union[int, float]] = {"begin": 0}
-button = 0
 instrument = ins[0:5]
 
 
@@ -145,7 +142,6 @@ def get_time_step(step):
 
 
 def break_func(stage):
-    button = 1
     if stage >= stage_break:
         return 99
     else:

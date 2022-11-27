@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from ..io import pickle_dump
+from ..iofun import pickle_dump
 from ..paths import root
 
 
@@ -66,8 +66,8 @@ class StarInfo(TypedDict, total=False):
 
 
 class spec_time_series(object):
-    from .activity import yarara_correct_activity
-    from .bridge import (
+    from ._activity import yarara_correct_activity
+    from ._bridge import (
         continuum_error,
         dace_statistic,
         flux_error,
@@ -88,47 +88,47 @@ class spec_time_series(object):
         yarara_suppress_doubtful_spectra,
         yarara_transit_def,
     )
-    from .ccf.analysis import yarara_ccf
-    from .ccf.io import read_ccf_mask, yarara_ccf_save
-    from .ccf.master import yarara_master_ccf
-    from .extract import yarara_get_berv_value, yarara_get_orders, yarara_get_pixels
-    from .instrument.correct_borders_pxl import yarara_correct_borders_pxl
-    from .instrument.correct_frog import yarara_correct_frog
-    from .instrument.correct_pattern import yarara_correct_pattern
-    from .instrument.produce_mask_contam import yarara_produce_mask_contam
-    from .instrument.produce_mask_frog import yarara_produce_mask_frog
-    from .io.ccf import import_ccf, yarara_add_ccf_entry
-    from .io.dico import import_dico_chain, import_dico_tree, yarara_add_step_dico
-    from .io.flux import import_sts_flux
-    from .io.material import import_material
-    from .io.obs_info import yarara_obs_info
-    from .io.pickle import yarara_exploding_pickle
-    from .io.rassine import import_rassine_output
-    from .io.reduction import import_info_reduction, update_info_reduction
-    from .io.spectrum import import_spectrum, spectrum, yarara_get_bin_length
-    from .io.star_info import import_star_info, yarara_star_info
-    from .io.summary import yarara_analyse_summary
-    from .io.suppress import suppress_time_RV, suppress_time_spectra
-    from .io.table import import_table
-    from .outliers.brute import yarara_correct_brute
-    from .outliers.cosmics import yarara_correct_cosmics
-    from .outliers.mad import yarara_correct_mad
-    from .outliers.smooth import yarara_correct_smooth
-    from .plots import yarara_comp_all, yarara_plot_all
-    from .processing.activity_index import yarara_activity_index
-    from .processing.map import yarara_map
-    from .processing.retropropagation_correction import yarara_retropropagation_correction
-    from .processing.uncorrect_hole import uncorrect_hole
-    from .telluric.analysis import yarara_telluric
-    from .telluric.correct import yarara_correct_telluric_proxy
-    from .telluric.gradient import yarara_correct_telluric_gradient
-    from .telluric.oxygen import yarara_correct_oxygen
-    from .util.cut_spectrum import yarara_cut_spectrum
-    from .util.map import yarara_add_map, yarara_substract_map
-    from .util.map_all import yarara_map_all
-    from .util.median_master import yarara_median_master
-    from .util.non_zero_flux import yarara_non_zero_flux
-    from .util.poissonian_noise import yarara_poissonian_noise
+    from ._ccf.analysis import yarara_ccf
+    from ._ccf.io import read_ccf_mask, yarara_ccf_save
+    from ._ccf.master import yarara_master_ccf
+    from ._extract import yarara_get_berv_value, yarara_get_orders, yarara_get_pixels
+    from ._instrument.correct_borders_pxl import yarara_correct_borders_pxl
+    from ._instrument.correct_frog import yarara_correct_frog
+    from ._instrument.correct_pattern import yarara_correct_pattern
+    from ._instrument.produce_mask_contam import yarara_produce_mask_contam
+    from ._instrument.produce_mask_frog import yarara_produce_mask_frog
+    from ._io.ccf import import_ccf, yarara_add_ccf_entry
+    from ._io.dico import import_dico_chain, import_dico_tree, yarara_add_step_dico
+    from ._io.flux import import_sts_flux
+    from ._io.material import import_material
+    from ._io.obs_info import yarara_obs_info
+    from ._io.pickle import yarara_exploding_pickle
+    from ._io.rassine import import_rassine_output
+    from ._io.reduction import import_info_reduction, update_info_reduction
+    from ._io.spectrum import import_spectrum, spectrum, yarara_get_bin_length
+    from ._io.star_info import import_star_info, yarara_star_info
+    from ._io.summary import yarara_analyse_summary
+    from ._io.suppress import suppress_time_RV, suppress_time_spectra
+    from ._io.table import import_table
+    from ._outliers.brute import yarara_correct_brute
+    from ._outliers.cosmics import yarara_correct_cosmics
+    from ._outliers.mad import yarara_correct_mad
+    from ._outliers.smooth import yarara_correct_smooth
+    from ._plots import yarara_comp_all, yarara_plot_all
+    from ._processing.activity_index import yarara_activity_index
+    from ._processing.map import yarara_map
+    from ._processing.retropropagation_correction import yarara_retropropagation_correction
+    from ._processing.uncorrect_hole import uncorrect_hole
+    from ._telluric.analysis import yarara_telluric
+    from ._telluric.correct import yarara_correct_telluric_proxy
+    from ._telluric.gradient import yarara_correct_telluric_gradient
+    from ._telluric.oxygen import yarara_correct_oxygen
+    from ._util.cut_spectrum import yarara_cut_spectrum
+    from ._util.map import yarara_add_map, yarara_substract_map
+    from ._util.map_all import yarara_map_all
+    from ._util.median_master import yarara_median_master
+    from ._util.non_zero_flux import yarara_non_zero_flux
+    from ._util.poissonian_noise import yarara_poissonian_noise
 
     def __init__(self, directory: str) -> None:
         if len(directory.split("/")) == 1:
