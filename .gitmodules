@@ -13,3 +13,6 @@
 [submodule "test/test_helper/bats-assert"]
 	path = Python/test/test_helper/bats-assert
 	url = https://github.com/bats-core/bats-assert.git
+[submodule "spectra/HD110315"]
+	path = spectra/HD110315
+	url = git@github.com:pegasilab/HD110315.git
