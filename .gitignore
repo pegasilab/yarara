@@ -1,6 +1,5 @@
 .history/
-HD110315/
-.venv/
+/Python/.venv/
 __pycache__/
 build/
 /docs/source/_autosummary
@@ -8,8 +7,8 @@ build/
 .coverage
 coverage.xml
 
-docs/_build/
+/Python/docs/_build/
 
-.venv
+/Python/.venv
 
-.mypy_cache/
+/Python/.mypy_cache/
