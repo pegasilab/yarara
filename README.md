@@ -15,7 +15,7 @@ poetry install --all-extras # remove --all-extras if you do not want to build th
 
 ```bash
 cd Python # (if not done already)
-poetry run ./run_HD110315.sh
+poetry run test/bats/bin/bats test/test_HD110315.bats # will run the full pipeline including RASSINE
 ```
 
 ## To build the docs
