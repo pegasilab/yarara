@@ -33,6 +33,11 @@ setup_file() {
     ./run_rassine.sh -l WARNING -c harpn.ini ../spectra/HD110315/data/s1d/HARPN matching_diff
 }
 
+@test "Preparing YARARA run" {
+    mkdir ../spectra/HD110315/data/s1d/HARPN/WORKSPACE
+    cp ../spectra/HD110315/data/s1d/HARPN/STACKED/RASSINE_* ../spectra/HD110315/data/s1d/HARPN/WORKSPACE
+}
+
 @test "YARARA" {
     python trigger_yarara_harpn.py -b 0 -e 15
 }
