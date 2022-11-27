@@ -23,20 +23,21 @@ scikit-learn = "0.24.1"
 scipy = "^1.8.1"
 statsmodels = "0.13.2"
 tqdm = "^4.59.0"
-typing-extensions = "^4.1.1"
+typing-extensions = "^4.4.0"
 wpca = "0.1" 
 
-ipykernel = {version = "^6.13.0", optional = true}
-myst-nb = {version = "^0.13.2", optional = true}
-sphinx = {version = "4.3.2", optional = true}
-sphinx-argparse = {version = "^0.3.1", optional = true}
-sphinx-autodoc-typehints = {version = "^1.17.0", optional = true}
-sphinx-book-theme = {version = "^0.2.0", optional = true}
-sphinxcontrib-bibtex = {version = "^2.4.1", optional = true}
-sphinxnotes-strike = {version = "^1.0", optional = true}
+ipykernel = {version = "^6.17.1", optional = true}
+myst-nb = {version = "^0.17.1", optional = true}
+sphinx = {version = "^5.3.0", optional = true}
+sphinx-argparse = {version = "^0.4.0", optional = true}
+sphinx-autodoc-typehints = {version = "^1.19.5", optional = true}
+sphinx-book-theme = {git = "https://github.com/executablebooks/sphinx-book-theme.git", rev = "060ba47685b49d2ea0fdf86af65fac4e35912618"}
+sphinxcontrib-bibtex = {version = "^2.5.0", optional = true}
+sphinxcontrib-programoutput = {version = "^0.17", optional = true}
 
 [tool.poetry.extras]
 docs = [
+  "esbonio",
   "myst-nb",
   "ipykernel",
   "sphinx",
@@ -44,28 +45,19 @@ docs = [
   "sphinx-autodoc-typehints",
   "sphinx-book-theme",
   "sphinxcontrib-bibtex",
-  "sphinxnotes-strike",
-  "esbonio",
 ]
 
 [tool.poetry.dev-dependencies]
-black = "^22.1.0"
-commitizen = "^2.21.2"
+black = "^22.10.0"
+doc8 = "^1.0.0"
+esbonio = "^0.14.3"
 coverage = "^6.3.2"
-doc8 = "^0.10.1"
-esbonio = "^0.10.2"
 isort = "^5.10.1"
-mypy = "^0.941"
+mypy = "^0.991"
 pandas-stubs = "^1.2.0.43"
-pylint = "^2.13.5"
-pytest = "^7.0.1"
-rstcheck = "^3.3.1"
-
-# [tool.pyright]
-# exclude = [
-#   "reafctor/",
-ipykernel = "^6.13.0"
-# ]
+pylint = "^2.15.6"
+pytest = "^7.1.1"
+rstcheck = "^6.1.1"
 
 [tool.mypy]
 plugins = ["numpy.typing.mypy_plugin"]

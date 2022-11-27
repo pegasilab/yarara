@@ -5,8 +5,8 @@ from pathlib import Path
 import yarara
 
 project = "yarara"  # Name of the documented package
-repository_url = f"https://github.com/denisrosset/{project}"
-repository_branch = "main"
+repository_url = f"https://github.com/pegasilab/yarara"
+repository_branch = "master"
 copyright = "2022, Michael Cretignier and Denis Rosset"
 
 # General stuff
