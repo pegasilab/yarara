@@ -7,3 +7,12 @@
 [submodule "Yarara/HD110315"]
 	path = spectra/HD110315
 	url = git@github.com:pegasilab/HD110315_after_rassine.git
+[submodule "test/bats"]
+	path = Python/test/bats
+	url = https://github.com/bats-core/bats-core.git
+[submodule "test/test_helper/bats-support"]
+	path = Python/test/test_helper/bats-support
+	url = https://github.com/bats-core/bats-support.git
+[submodule "test/test_helper/bats-assert"]
+	path = Python/test/test_helper/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
