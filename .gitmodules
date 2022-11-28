@@ -1,9 +1,3 @@
-[submodule "Material"]
-	path = Material
-	url = https://github.com/pegasilab/YARARA-material.git
-[submodule "MASK_CCF"]
-	path = MASK_CCF
-	url = https://github.com/pegasilab/YARARA-mask-ccf.git
 [submodule "test/bats"]
 	path = test/bats
 	url = https://github.com/bats-core/bats-core.git
