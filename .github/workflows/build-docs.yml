@@ -21,8 +21,12 @@ jobs:
         python-version: 3.8
 
     - name: Install Poetry
-      uses: snok/install-poetry@v1        
+      uses: snok/install-poetry@v1
 
+    - name: Install dependencies
+      run: |
+        poetry install -E docs
+        
     # Build the site
     - name: Build the site
       run: |
