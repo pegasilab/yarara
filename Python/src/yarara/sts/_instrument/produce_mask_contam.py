@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import glob as glob
 import time
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, cast
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -11,7 +11,7 @@ from colorama import Fore
 from numpy import ndarray
 from tqdm import tqdm
 
-from ... import iofun
+from ... import iofun, materials
 from ...analysis import table, tableXY
 from ...paths import root
 from ...plots import my_colormesh, plot_color_box
@@ -55,7 +55,7 @@ def yarara_produce_mask_contam(
     grid = np.array(load["wave"])
 
     # extract frog table
-    frog_table = pd.read_pickle(frog_file)
+    frog_table = cast(materials.Contam_HARPN, pd.read_pickle(frog_file))
     # stitching
 
     print("\n [INFO] Producing the contam mask...")
