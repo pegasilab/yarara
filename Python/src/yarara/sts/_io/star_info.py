@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
 
-from ... import iofun, util
+from ... import Float, iofun, materials, util
 from ...analysis import tableXY
-from ...paths import root
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -19,7 +19,7 @@ def import_star_info(self: spec_time_series) -> None:
     )
 
 
-def find_stellar_mass_radius(Teff, sp_type="G2V"):
+def find_stellar_mass_radius(material_folder: Path, Teff: Float, sp_type="G2V"):
     """Habets 1981 calibration curve"""
     lim = 0
     for k in sp_type[::-1]:
@@ -34,7 +34,10 @@ def find_stellar_mass_radius(Teff, sp_type="G2V"):
         class_lum = "V"
     if class_lum != "V":
         class_lum = "IV"
-    calib = pd.read_pickle(root + "/Python/Material/logT_logM_logR.p")[class_lum]
+    calib_data = cast(
+        materials.Table_stellar_model, pd.read_pickle(str(material_folder / "logT_logM_logR.p"))
+    )
+    calib = calib_data[class_lum]
     curve_mass = tableXY(10 ** calib["log(T)"], 10 ** calib["log(M/Ms)"])
     curve_radius = tableXY(10 ** calib["log(T)"], 10 ** calib["log(R/Rs)"])
     curve_mass.interpolate(new_grid=np.array([Teff]))
@@ -46,7 +49,7 @@ def find_stellar_mass_radius(Teff, sp_type="G2V"):
 
 
 def yarara_star_info(
-    self,
+    self: spec_time_series,
     Rv_sys=None,
     simbad_name=None,
     magB=None,
@@ -140,6 +143,7 @@ def yarara_star_info(
     try:
         self.star_info["Teff"]["Gray"] = file_test["parameters"]["Teff_gray"]
         M, R, logg = find_stellar_mass_radius(
+            self.material_folder,
             file_test["parameters"]["Teff_gray"],
             sp_type=self.star_info["Sp_type"]["fixed"],
         )

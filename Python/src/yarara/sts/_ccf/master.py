@@ -17,7 +17,6 @@ from scipy.interpolate import interp1d
 from ... import iofun, util
 from ...analysis import tableXY
 from ...iofun import pickle_dump
-from ...paths import paths, root
 from ...stats import IQ, find_nearest, identify_nearest
 from ...util import assert_never, ccf_fun, doppler_r
 

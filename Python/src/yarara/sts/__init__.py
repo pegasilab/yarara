@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import glob as glob
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, TypedDict
 
 import numpy as np
@@ -9,7 +10,6 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from ..iofun import pickle_dump
-from ..paths import root
 
 
 class SIF_float_telluric(TypedDict, total=False):
@@ -102,7 +102,7 @@ class spec_time_series(object):
     from ._io.flux import import_sts_flux
     from ._io.material import import_material
     from ._io.obs_info import yarara_obs_info
-    from ._io.pickle import yarara_exploding_pickle
+    from ._io.pickle import sorted_rassine_pickles, yarara_exploding_pickle
     from ._io.rassine import import_rassine_output
     from ._io.reduction import import_info_reduction, update_info_reduction
     from ._io.spectrum import import_spectrum, spectrum, yarara_get_bin_length
@@ -130,18 +130,47 @@ class spec_time_series(object):
     from ._util.non_zero_flux import yarara_non_zero_flux
     from ._util.poissonian_noise import yarara_poissonian_noise
 
-    def __init__(self, directory: str) -> None:
-        if len(directory.split("/")) == 1:
-            # TODO: never executed
-            directory = root + "/spectra/" + directory + "/data/s1d/HARPS03/WORKSPACE/"
-        if directory[-1] != "/":
-            # TODO: never executed
-            directory = directory + "/"
+    def __init__(
+        self,
+        directory: str,
+        starname: str,
+        instrument: str,
+        simbad_folder: Path,
+        mask_ccf_folder: Path,
+        material_folder: Path,
+    ) -> None:
+        """Creates a spec_time_series instance
 
-        self.directory = directory
-        self.starname = directory.split("/spectra/")[-1].split("/")[0].split("=")[0]
-        self.dir_root = directory.split("WORKSPACE/")[0]
-        self.dir_yarara = directory.split("spectra/")[0] + "spectra/"
+        Params:
+            directory: Directory containing the RASSINE reduced data include the ending WORKSPACE/
+            starname: Name of the star
+            instrument: Name of the instrument (> 5 letters possible)
+            simbad_folder: Path to the SIMBAD folder
+            mask_ccf_folder: Path to the mask_ccf folder
+            material_folder: Path to the material folder
+        """
+
+        #: Directory containing the RASSINE reduced data include the ending WORKSPACE/
+        self.directory: str = directory
+
+        #: Name of the star
+        self.starname: str = starname
+
+        #: Directory containing the data under processing, parent of the WORKSPACE/ folder
+        self.dir_root: str = str(Path(directory).parent) + "/"
+
+        #: Path to the SIMBAD database
+        self.simbad_folder: Path = simbad_folder
+
+        #: Path to the MASK_CCF folder
+        self.mask_ccf_folder: Path = mask_ccf_folder
+
+        #: Path to the Material folder
+        self.material_folder: Path = material_folder
+
+        #: Instrument used for the measurements
+        self.instrument: str = instrument
+
         self.cmap = "plasma"
 
         # color code of the spec time series residuals in flux normalized units
@@ -150,7 +179,10 @@ class spec_time_series(object):
 
         self.zoom = 1
         self.smooth_map = 1
-        self.planet: bool = False  #: If a planet has been injected
+
+        #: If a planet has been injected
+        self.planet: bool = False
+
         self.sp_type = None
         self.rv_sys = None
         self.teff = None
@@ -166,8 +198,6 @@ class spec_time_series(object):
 
         #: If info_reduction has been loaded, modification time of the loaded file
         self.info_reduction_ut: float = 0.0
-
-        self.instrument = ""  #: Instrument used for the measurements
 
         # TODO: document the columns
         #: Table of relations between outputs produced at different stages of the pipeline

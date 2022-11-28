@@ -3,19 +3,18 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING, List, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Optional, cast
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from colorama import Fore
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import ArrayLike
 from tqdm import tqdm
 
-from ... import iofun
+from ... import materials
 from ...analysis import table as table_cls
 from ...analysis import tableXY
-from ...paths import paths, root
 from ...plots import my_colormesh, plot_color_box
 from ...stats import IQ as IQ_fun
 from ...stats import clustering, find_nearest, mad, smooth, smooth2d
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 def yarara_correct_telluric_gradient(
     self: spec_time_series,
     sub_dico_detection: str = "matching_fourier",
-    sub_dico_correction: None = "matching_oxygen",  # was None
+    sub_dico_correction: Optional[str] = "matching_oxygen",  # was None
     wave_min_train: float = 4200.0,
     wave_max_train: float = 5000.0,
     wave_min_correction: int = 4400,  # TODO: put a float default
@@ -266,7 +265,9 @@ def yarara_correct_telluric_gradient(
 
     # comparison with Molecfit
 
-    model = pd.read_pickle(root + "/Python/Material/model_telluric.p")
+    model = cast(
+        materials.Telluric_spectrum, pd.read_pickle(str(self.material_folder / "model_telluric.p"))
+    )
     wave_model = doppler_r(model["wave"], mean_berv * 1000)[0]
     telluric_model = model["flux_norm"]
     model = tableXY(wave_model, telluric_model, 0 * wave_model)
@@ -336,13 +337,15 @@ def yarara_correct_telluric_gradient(
         plt.axvline(
             x=tel_depth_grid[np.where(comp_percent == 100)[0][0]],
             color="b",
-            label=f"100% Completeness : {100 * 10 ** tel_depth_grid[np.where(comp_percent == 100)[0][0]]:.2f} [%]",
+            label="100%% Completeness : %.2f [%%]"
+            % (100 * 10 ** (tel_depth_grid[np.where(comp_percent == 100)[0][0]])),
         )
         plt.axvline(
             x=tel_depth_grid[find_nearest(comp_percent, 90)[0]],
             color="b",
             ls=":",
-            label=f"90% Completeness : {100 * 10 ** tel_depth_grid[find_nearest(comp_percent, 90)[0]]:.2f} [%]",
+            label="90%% Completeness : %.2f [%%]"
+            % (100 * 10 ** (tel_depth_grid[find_nearest(comp_percent, 90)[0]])),
         )
     plt.ylabel("Completness [%]", fontsize=16)
     plt.xlabel(r"$\log_{10}$(Telluric depth)", fontsize=16)

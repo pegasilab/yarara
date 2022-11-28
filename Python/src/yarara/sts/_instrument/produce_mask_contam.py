@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from ... import iofun, materials
 from ...analysis import table, tableXY
-from ...paths import root
 from ...plots import my_colormesh, plot_color_box
 from ...stats import (
     clustering,
@@ -29,9 +28,7 @@ if TYPE_CHECKING:
     from .. import spec_time_series
 
 
-def yarara_produce_mask_contam(
-    self: spec_time_series, frog_file: str = root + "/Python/Material/Contam_HARPN.p"
-) -> None:
+def yarara_produce_mask_contam(self: spec_time_series, frog_file: str) -> None:
     """
     Creation of the stitching mask on the spectrum
 

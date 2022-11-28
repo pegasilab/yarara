@@ -5,16 +5,16 @@ from typing import Literal, Union
 
 import numpy as np
 import pandas as pd
+from numpy import ndarray
 from numpy.typing import NDArray
 from scipy import signal
 from scipy.signal import savgol_filter
 from scipy.stats import norm
-from numpy import ndarray
+
+from ..util import assert_never
 
 
-def smooth2d(
-    y: ndarray, box_pts: int, borders: bool = True, mode: str = "same"
-) -> ndarray:
+def smooth2d(y: ndarray, box_pts: int, borders: bool = True, mode: str = "same") -> ndarray:
     if box_pts > 1:
         box = 1 / (box_pts**2) * np.ones(box_pts) * np.ones(box_pts)[:, np.newaxis]
         y_smooth = signal.convolve2d(y, box, mode=mode)
@@ -40,7 +40,7 @@ def smooth2d(
 def smooth(
     y: ndarray,
     box_pts: int,
-    shape: Union[int, str] = "rectangular",
+    shape: Union[int, Literal["savgol", "rectangular", "gaussian"]] = "rectangular",
 ) -> ndarray:  # rectangular kernel for the smoothing
     box2_pts = int(2 * box_pts - 1)
     if isinstance(shape, int):
@@ -65,4 +65,6 @@ def smooth(
         y_smooth = np.convolve(y, box, mode="same")
         y_smooth[0 : int((len(box) - 1) / 2)] = y[0 : int((len(box) - 1) / 2)]
         y_smooth[-int((len(box) - 1) / 2) :] = y[-int((len(box) - 1) / 2) :]
+    else:
+        assert_never(shape)
     return y_smooth

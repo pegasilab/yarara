@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import matplotlib.pylab as plt
@@ -17,7 +18,6 @@ from scipy.interpolate import interp1d
 from ... import iofun, util
 from ...analysis import tableXY
 from ...iofun import pickle_dump
-from ...paths import paths, root
 from ...stats import IQ, find_nearest, identify_nearest
 from ...util import assert_never, ccf_fun, doppler_r
 
@@ -253,7 +253,7 @@ def yarara_ccf(
     else:
         used_region = np.ones(len(grid)).astype("bool")
 
-    mask_path = paths.reinterpolated_mask_ccf(self) / (f"CCF_{mask_name}.fits")
+    mask_path = Path(self.dir_root) / "CCF_MASK" / (f"CCF_{mask_name}.fits")
 
     if not mask_path.exists() or force_brute:
         logging.info("CCF mask reduced for the first time, wait for the static mask producing...")
@@ -361,9 +361,7 @@ def yarara_ccf(
     )  # to compute on all the ccf simultaneously
 
     now = datetime.datetime.now()
-    logging.info(
-        f"CCF computed (Current time {now.hour:.0f}h{now.minute:.0f}m{now.second:.0f}s)"
-    )
+    logging.info(f"CCF computed (Current time {now.hour:.0f}h{now.minute:.0f}m{now.second:.0f}s)")
     logging.info(f"CCF velocity step : {np.median(np.diff(vrad)):.0f} m/s\n")
 
     self.all_ccf_saved[ccf_name] = (vrad, ccf_power, ccf_power_std)

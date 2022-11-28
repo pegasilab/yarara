@@ -11,7 +11,6 @@ from colorama import Fore
 from tqdm import tqdm
 
 from ...analysis import table, tableXY
-from ...paths import root
 from ...plots import my_colormesh, plot_color_box
 from ...stats import clustering, find_nearest, flat_clustering, merge_borders
 from ...util import assert_never, doppler_r, flux_norm_std, print_box, sphinx

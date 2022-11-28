@@ -14,7 +14,6 @@ from tqdm import tqdm
 
 from ... import iofun
 from ...analysis import tableXY
-from ...paths import root
 from ...plots import my_colormesh
 from ...stats import IQ, find_nearest, flat_clustering, smooth
 from ...util import doppler_r, flux_norm_std, print_box

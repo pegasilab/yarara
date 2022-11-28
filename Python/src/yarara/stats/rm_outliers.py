@@ -7,6 +7,7 @@ import numpy as np
 from numpy import ndarray
 from numpy.typing import ArrayLike, NDArray
 
+from .. import Float
 from ..util import assert_never
 
 
@@ -14,7 +15,7 @@ from ..util import assert_never
 def rm_outliers(
     array_: ndarray,
     return_borders: bool = False,
-    m: int = 1.5,  # TODO: float
+    m: Union[Float, int] = 1.5,  # TODO: float
     kind: str = "sigma",
     axis: int = 0,
 ) -> Tuple[ndarray, ndarray]:
@@ -25,7 +26,7 @@ def rm_outliers(
 def rm_outliers(
     array_: ndarray,
     return_borders: bool,
-    m: int = 1.5,
+    m: Union[Float, int] = 1.5,
     kind: str = "sigma",
     axis: int = 0,
 ) -> Tuple[ndarray, ndarray]:
@@ -35,7 +36,7 @@ def rm_outliers(
 def rm_outliers(
     array_: ndarray,
     return_borders: bool = False,
-    m: int = 1.5,
+    m: Union[Float, int] = 1.5,
     kind: str = "sigma",
     axis: int = 0,
 ) -> Tuple[ndarray, ndarray]:

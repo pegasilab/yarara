@@ -13,7 +13,6 @@ from tqdm import tqdm
 from ... import iofun
 from ...analysis import table as table_cls
 from ...analysis import tableXY
-from ...paths import paths, root
 from ...plots import my_colormesh
 from ...stats import IQ as IQ_fun
 from ...stats import clustering, find_nearest, flat_clustering, merge_borders, smooth2d

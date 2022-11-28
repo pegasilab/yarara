@@ -10,7 +10,6 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from ...iofun import pickle_dump
-from ...paths import paths, root
 from ...util import assert_never, ccf_fun, doppler_r
 
 if TYPE_CHECKING:
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
 
 def read_ccf_mask(self: spec_time_series, mask_name: str) -> NDArray[np.float64]:
     logging.info(f"Reading CCF mask : {mask_name} \n")
-    mask_path = root + "/Python/MASK_CCF/" + mask_name + ".txt"
+    mask_path = str(self.mask_ccf_folder / (mask_name + ".txt"))
     mask = np.genfromtxt(mask_path)
     mask = np.array([0.5 * (mask[:, 0] + mask[:, 1]), mask[:, 2]]).T
     return mask

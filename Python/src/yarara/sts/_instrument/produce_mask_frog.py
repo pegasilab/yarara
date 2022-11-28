@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, cast
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from ... import iofun
+from ... import iofun, materials
 from ...analysis import tableXY
-from ...paths import root
 from ...stats import find_nearest, match_nearest
 from ...util import doppler_r, print_box
 
@@ -17,16 +16,13 @@ if TYPE_CHECKING:
     from .. import spec_time_series
 
 
-def yarara_produce_mask_frog(
-    self: spec_time_series, frog_file: str = root + "/Python/Material/Ghost_HARPS03.p"
-) -> None:
+def yarara_produce_mask_frog(self: spec_time_series, frog_file: str) -> None:
     """
     Correction of the stitching/ghost on the spectrum by PCA fitting
 
-    Parameters
-    ----------
-    sub_dico : The sub_dictionnary used to  select the continuum
-    frog_file : files containing the wavelength of the stitching
+    Params:
+        sub_dico: The sub_dictionnary used to  select the continuum
+        frog_file: files containing the wavelength of the stitching
     """
 
     print_box("\n---- RECIPE : MASK GHOST/STITCHING/THAR WITH FROG ----\n")
@@ -50,9 +46,7 @@ def yarara_produce_mask_frog(
     imax = find_nearest(grid, doppler_r(grid[-1], np.max(abs(self.table.berv)) * 1000)[1])[0][0]
 
     # extract frog table
-    frog_table = pd.read_pickle(frog_file)
-    frog_table_jdb: NDArray[np.float64] = frog_table["jdb"]
-    berv_file: NDArray[np.float64] = self.yarara_get_berv_value(frog_table_jdb)
+    frog_table = cast(materials.Ghost_HARPN, pd.read_pickle(frog_file))
 
     # ghost
     for correction in ["stitching", "ghost_a", "ghost_b", "thar"]:
@@ -65,8 +59,8 @@ def yarara_produce_mask_frog(
                     np.ones(np.shape(wave2d)[0])
                     * np.arange(1, 1 + np.shape(wave2d)[1])[:, np.newaxis]
                 ).T
-                wave_stitching = np.hstack(wave2d)
-                gap_stitching = np.hstack(frog_table["stitching"])
+                wave_stitching = np.hstack(wave2d)  # type: ignore
+                gap_stitching = np.hstack(frog_table["stitching"])  # type: ignore
                 pxl_stitching = np.hstack(pxl2d)  # type: ignore
 
                 mask = gap_stitching != 0
@@ -83,7 +77,7 @@ def yarara_produce_mask_frog(
                 vec.order()
                 pixels = vec.y
 
-                stitching_b0 = doppler_r(stitching, 0 * berv_file * 1000)[0]
+                stitching_b0 = doppler_r(stitching, 0.0)[0]
                 # all_stitch = myf.doppler_r(stitching_b0, berv*1000)[0]
 
                 match_stitching = match_nearest(grid, stitching_b0)
@@ -97,8 +91,8 @@ def yarara_produce_mask_frog(
                 wavet_pxl[indext] = pixels[match_stitching[:, 1].astype("int")]
 
                 wavet = grid[indext]
-                max_t = wavet * ((1 + 1.55e-8) * (1 + (berv_max - 0.0 * berv_file) / 299792.458))
-                min_t = wavet * ((1 + 1.55e-8) * (1 + (berv_min - 0.0 * berv_file) / 299792.458))
+                max_t = wavet * ((1 + 1.55e-8) * (1 + (berv_max) / 299792.458))
+                min_t = wavet * ((1 + 1.55e-8) * (1 + (berv_min) / 299792.458))
 
                 mask_stitching = np.sum(
                     (grid > min_t[:, np.newaxis]) & (grid < max_t[:, np.newaxis]),
@@ -126,7 +120,7 @@ def yarara_produce_mask_frog(
                 order_s2d = []
                 for order in np.arange(len(contam)):
                     vec = tableXY(
-                        doppler_r(frog_table["wave"][order], 0.0 * berv_file * 1000)[0],
+                        doppler_r(frog_table["wave"][order], 0.0)[0],
                         contam[order],
                         0 * contam[order],
                     )

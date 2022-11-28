@@ -69,7 +69,7 @@ def save_pickle(
 
 
 # remove "protocol" parameter
-def pickle_dump(obj: Any, obj_file: BufferedWriter, protocol: None = None) -> None:
+def pickle_dump(obj: Any, obj_file: BufferedWriter, protocol: Optional[int] = None) -> None:
     if protocol is None:
         protocol = pickle_protocol_version
     pickle.dump(obj, obj_file, protocol=protocol)

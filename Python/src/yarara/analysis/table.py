@@ -163,7 +163,7 @@ class table(object):
                                 va="center",
                             )
 
-    def rms_w(self, weights: ndarray, axis: int = 1) -> None:
+    def rms_w(self, weights: ndarray, axis: Literal[0, 1] = 1) -> None:
         average = np.average(self.table, weights=weights, axis=axis)
 
         data_recentered: np.ndarray = np.array([])
@@ -179,7 +179,7 @@ class table(object):
 
     def WPCA(
         self,
-        pca_type: str,
+        pca_type: Literal["pca", "wpca", "empca"],
         weight: Optional[ndarray] = None,
         comp_max: Optional[int] = None,
     ) -> None:

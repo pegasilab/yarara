@@ -8,7 +8,6 @@ import matplotlib.pylab as plt
 import numpy as np
 from tqdm import tqdm
 
-from ...paths import root
 from ...plots import my_colormesh
 from ...stats import find_nearest, smooth
 from ...util import assert_never, flux_norm_std, print_box, yarara_artefact_suppressed
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
 def yarara_correct_smooth(
     self: spec_time_series,
     sub_dico: str = "matching_diff",
-    reference: str = "median",
+    reference: Union[int, Literal["snr", "median", "master", "zeros"]] = "median",
     wave_min: float = 4200.0,
     wave_max: float = 4300.0,
     window_ang: int = 5.0,

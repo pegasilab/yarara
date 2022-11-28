@@ -149,7 +149,7 @@ def my_colormesh(
     shading: str = "auto",
     order: int = 3,
     smooth_box: int = 1,
-) -> None:
+) -> Optional[Tuple[ndarray, ndarray, ndarray]]:
 
     dx = x[-1] - x[-2]
     dy = y[-1] - y[-2]

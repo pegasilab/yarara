@@ -9,7 +9,6 @@ import pandas as pd
 from numpy.typing import ArrayLike, NDArray
 
 from ... import iofun
-from ...paths import paths, root
 from ...stats import clustering
 from ...util import doppler_r
 
@@ -70,7 +69,7 @@ def yarara_telluric(
 
     rv_shift = np.array(self.table["rv_shift"]) * 1000
 
-    files = paths.sorted_rassine_pickles(self)
+    files = self.sorted_rassine_pickles()
 
     if sub_dico is None:
         sub_dico = self.dico_actif
@@ -85,7 +84,7 @@ def yarara_telluric(
 
     # TODO: does mask differ from telluric_tag?
     mask: NDArray[np.float64] = np.genfromtxt(
-        paths.generic_mask_ccf + "mask_telluric_" + telluric_tag + ".txt"
+        str(self.mask_ccf_folder / ("mask_telluric_" + telluric_tag + ".txt"))
     )
     mask = mask[mask[:, 0].argsort()]
     # mask = mask[(mask[:,0]>6200)&(mask[:,0]<6400)]

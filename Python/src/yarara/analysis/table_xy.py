@@ -16,6 +16,7 @@ from pandas.core.series import Series
 from scipy.interpolate import interp1d
 from statsmodels.stats.weightstats import DescrStatsW
 
+from .. import Float
 from ..mathfun import gaussian, sinus
 from ..stats import find_nearest, identify_nearest, local_max, mad
 from ..stats import rm_outliers as rm_out
@@ -47,8 +48,8 @@ class tableXY(object):
 
     def __init__(
         self,
-        x: Union[List[float64], Series, ndarray],
-        y: Union[List[float64], Series, List[Union[float64, float]], ndarray],
+        x: Optional[ArrayLike],
+        y: ArrayLike,
         *errs: ArrayLike,
     ) -> None:
         """Creates a tableXY
@@ -192,7 +193,9 @@ class tableXY(object):
             self.ymean = np.nanmean(self.y)
             self.y = self.y - np.nanmean(self.y)
 
-    def species_recenter(self, species: ndarray, ref: None = None, replace: bool = True) -> None:
+    def species_recenter(
+        self, species: ndarray, ref: Optional[int] = None, replace: bool = True
+    ) -> None:
 
         spe = np.unique(species)
         shift = np.zeros(len(self.y))
@@ -201,11 +204,11 @@ class tableXY(object):
             val_median = np.array([np.nanmedian(self.y[np.where(species == s)[0]]) for s in spe])
 
             if ref is None:
-                ref = 0
+                ref_ = 0.0
             else:
-                ref = val_median[ref]
+                ref_ = val_median[ref]
 
-            val_median -= ref
+            val_median -= ref_
 
             for k, s in enumerate(spe):
                 shift[species == s] += val_median[k]

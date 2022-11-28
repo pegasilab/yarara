@@ -18,6 +18,13 @@ if TYPE_CHECKING:
     from .. import spec_time_series
 
 
+def sorted_rassine_pickles(sts: spec_time_series) -> Sequence[str]:
+    # TODO: replace all calls to glob.glob(self.directory + "RASSI*.p") to this
+    files = glob.glob(sts.directory + "RASSI*.p")
+    files = np.sort(files)
+    return list(files)
+
+
 def yarara_exploding_pickle(self: spec_time_series) -> None:
     self.import_table()
     file_test = self.import_spectrum()

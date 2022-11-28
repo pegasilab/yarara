@@ -4,7 +4,7 @@ import glob
 import logging
 import os
 import time
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,10 +14,9 @@ from astropy.time import Time
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
-from ... import analysis
+from ... import materials
 from ...analysis import tableXY
 from ...iofun import pickle_dump, save_pickle, touch_pickle
-from ...paths import root
 from ...plots import plot_color_box, plot_copy_time, transit_draw
 from ...stats import IQ, rm_outliers
 from ...stats.misc import mad
@@ -36,13 +35,13 @@ def yarara_simbad_query(self: spec_time_series, starname=None) -> None:
     if starname is None:
         starname = self.starname
 
-    table_simbad = touch_pickle(root + "/Python/database/SIMBAD/table_stars.p")
+    table_simbad = touch_pickle(str(self.simbad_folder / "table_stars.p"))
 
     dico = self.star_info
 
     if starname in table_simbad.keys():
         logging.info("Star found in the SIMBAD table")
-        dico2 = table_simbad[starname]
+        dico2 = cast(materials.SIMBADEntry, table_simbad[starname])
 
         for kw in dico2.keys():
             if isinstance(dico2[kw], dict):
@@ -133,7 +132,7 @@ def yarara_check_rv_sys(self: spec_time_series):
             rv_sys1,
             rv_sys2,
         )
-        mask = np.genfromtxt(root + "/Python/MASK_CCF/" + self.mask_harps + ".txt")
+        mask = np.genfromtxt(str(self.mask_ccf_folder / (self.mask_harps + ".txt")))
         mask = np.array([0.5 * (mask[:, 0] + mask[:, 1]), mask[:, 2]]).T
 
         rv_range = [15, self.star_info["FWHM"]["fixed"]][int(self.star_info["FWHM"]["fixed"] > 15)]
@@ -473,16 +472,16 @@ def suppress_time_RV(self: spec_time_series, liste):
             logging.error("CCF cannot be modified")
 
 
-def yarara_map_1d_to_2d(self: spec_time_series, instrument="HARPS03"):
+def yarara_map_1d_to_2d(self: spec_time_series, instrument: str):
     self.import_material()
     mat = self.material
     wave = np.array(mat["wave"])
-    wave_matrix = fits.open(root + "/Python/Material/" + instrument + "_WAVE_MATRIX_A.fits")[
+    wave_matrix = fits.open(str(self.material_folder / (instrument + "_WAVE_MATRIX_A.fits")))[
         0
     ].data
 
     jdb = (
-        fits.open(root + "/Python/Material/" + instrument + "_WAVE_MATRIX_A.fits")[0].header[
+        fits.open(str(self.material_folder / (instrument + "_WAVE_MATRIX_A.fits")))[0].header[
             "MJD-OBS"
         ]
         + 0.5
@@ -495,7 +494,7 @@ def yarara_map_1d_to_2d(self: spec_time_series, instrument="HARPS03"):
     dim2 += 1
 
     try:
-        blaze = fits.open(root + "/Python/Material/" + instrument + "_BLAZE.fits")[0].data
+        blaze = fits.open(str(self.material_folder / (instrument + "_BLAZE.fits")))[0].data
     except:
         blaze = 0 * wave_matrix
 
@@ -861,7 +860,7 @@ def yarara_transit_def(
     time = np.sort(np.array(self.table.jdb))
 
     if auto:
-        table_transit = pd.read_csv(root + "/Python/Material/transits.csv", index_col=0)
+        table_transit = pd.read_csv(str(self.material_folder / "transits.csv"), index_col=0)
         star_transit_properties = table_transit.loc[table_transit["starname"] == self.starname]
         if len(star_transit_properties):
             period = np.array(star_transit_properties["period"]).astype("float")

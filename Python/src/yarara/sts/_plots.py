@@ -7,10 +7,9 @@ import matplotlib.cm as cmx
 import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
 import numpy as np
-from typing_extensions import assert_never
 
 from ..stats import find_nearest
-from ..util import doppler_r
+from ..util import assert_never, doppler_r
 
 if TYPE_CHECKING:
     from . import spec_time_series

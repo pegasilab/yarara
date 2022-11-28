@@ -1,20 +1,18 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, List, Literal, Optional, Union, cast
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 from tqdm import tqdm
 
-from ... import iofun
+from ... import iofun, materials
 from ...analysis import tableXY
-from ...paths import root
 from ...plots import my_colormesh
 from ...stats import IQ, find_nearest, flat_clustering
-from ...util import doppler_r, print_box
+from ...util import doppler_r
 
 if TYPE_CHECKING:
     from .. import spec_time_series
@@ -118,7 +116,9 @@ def yarara_median_master(
     rv_shift = np.array(self.table["rv_shift"])[mask]
     berv = berv - rv_shift
 
-    model = pd.read_pickle(root + "/Python/Material/model_telluric.p")
+    model = cast(
+        materials.Telluric_spectrum, pd.read_pickle(str(self.material_folder / "model_telluric.p"))
+    )
     grid = model["wave"]
     spectre = model["flux_norm"]
     telluric = tableXY(grid, spectre)

@@ -20,7 +20,6 @@ from yarara.analysis import tableXY
 
 from ... import iofun, util
 from ...analysis import table, tableXY
-from ...paths import root
 from ...plots import auto_axis, my_colormesh
 from ...stats import IQ, find_nearest, identify_nearest, match_nearest, smooth2d
 from ...util import ccf_fun, doppler_r, get_phase, print_box
