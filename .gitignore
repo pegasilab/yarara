@@ -1,5 +1,5 @@
 .history/
-/.venv/
+.venv/
 __pycache__/
 build/
 /docs/source/_autosummary
