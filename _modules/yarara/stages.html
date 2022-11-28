@@ -1,0 +1,1316 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>yarara.stages &#8212; yarara</title>
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+
+  
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=6aa211a80e8e0ad13c9f98b61f85fb78546ea56f" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=4f5a1d078b6c00e5ef435388cc61494d2f099c28"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/yarara/stages';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+
+    <div class="bd-sidebar__content">
+        <div class="sidebar-start-items"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">yarara</h1>
+      
+    </a>
+</div>
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  General information
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../index.html">
+   Home page
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../data.html">
+   Data format
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../api.html">
+   API
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label class="toctree-toggle" for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../_autosummary/yarara.html">
+     yarara
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label class="toctree-toggle" for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.analysis.html">
+       analysis
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-3">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.analysis.table.html">
+         table
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.analysis.table_xy.html">
+         table_xy
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../_autosummary/yarara.constants.html">
+       constants
+      </a>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.deprecated.html">
+       deprecated
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-4">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.deprecated.try_field.html">
+         try_field
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.iofun.html">
+       iofun
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-5">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.open_pickle.html">
+         open_pickle
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.pickle_dump.html">
+         pickle_dump
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.save_pickle.html">
+         save_pickle
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.touch_pickle.html">
+         touch_pickle
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.materials.html">
+       materials
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-6">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Contam_HARPN.html">
+         Contam_HARPN
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.FixedFloat.html">
+         FixedFloat
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.FixedInt.html">
+         FixedInt
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.FixedString.html">
+         FixedString
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Ghost_HARPN.html">
+         Ghost_HARPN
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.SIMBADEntry.html">
+         SIMBADEntry
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Table_stellar_model.html">
+         Table_stellar_model
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Telluric_spectrum.html">
+         Telluric_spectrum
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.mathfun.html">
+       mathfun
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-7">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.gaussian.html">
+         gaussian
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.lorentzian.html">
+         lorentzian
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.parabole.html">
+         parabole
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.sinus.html">
+         sinus
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.voigt.html">
+         voigt
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.plots.html">
+       plots
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-8">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.auto_axis.html">
+         auto_axis
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.init_matplotlib.html">
+         init_matplotlib
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.my_colormesh.html">
+         my_colormesh
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.plot_color_box.html">
+         plot_color_box
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.plot_copy_time.html">
+         plot_copy_time
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.transit_draw.html">
+         transit_draw
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.run_yarara.html">
+       run_yarara
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-9">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.run_yarara.cli.html">
+         cli
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.run_yarara.run.html">
+         run
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.run_yarara.Task.html">
+         Task
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.stages.html">
+       stages
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-10">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.load_and_adapt_input_data.html">
+         load_and_adapt_input_data
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_activity.html">
+         matching_activity
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_brute.html">
+         matching_brute
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_contam.html">
+         matching_contam
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_cosmics.html">
+         matching_cosmics
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_fourier.html">
+         matching_fourier
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_ghost_a.html">
+         matching_ghost_a
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_ghost_b.html">
+         matching_ghost_b
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_mad.html">
+         matching_mad
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_oxygen.html">
+         matching_oxygen
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_pca.html">
+         matching_pca
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_smooth.html">
+         matching_smooth
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_telluric.html">
+         matching_telluric
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.preprocessing.html">
+         preprocessing
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.statistics.html">
+         statistics
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.stellar_atmos1.html">
+         stellar_atmos1
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.stats.html">
+       stats
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-11">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.clustering.html">
+         clustering
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.misc.html">
+         misc
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.nearest.html">
+         nearest
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.rm_outliers.html">
+         rm_outliers
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.smooth.html">
+         smooth
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.sts.html">
+       sts
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-12">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_float.html">
+         SIF_float
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_float_telluric.html">
+         SIF_float_telluric
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_int.html">
+         SIF_int
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_str.html">
+         SIF_str
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.StarInfo.html">
+         StarInfo
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.spec_time_series.html">
+         spec_time_series
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.util.html">
+       util
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-13">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.assert_never.html">
+         assert_never
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.ccf_fun.html">
+         ccf_fun
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.doppler_r.html">
+         doppler_r
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.flux_norm_std.html">
+         flux_norm_std
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.get_phase.html">
+         get_phase
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.map_rnr.html">
+         map_rnr
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.my_ruler.html">
+         my_ruler
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.print_box.html">
+         print_box
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.print_iter.html">
+         print_iter
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.ratio_line.html">
+         ratio_line
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.sphinx.html">
+         sphinx
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.string_contained_in.html">
+         string_contained_in
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.yarara_artefact_suppressed.html">
+         yarara_artefact_suppressed
+        </a>
+       </li>
+      </ul>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav>
+        </div>
+        <div class="sidebar-end-items">
+             <!-- To handle the deprecated key -->
+            
+                <div class="navbar_extra_footer">
+                Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+                </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+
+
+      </div>
+      <main class="bd-main">
+        
+        
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__primary"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+    </div>
+</div>
+            </div>
+            
+            
+<!-- Table of contents that is only displayed when printing the page -->
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+            <article class="bd-article" role="main">
+              
+  <h1>Source code for yarara.stages</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">..iofun</span> <span class="kn">import</span> <span class="n">pickle_dump</span>
+<span class="kn">from</span> <span class="nn">..sts</span> <span class="kn">import</span> <span class="n">spec_time_series</span>
+
+
+<div class="viewcode-block" id="load_and_adapt_input_data"><a class="viewcode-back" href="../../_autosummary/yarara.stages.load_and_adapt_input_data.html#yarara.stages.load_and_adapt_input_data">[docs]</a><span class="k">def</span> <span class="nf">load_and_adapt_input_data</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># ADAPT INPUT DATA</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_analyse_summary</span><span class="p">(</span><span class="n">rm_old</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_add_step_dico</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_diff&quot;</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sub_dico_used</span><span class="o">=</span><span class="s2">&quot;matching_anchors&quot;</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_exploding_pickle</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="preprocessing"><a class="viewcode-back" href="../../_autosummary/yarara.stages.preprocessing.html#yarara.stages.preprocessing">[docs]</a><span class="k">def</span> <span class="nf">preprocessing</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># sts.yarara_inject_planet()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_simbad_query</span><span class="p">()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_analyse_summary</span><span class="p">()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">import_table</span><span class="p">()</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">flux_error</span><span class="p">(</span><span class="n">ron</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">continuum_error</span><span class="p">()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_exploding_pickle</span><span class="p">()</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_check_rv_sys</span><span class="p">()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_check_fwhm</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_ccf</span><span class="p">(</span>
+        <span class="n">mask</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">read_ccf_mask</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">),</span>
+        <span class="n">mask_name</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">,</span>
+        <span class="n">ccf_oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">rv_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_secular_acc</span><span class="p">(</span><span class="n">update_rv</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">scale_cmap</span><span class="p">()</span>
+
+    <span class="c1"># sous option</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">suppress_low_snr_spectra</span><span class="p">(</span><span class="n">suppress</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># sous option</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_suppress_doubtful_spectra</span><span class="p">(</span><span class="n">suppress</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># sts.supress_time_spectra(num_min=None, num_max=None)</span>
+    <span class="c1"># sts.split_instrument(instrument=ins)</span>
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="statistics"><a class="viewcode-back" href="../../_autosummary/yarara.stages.statistics.html#yarara.stages.statistics">[docs]</a><span class="k">def</span> <span class="nf">statistics</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">ins</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># STATISTICS</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_simbad_query</span><span class="p">()</span>
+    <span class="c1"># sts.yarara_star_info(sp_type=&#39;K1V&#39;, Mstar=1.0, Rstar=1.0)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_add_step_dico</span><span class="p">(</span><span class="s2">&quot;matching_diff&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sub_dico_used</span><span class="o">=</span><span class="s2">&quot;matching_anchors&quot;</span><span class="p">)</span>
+
+    <span class="c1"># sts.yarara_add_step_dico(&#39;matching_brute&#39;,0,chain=True)</span>
+
+    <span class="c1"># COLOR TEMPLATE</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Compute bolometric constant&quot;</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_flux_constant</span><span class="p">()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_color_template</span><span class="p">()</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_map_1d_to_2d</span><span class="p">(</span><span class="n">instrument</span><span class="o">=</span><span class="n">ins</span><span class="p">)</span>
+
+    <span class="c1"># ERROR BARS ON FLUX AND CONTINUUM</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Add flux errors&quot;</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_non_zero_flux</span><span class="p">()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">flux_error</span><span class="p">(</span><span class="n">ron</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">continuum_error</span><span class="p">()</span>
+
+    <span class="c1"># BERV SUMMARY</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_berv_summary</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_diff&quot;</span><span class="p">,</span> <span class="n">dbin_berv</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">nb_plot</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># ACTIVITY</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Compute activity proxy&quot;</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_activity_index</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_diff&quot;</span><span class="p">)</span>
+
+    <span class="c1"># table</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_obs_info</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">ins</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">table</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;instrument&quot;</span><span class="p">]))</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">import_table</span><span class="p">()</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Make SNR statistics figure&quot;</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">snr_statistic</span><span class="p">()</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Make DRS RV summary figure&quot;</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">dace_statistic</span><span class="p">()</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_transit_def</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">T0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Crop spectra&quot;</span><span class="p">)</span>
+    <span class="n">w0</span> <span class="o">=</span> <span class="n">sts</span><span class="o">.</span><span class="n">yarara_get_first_wave</span><span class="p">()</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_cut_spectrum</span><span class="p">(</span><span class="n">wave_min</span><span class="o">=</span><span class="n">w0</span><span class="p">,</span> <span class="n">wave_max</span><span class="o">=</span><span class="mf">6865.00</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_exploding_pickle</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="matching_cosmics"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_cosmics.html#yarara.stages.matching_cosmics">[docs]</a><span class="k">def</span> <span class="nf">matching_cosmics</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># needs mask_telluric_telluric.txt, type MaskCCF</span>
+    <span class="n">sub_dico</span> <span class="o">=</span> <span class="s2">&quot;matching_diff&quot;</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_cosmics</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="n">sub_dico</span><span class="p">,</span> <span class="n">k_sigma</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># MEDIAN MASTER</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+        <span class="p">)</span>
+
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_telluric</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+            <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;norm&quot;</span><span class="p">,</span>
+            <span class="n">ratio</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1">## Works until there</span>
+
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_master_ccf</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span> <span class="n">name_ext</span><span class="o">=</span><span class="s2">&quot;_telluric&quot;</span><span class="p">)</span>
+
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_telluric"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_telluric.html#yarara.stages.matching_telluric">[docs]</a><span class="k">def</span> <span class="nf">matching_telluric</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># needs mask_telluric_telluric.txt, type MaskCCF</span>
+    <span class="c1"># needs mask_telluric_h2o.txt</span>
+
+    <span class="c1"># CORRECT TELLURIC WATER</span>
+
+    <span class="c1"># TELLURIC FOR MEDIAN MASTER</span>
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># MEDIAN MASTER FOR TELLURIC CORRECTION</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+        <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_telluric</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+        <span class="n">telluric_tag</span><span class="o">=</span><span class="s2">&quot;telluric&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;norm&quot;</span><span class="p">,</span>
+        <span class="n">ratio</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">normalisation</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># MEDIAN MASTER FOR TELLURIC CORRECTION</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+        <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_telluric</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+        <span class="n">telluric_tag</span><span class="o">=</span><span class="s2">&quot;h2o&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;norm&quot;</span><span class="p">,</span>
+        <span class="n">ratio</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">normalisation</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># CORRECT WATER TELLURIC WITH CCF</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_telluric_proxy</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+        <span class="n">sub_dico_output</span><span class="o">=</span><span class="s2">&quot;telluric&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">,</span>
+        <span class="n">proxies_corr</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;h2o_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;h2o_fwhm&quot;</span><span class="p">],</span>
+        <span class="n">wave_min_correction_</span><span class="o">=</span><span class="mf">4400.0</span><span class="p">,</span>
+        <span class="n">min_r_corr_</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+        <span class="n">sigma_ext</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_oxygen"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_oxygen.html#yarara.stages.matching_oxygen">[docs]</a><span class="k">def</span> <span class="nf">matching_oxygen</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># needs mask_telluric_telluric.txt, type MaskCCF</span>
+    <span class="c1"># needs mask_telluric_o2.txt, type MaskCCF</span>
+
+    <span class="c1"># CORRECT OXYGEN WATER</span>
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># MEDIAN MASTER FOR TELLURIC CORRECTION</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+        <span class="p">)</span>
+
+    <span class="c1"># TELLURIC FOR MEDIAN MASTER</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_telluric</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+        <span class="n">telluric_tag</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;norm&quot;</span><span class="p">,</span>
+        <span class="n">ratio</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">normalisation</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># CORRECT WATER TELLURIC WITH CCF</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_telluric_proxy</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_telluric&quot;</span><span class="p">,</span>
+        <span class="n">sub_dico_output</span><span class="o">=</span><span class="s2">&quot;oxygen&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">,</span>
+        <span class="n">proxies_corr</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;h2o_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;h2o_fwhm&quot;</span><span class="p">,</span> <span class="s2">&quot;o2_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;o2_fwhm&quot;</span><span class="p">],</span>
+        <span class="n">wave_min_correction_</span><span class="o">=</span><span class="mi">4400</span><span class="p">,</span>
+        <span class="n">min_r_corr_</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+        <span class="n">sigma_ext</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_oxygen</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_oxygen&quot;</span><span class="p">,</span>
+        <span class="n">oxygene_bands</span><span class="o">=</span><span class="p">[[</span><span class="mi">5787</span><span class="p">,</span> <span class="mi">5830</span><span class="p">]],</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_contam"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_contam.html#yarara.stages.matching_contam">[docs]</a><span class="k">def</span> <span class="nf">matching_contam</span><span class="p">(</span>
+    <span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">frog_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_activity_index</span><span class="p">()</span>
+
+    <span class="c1"># input Contam_HARPN</span>
+
+    <span class="c1"># CORRECT TH CONTAM</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">import_table</span><span class="p">()</span>
+    <span class="n">nb_spec</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">jdb</span> <span class="o">&lt;</span> <span class="mi">57505</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nb_spec</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">nb_spec</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
+            <span class="n">jdb_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">53000</span><span class="p">,</span> <span class="mi">57505</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">jdb_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100000</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># MEDIAN MASTER</span>
+            <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+                <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+                <span class="n">suppress_telluric</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">jdb_range</span><span class="o">=</span><span class="n">jdb_range</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_produce_mask_contam</span><span class="p">(</span><span class="n">frog_file</span><span class="p">)</span>
+        <span class="c1"># sts.yarara_produce_mask_telluric(telluric_tresh=0.001)</span>
+
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_frog</span><span class="p">(</span>
+            <span class="n">correction</span><span class="o">=</span><span class="s2">&quot;contam&quot;</span><span class="p">,</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_oxygen&quot;</span><span class="p">,</span>
+            <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">,</span>
+            <span class="n">wave_min</span><span class="o">=</span><span class="mf">5710.0</span><span class="p">,</span>
+            <span class="n">wave_max</span><span class="o">=</span><span class="mf">5840.0</span><span class="p">,</span>
+            <span class="n">wave_max_train</span><span class="o">=</span><span class="mf">7000.0</span><span class="p">,</span>
+            <span class="n">pca_comp_kept_</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">algo_pca</span><span class="o">=</span><span class="s2">&quot;pca&quot;</span><span class="p">,</span>
+            <span class="n">threshold_contam</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">equal_weight</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">complete_analysis</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">rcorr_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_pca"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_pca.html#yarara.stages.matching_pca">[docs]</a><span class="k">def</span> <span class="nf">matching_pca</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Input K5 type MaskCCF</span>
+    <span class="c1"># CORRECT TELLURIC WITH PCA</span>
+    <span class="n">file_test</span> <span class="o">=</span> <span class="n">sts</span><span class="o">.</span><span class="n">import_spectrum</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">&quot;matching_contam&quot;</span> <span class="ow">in</span> <span class="n">file_test</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">dico_actif</span> <span class="o">=</span> <span class="s2">&quot;matching_contam&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">dico_actif</span> <span class="o">=</span> <span class="s2">&quot;matching_oxygen&quot;</span>
+
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+        <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_telluric_gradient</span><span class="p">(</span>
+        <span class="n">sub_dico_detection</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+        <span class="n">sub_dico_correction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">inst_resolution</span><span class="o">=</span><span class="mi">110000</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">,</span>
+        <span class="n">equal_weight</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">wave_min_correction</span><span class="o">=</span><span class="mi">4400</span><span class="p">,</span>
+        <span class="n">calib_std</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">nb_pca_comp_kept</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">nb_pca_max_kept</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_telluric</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_pca&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;norm&quot;</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_master_ccf</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_pca&quot;</span><span class="p">,</span>
+        <span class="n">name_ext</span><span class="o">=</span><span class="s2">&quot;_telluric&quot;</span><span class="p">,</span>
+        <span class="n">rvs_</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;berv&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_telluric</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;norm&quot;</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_master_ccf</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+        <span class="n">name_ext</span><span class="o">=</span><span class="s2">&quot;_telluric&quot;</span><span class="p">,</span>
+        <span class="n">rvs_</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;berv&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_activity"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_activity.html#yarara.stages.matching_activity">[docs]</a><span class="k">def</span> <span class="nf">matching_activity</span><span class="p">(</span>
+    <span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;snr&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;median&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;master&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zeros&quot;</span><span class="p">]],</span>
+    <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">input_dico</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># CORRECT ACTIVITY WITH PROXIES + CCF MOMENT</span>
+
+    <span class="c1"># ACTIVITY</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Compute activity proxy&quot;</span><span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_activity_index</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_pca&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_ccf</span><span class="p">(</span>
+        <span class="n">mask</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">read_ccf_mask</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">),</span>
+        <span class="n">mask_name</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">,</span>
+        <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="n">input_dico</span><span class="p">,</span>
+        <span class="n">ccf_oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">rv_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">proxy</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Kernel_CaII&quot;</span><span class="p">,</span> <span class="s2">&quot;CaII&quot;</span><span class="p">][</span><span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>  <span class="c1"># sts.yarara_determine_optimal_Sindex()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Optimal proxy of activity : </span><span class="si">{</span><span class="n">proxy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_activity</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="n">input_dico</span><span class="p">,</span>
+        <span class="n">proxy_corr</span><span class="o">=</span><span class="p">[</span><span class="n">proxy</span><span class="p">,</span> <span class="s2">&quot;ccf_fwhm&quot;</span><span class="p">,</span> <span class="s2">&quot;ccf_contrast&quot;</span><span class="p">],</span>
+        <span class="n">smooth_corr</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_ghost_a"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_ghost_a.html#yarara.stages.matching_ghost_a">[docs]</a><span class="k">def</span> <span class="nf">matching_ghost_a</span><span class="p">(</span>
+    <span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span>
+    <span class="n">frog_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;snr&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;median&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;master&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zeros&quot;</span><span class="p">]],</span>
+    <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Material/Ghost_{instrument}.p type InstrumentGhost</span>
+
+    <span class="c1"># CORRECT FROG</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">dico_actif</span> <span class="o">=</span> <span class="s2">&quot;matching_activity&quot;</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_borders_pxl</span><span class="p">(</span>
+        <span class="n">pixels_to_reject</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4092</span><span class="p">,</span> <span class="mi">4097</span><span class="p">)])</span>
+    <span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_produce_mask_frog</span><span class="p">(</span><span class="n">frog_file</span><span class="o">=</span><span class="n">frog_file</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_frog</span><span class="p">(</span>
+        <span class="n">correction</span><span class="o">=</span><span class="s2">&quot;ghost_a&quot;</span><span class="p">,</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_activity&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span>
+        <span class="n">threshold_contam</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">equal_weight</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">pca_comp_kept_</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">complete_analysis</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_ghost_b"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_ghost_b.html#yarara.stages.matching_ghost_b">[docs]</a><span class="k">def</span> <span class="nf">matching_ghost_b</span><span class="p">(</span>
+    <span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;snr&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;median&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;master&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zeros&quot;</span><span class="p">]],</span>
+    <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># CORRECT GHOST B CONTAM</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_frog</span><span class="p">(</span>
+        <span class="n">correction</span><span class="o">=</span><span class="s2">&quot;ghost_b&quot;</span><span class="p">,</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_ghost_a&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span>
+        <span class="n">wave_max_train</span><span class="o">=</span><span class="mi">4100</span><span class="p">,</span>
+        <span class="n">pca_comp_kept_</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">threshold_contam</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">equal_weight</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">complete_analysis</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_fourier"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_fourier.html#yarara.stages.matching_fourier">[docs]</a><span class="k">def</span> <span class="nf">matching_fourier</span><span class="p">(</span>
+    <span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># CORRECT INTERFERENCE PATTERN</span>
+
+    <span class="c1"># MEDIAN MASTER</span>
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_ghost_b&quot;</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+            <span class="n">jdb_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100000</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="c1"># CORRECT PATTERN IN FOURIER SPACE</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_pattern</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_ghost_b&quot;</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">,</span>
+        <span class="n">correct_blue</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">correct_red</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">width_range</span><span class="o">=</span><span class="p">(</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">),</span>
+        <span class="n">jdb_range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100000</span><span class="p">),</span>
+    <span class="p">)</span>  <span class="c1"># all the time a pattern on HARPN</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_smooth"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_smooth.html#yarara.stages.matching_smooth">[docs]</a><span class="k">def</span> <span class="nf">matching_smooth</span><span class="p">(</span>
+    <span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;snr&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;median&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;master&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zeros&quot;</span><span class="p">]],</span>
+    <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># CORRECT CONTINUUM</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_smooth</span><span class="p">(</span><span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_fourier&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">window_ang</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">yarara_retropropagation_correction</span><span class="p">(</span>
+            <span class="n">correction_map</span><span class="o">=</span><span class="s2">&quot;matching_smooth&quot;</span><span class="p">,</span>
+            <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="matching_mad"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_mad.html#yarara.stages.matching_mad">[docs]</a><span class="k">def</span> <span class="nf">matching_mad</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># CORRECT MAD</span>
+    <span class="n">counter_mad_removed</span> <span class="o">=</span> <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_mad</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_smooth&quot;</span><span class="p">,</span>
+        <span class="n">k_sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">k_mad</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">n_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">ext</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">reference</span> <span class="o">==</span> <span class="s2">&quot;master&quot;</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="c1"># spectrum_removed = counter_mad_removed &gt; [0.15, 0.15][int(reference == &quot;master&quot;)]</span>
+    <span class="n">spectrum_removed</span> <span class="o">=</span> <span class="n">counter_mad_removed</span> <span class="o">&gt;</span> <span class="mf">0.15</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">suppress_time_spectra</span><span class="p">(</span><span class="n">mask</span><span class="o">=</span><span class="n">spectrum_removed</span><span class="p">)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_ccf</span><span class="p">(</span>
+        <span class="n">mask</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">read_ccf_mask</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">),</span>
+        <span class="n">mask_name</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">,</span>
+        <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_mad&quot;</span><span class="p">,</span>
+        <span class="n">ccf_oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">rv_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="stellar_atmos1"><a class="viewcode-back" href="../../_autosummary/yarara.stages.stellar_atmos1.html#yarara.stages.stellar_atmos1">[docs]</a><span class="k">def</span> <span class="nf">stellar_atmos1</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># TEMPERATURE + MODEL FIT</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_median_master</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_mad&quot;</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">&quot;median&quot;</span><span class="p">,</span>  <span class="c1"># if smt else than max, the classical weighted average of v1.0</span>
+        <span class="n">suppress_telluric</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">shift_spectrum</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reference</span> <span class="o">!=</span> <span class="s2">&quot;master&quot;</span><span class="p">:</span>
+        <span class="n">sts</span><span class="o">.</span><span class="n">import_material</span><span class="p">()</span>
+        <span class="n">load</span> <span class="o">=</span> <span class="n">sts</span><span class="o">.</span><span class="n">material</span>
+
+        <span class="n">load</span><span class="p">[</span><span class="s2">&quot;reference_spectrum_backup&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">load</span><span class="p">[</span><span class="s2">&quot;reference_spectrum&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">pickle_dump</span><span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">directory</span> <span class="o">+</span> <span class="s2">&quot;Analyse_material.p&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_cut_spectrum</span><span class="p">(</span><span class="n">wave_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wave_max</span><span class="o">=</span><span class="mi">6834</span><span class="p">)</span>
+
+    <span class="c1">#    sts.yarara_stellar_atmos(sub_dico=&quot;matching_diff&quot;, reference=&quot;master&quot;, continuum=&quot;linear&quot;)</span>
+
+    <span class="c1">#    sts.yarara_correct_continuum_absorption(model=None, T=None, g=None)</span>
+
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_ccf</span><span class="p">(</span>
+        <span class="n">mask</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">read_ccf_mask</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">),</span>
+        <span class="n">mask_name</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">,</span>
+        <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_pca&quot;</span><span class="p">,</span>
+        <span class="n">ccf_oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">rv_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_ccf</span><span class="p">(</span>
+        <span class="n">mask</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">read_ccf_mask</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">),</span>
+        <span class="n">mask_name</span><span class="o">=</span><span class="n">sts</span><span class="o">.</span><span class="n">mask_harps</span><span class="p">,</span>
+        <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_mad&quot;</span><span class="p">,</span>
+        <span class="n">ccf_oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">rv_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1">#    sts.yarara_snr_curve()</span>
+    <span class="c1">#    sts.snr_statistic(version=2)</span>
+    <span class="c1">#    sts.yarara_kernel_caii(</span>
+    <span class="c1">#     contam=True,</span>
+    <span class="c1">#     mask=&quot;CaII_HD128621&quot;,</span>
+    <span class="c1">#     power_snr=None,</span>
+    <span class="c1">#     noise_kernel=&quot;unique&quot;,</span>
+    <span class="c1">#     wave_max=None,</span>
+    <span class="c1">#     doppler_free=False,</span>
+    <span class="c1"># )</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matching_brute"><a class="viewcode-back" href="../../_autosummary/yarara.stages.matching_brute.html#yarara.stages.matching_brute">[docs]</a><span class="k">def</span> <span class="nf">matching_brute</span><span class="p">(</span><span class="n">sts</span><span class="p">:</span> <span class="n">spec_time_series</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">close_figure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># CORRECT BRUTE</span>
+    <span class="n">sts</span><span class="o">.</span><span class="n">yarara_correct_brute</span><span class="p">(</span>
+        <span class="n">sub_dico</span><span class="o">=</span><span class="s2">&quot;matching_mad&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">k_sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">percent_removed</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># None if sphinx</span>
+        <span class="n">borders_pxl</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">close_figure</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+            </article>
+            
+
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+
+    <!-- Table of contents -->
+
+
+<div class="bd-sidebar-secondary bd-toc show noprint">
+</div>
+
+
+
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            <p>
+  
+      &copy; Copyright 2022, Michael Cretignier and Denis Rosset.<br/>
+</p>
+          </div>
+        </footer>
+        
+
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b"></script>
+
+  </body>
+</html>

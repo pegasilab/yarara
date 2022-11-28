@@ -1,0 +1,1350 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Ghost_HARPN &#8212; yarara</title>
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+
+  
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/6.1.2/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=6aa211a80e8e0ad13c9f98b61f85fb78546ea56f" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=4f5a1d078b6c00e5ef435388cc61494d2f099c28"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_autosummary/yarara.materials.Ghost_HARPN';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SIMBADEntry" href="yarara.materials.SIMBADEntry.html" />
+    <link rel="prev" title="FixedString" href="yarara.materials.FixedString.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+
+    <div class="bd-sidebar__content">
+        <div class="sidebar-start-items"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">yarara</h1>
+      
+    </a>
+</div>
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  General information
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../index.html">
+   Home page
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../data.html">
+   Data format
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="../api.html">
+   API
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label class="toctree-toggle" for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2 current active has-children">
+    <a class="reference internal" href="yarara.html">
+     yarara
+    </a>
+    <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label class="toctree-toggle" for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul class="current">
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.analysis.html">
+       analysis
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-3">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.analysis.table.html">
+         table
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.analysis.table_xy.html">
+         table_xy
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="yarara.constants.html">
+       constants
+      </a>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.deprecated.html">
+       deprecated
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-4">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.deprecated.try_field.html">
+         try_field
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.iofun.html">
+       iofun
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-5">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.iofun.open_pickle.html">
+         open_pickle
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.iofun.pickle_dump.html">
+         pickle_dump
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.iofun.save_pickle.html">
+         save_pickle
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.iofun.touch_pickle.html">
+         touch_pickle
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 current active has-children">
+      <a class="reference internal" href="yarara.materials.html">
+       materials
+      </a>
+      <input checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-6">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul class="current">
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.materials.Contam_HARPN.html">
+         Contam_HARPN
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.materials.FixedFloat.html">
+         FixedFloat
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.materials.FixedInt.html">
+         FixedInt
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.materials.FixedString.html">
+         FixedString
+        </a>
+       </li>
+       <li class="toctree-l4 current active">
+        <a class="current reference internal" href="#">
+         Ghost_HARPN
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.materials.SIMBADEntry.html">
+         SIMBADEntry
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.materials.Table_stellar_model.html">
+         Table_stellar_model
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.materials.Telluric_spectrum.html">
+         Telluric_spectrum
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.mathfun.html">
+       mathfun
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-7">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.mathfun.gaussian.html">
+         gaussian
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.mathfun.lorentzian.html">
+         lorentzian
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.mathfun.parabole.html">
+         parabole
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.mathfun.sinus.html">
+         sinus
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.mathfun.voigt.html">
+         voigt
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.plots.html">
+       plots
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-8">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.plots.auto_axis.html">
+         auto_axis
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.plots.init_matplotlib.html">
+         init_matplotlib
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.plots.my_colormesh.html">
+         my_colormesh
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.plots.plot_color_box.html">
+         plot_color_box
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.plots.plot_copy_time.html">
+         plot_copy_time
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.plots.transit_draw.html">
+         transit_draw
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.run_yarara.html">
+       run_yarara
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-9">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.run_yarara.cli.html">
+         cli
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.run_yarara.run.html">
+         run
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.run_yarara.Task.html">
+         Task
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.stages.html">
+       stages
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-10">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.load_and_adapt_input_data.html">
+         load_and_adapt_input_data
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_activity.html">
+         matching_activity
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_brute.html">
+         matching_brute
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_contam.html">
+         matching_contam
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_cosmics.html">
+         matching_cosmics
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_fourier.html">
+         matching_fourier
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_ghost_a.html">
+         matching_ghost_a
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_ghost_b.html">
+         matching_ghost_b
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_mad.html">
+         matching_mad
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_oxygen.html">
+         matching_oxygen
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_pca.html">
+         matching_pca
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_smooth.html">
+         matching_smooth
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.matching_telluric.html">
+         matching_telluric
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.preprocessing.html">
+         preprocessing
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.statistics.html">
+         statistics
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stages.stellar_atmos1.html">
+         stellar_atmos1
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.stats.html">
+       stats
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-11">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stats.clustering.html">
+         clustering
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stats.misc.html">
+         misc
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stats.nearest.html">
+         nearest
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stats.rm_outliers.html">
+         rm_outliers
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.stats.smooth.html">
+         smooth
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.sts.html">
+       sts
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-12">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.sts.SIF_float.html">
+         SIF_float
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.sts.SIF_float_telluric.html">
+         SIF_float_telluric
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.sts.SIF_int.html">
+         SIF_int
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.sts.SIF_str.html">
+         SIF_str
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.sts.StarInfo.html">
+         StarInfo
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.sts.spec_time_series.html">
+         spec_time_series
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="yarara.util.html">
+       util
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-13">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.assert_never.html">
+         assert_never
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.ccf_fun.html">
+         ccf_fun
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.doppler_r.html">
+         doppler_r
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.flux_norm_std.html">
+         flux_norm_std
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.get_phase.html">
+         get_phase
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.map_rnr.html">
+         map_rnr
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.my_ruler.html">
+         my_ruler
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.print_box.html">
+         print_box
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.print_iter.html">
+         print_iter
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.ratio_line.html">
+         ratio_line
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.sphinx.html">
+         sphinx
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.string_contained_in.html">
+         string_contained_in
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="yarara.util.yarara_artefact_suppressed.html">
+         yarara_artefact_suppressed
+        </a>
+       </li>
+      </ul>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav>
+        </div>
+        <div class="sidebar-end-items">
+             <!-- To handle the deprecated key -->
+            
+                <div class="navbar_extra_footer">
+                Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+                </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+
+
+      </div>
+      <main class="bd-main">
+        
+        
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__primary"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<label for="__secondary"
+  class="headerbtn headerbtn-secondary"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+            </div>
+            
+            
+<!-- Table of contents that is only displayed when printing the page -->
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Ghost_HARPN</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Ghost_HARPN
+    </span>
+   </code>
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.jdb">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.jdb
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.berv">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.berv
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.wave">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.wave
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.stitching">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.stitching
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.ghost_a">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.ghost_a
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.ghost_b">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.ghost_b
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.__init__">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.__init__()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.__new__">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.__new__()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.clear">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.clear()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.copy">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.copy()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.fromkeys">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.fromkeys()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.get">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.get()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.items">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.items()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.keys">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.keys()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.pop">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.pop()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.popitem">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.popitem()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.setdefault">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.setdefault()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.update">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.update()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.values">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.values()
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+
+            <article class="bd-article" role="main">
+              
+  <section id="ghost-harpn">
+<h1>Ghost_HARPN<a class="headerlink" href="#ghost-harpn" title="Permalink to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Ghost_HARPN</span></span><a class="reference internal" href="../_modules/yarara/materials.html#Ghost_HARPN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yarara.materials.Ghost_HARPN" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+<p class="rubric">Attributes</p>
+<p><em>Note: attributes inherited from parent classes are not shown here, if any</em></p>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.jdb" title="yarara.materials.Ghost_HARPN.jdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">jdb</span></code></a></p></td>
+<td><p>JDB time of the reference wavelength solution</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.berv" title="yarara.materials.Ghost_HARPN.berv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">berv</span></code></a></p></td>
+<td><p>Not used anymore</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.wave" title="yarara.materials.Ghost_HARPN.wave"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wave</span></code></a></p></td>
+<td><p>2D matrix of the reference wavelength solution</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.stitching" title="yarara.materials.Ghost_HARPN.stitching"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stitching</span></code></a></p></td>
+<td><p>2D matrix of the stitching contamination (fiber A)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.ghost_a" title="yarara.materials.Ghost_HARPN.ghost_a"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghost_a</span></code></a></p></td>
+<td><p>2D matrix of the ghost contamination (fiber A)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.ghost_b" title="yarara.materials.Ghost_HARPN.ghost_b"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghost_b</span></code></a></p></td>
+<td><p>2D matrix of the ghost contamination (fiber B)</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.clear" title="yarara.materials.Ghost_HARPN.clear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.copy" title="yarara.materials.Ghost_HARPN.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.fromkeys" title="yarara.materials.Ghost_HARPN.fromkeys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fromkeys</span></code></a></p></td>
+<td><p>Create a new dictionary with keys from iterable and values set to value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.get" title="yarara.materials.Ghost_HARPN.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a></p></td>
+<td><p>Return the value for key if key is in the dictionary, else default.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.items" title="yarara.materials.Ghost_HARPN.items"><code class="xref py py-obj docutils literal notranslate"><span class="pre">items</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.keys" title="yarara.materials.Ghost_HARPN.keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keys</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.pop" title="yarara.materials.Ghost_HARPN.pop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pop</span></code></a></p></td>
+<td><p>If key is not found, d is returned if given, otherwise KeyError is raised</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.popitem" title="yarara.materials.Ghost_HARPN.popitem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">popitem</span></code></a></p></td>
+<td><p>Remove and return a (key, value) pair as a 2-tuple.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.setdefault" title="yarara.materials.Ghost_HARPN.setdefault"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setdefault</span></code></a></p></td>
+<td><p>Insert key with a value of default if key is not in the dictionary.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.update" title="yarara.materials.Ghost_HARPN.update"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code></a></p></td>
+<td><p>If E is present and has a .keys() method, then does:  for k in E: D[k] = E[k] If E is present and lacks a .keys() method, then does:  for k, v in E: D[k] = v In either case, this is followed by: for k in F:  D[k] = F[k]</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#yarara.materials.Ghost_HARPN.values" title="yarara.materials.Ghost_HARPN.values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">values</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">List of members of Ghost_HARPN</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.jdb">
+<span class="sig-name descname"><span class="pre">jdb</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></em><a class="headerlink" href="#yarara.materials.Ghost_HARPN.jdb" title="Permalink to this definition">#</a></dt>
+<dd><p>JDB time of the reference wavelength solution</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.berv">
+<span class="sig-name descname"><span class="pre">berv</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></em><a class="headerlink" href="#yarara.materials.Ghost_HARPN.berv" title="Permalink to this definition">#</a></dt>
+<dd><p>Not used anymore</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.wave">
+<span class="sig-name descname"><span class="pre">wave</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.23)"><span class="pre">dtype</span></a><span class="p"><span class="pre">[</span></span><span class="pre">float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#yarara.materials.Ghost_HARPN.wave" title="Permalink to this definition">#</a></dt>
+<dd><p>2D matrix of the reference wavelength solution</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.stitching">
+<span class="sig-name descname"><span class="pre">stitching</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.23)"><span class="pre">dtype</span></a><span class="p"><span class="pre">[</span></span><span class="pre">ScalarType</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#yarara.materials.Ghost_HARPN.stitching" title="Permalink to this definition">#</a></dt>
+<dd><p>2D matrix of the stitching contamination (fiber A)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.ghost_a">
+<span class="sig-name descname"><span class="pre">ghost_a</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.23)"><span class="pre">dtype</span></a><span class="p"><span class="pre">[</span></span><span class="pre">ScalarType</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#yarara.materials.Ghost_HARPN.ghost_a" title="Permalink to this definition">#</a></dt>
+<dd><p>2D matrix of the ghost contamination (fiber A)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.ghost_b">
+<span class="sig-name descname"><span class="pre">ghost_b</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.23)"><span class="pre">dtype</span></a><span class="p"><span class="pre">[</span></span><span class="pre">ScalarType</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#yarara.materials.Ghost_HARPN.ghost_b" title="Permalink to this definition">#</a></dt>
+<dd><p>2D matrix of the ghost contamination (fiber B)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.__init__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.__new__">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_typename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.__new__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None.</span>&#160; <span class="pre">Remove</span> <span class="pre">all</span> <span class="pre">items</span> <span class="pre">from</span> <span class="pre">D.</span></span></span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.clear" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">a</span> <span class="pre">shallow</span> <span class="pre">copy</span> <span class="pre">of</span> <span class="pre">D</span></span></span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.copy" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.fromkeys">
+<span class="sig-name descname"><span class="pre">fromkeys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.fromkeys" title="Permalink to this definition">#</a></dt>
+<dd><p>Create a new dictionary with keys from iterable and values set to value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.get" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the value for key if key is in the dictionary, else default.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">a</span> <span class="pre">set-like</span> <span class="pre">object</span> <span class="pre">providing</span> <span class="pre">a</span> <span class="pre">view</span> <span class="pre">on</span> <span class="pre">D's</span> <span class="pre">items</span></span></span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.items" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">a</span> <span class="pre">set-like</span> <span class="pre">object</span> <span class="pre">providing</span> <span class="pre">a</span> <span class="pre">view</span> <span class="pre">on</span> <span class="pre">D's</span> <span class="pre">keys</span></span></span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.keys" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.pop">
+<span class="sig-name descname"><span class="pre">pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">v,</span> <span class="pre">remove</span> <span class="pre">specified</span> <span class="pre">key</span> <span class="pre">and</span> <span class="pre">return</span> <span class="pre">the</span> <span class="pre">corresponding</span> <span class="pre">value.</span></span></span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.pop" title="Permalink to this definition">#</a></dt>
+<dd><p>If key is not found, d is returned if given, otherwise KeyError is raised</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.popitem">
+<span class="sig-name descname"><span class="pre">popitem</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.popitem" title="Permalink to this definition">#</a></dt>
+<dd><p>Remove and return a (key, value) pair as a 2-tuple.</p>
+<p>Pairs are returned in LIFO (last-in, first-out) order.
+Raises KeyError if the dict is empty.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.setdefault">
+<span class="sig-name descname"><span class="pre">setdefault</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.setdefault" title="Permalink to this definition">#</a></dt>
+<dd><p>Insert key with a value of default if key is not in the dictionary.</p>
+<p>Return the value for key if key is in the dictionary, else default.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="optional">[</span><em class="sig-param"><span class="n"><span class="pre">E</span></span></em>, <span class="optional">]</span><em class="sig-param"><span class="n"><span class="pre">**F</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None.</span>&#160; <span class="pre">Update</span> <span class="pre">D</span> <span class="pre">from</span> <span class="pre">dict/iterable</span> <span class="pre">E</span> <span class="pre">and</span> <span class="pre">F.</span></span></span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.update" title="Permalink to this definition">#</a></dt>
+<dd><p>If E is present and has a .keys() method, then does:  for k in E: D[k] = E[k]
+If E is present and lacks a .keys() method, then does:  for k, v in E: D[k] = v
+In either case, this is followed by: for k in F:  D[k] = F[k]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="yarara.materials.Ghost_HARPN.values">
+<span class="sig-name descname"><span class="pre">values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">an</span> <span class="pre">object</span> <span class="pre">providing</span> <span class="pre">a</span> <span class="pre">view</span> <span class="pre">on</span> <span class="pre">D's</span> <span class="pre">values</span></span></span><a class="headerlink" href="#yarara.materials.Ghost_HARPN.values" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            </article>
+            
+
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="yarara.materials.FixedString.html" title="previous page">
+      <i class="fas fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">FixedString</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="yarara.materials.SIMBADEntry.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">SIMBADEntry</p>
+  </div>
+  <i class="fas fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+
+    <!-- Table of contents -->
+
+
+<div class="bd-sidebar-secondary bd-toc show noprint">
+    <div class="toc-item">
+        <div class="tocsection onthispage">
+            <i class="fas fa-list"></i> Contents
+        </div>
+        <nav id="bd-toc-nav" aria-label="Page">
+            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Ghost_HARPN
+    </span>
+   </code>
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.jdb">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.jdb
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.berv">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.berv
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.wave">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.wave
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.stitching">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.stitching
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.ghost_a">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.ghost_a
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.ghost_b">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.ghost_b
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.__init__">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.__init__()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.__new__">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.__new__()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.clear">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.clear()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.copy">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.copy()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.fromkeys">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.fromkeys()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.get">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.get()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.items">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.items()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.keys">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.keys()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.pop">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.pop()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.popitem">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.popitem()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.setdefault">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.setdefault()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.update">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.update()
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#yarara.materials.Ghost_HARPN.values">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       Ghost_HARPN.values()
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+        </nav>
+    </div>
+</div>
+
+
+
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            <p>
+  
+      &copy; Copyright 2022, Michael Cretignier and Denis Rosset.<br/>
+</p>
+          </div>
+        </footer>
+        
+
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b"></script>
+
+  </body>
+</html>

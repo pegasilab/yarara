@@ -1,0 +1,1026 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>yarara.run_yarara &#8212; yarara</title>
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+
+  
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=6aa211a80e8e0ad13c9f98b61f85fb78546ea56f" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=4f5a1d078b6c00e5ef435388cc61494d2f099c28"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/yarara/run_yarara';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+
+    <div class="bd-sidebar__content">
+        <div class="sidebar-start-items"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">yarara</h1>
+      
+    </a>
+</div>
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  General information
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../index.html">
+   Home page
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../data.html">
+   Data format
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../api.html">
+   API
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label class="toctree-toggle" for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../_autosummary/yarara.html">
+     yarara
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label class="toctree-toggle" for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.analysis.html">
+       analysis
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-3">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.analysis.table.html">
+         table
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.analysis.table_xy.html">
+         table_xy
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../_autosummary/yarara.constants.html">
+       constants
+      </a>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.deprecated.html">
+       deprecated
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-4">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.deprecated.try_field.html">
+         try_field
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.iofun.html">
+       iofun
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-5">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.open_pickle.html">
+         open_pickle
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.pickle_dump.html">
+         pickle_dump
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.save_pickle.html">
+         save_pickle
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.iofun.touch_pickle.html">
+         touch_pickle
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.materials.html">
+       materials
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-6">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Contam_HARPN.html">
+         Contam_HARPN
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.FixedFloat.html">
+         FixedFloat
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.FixedInt.html">
+         FixedInt
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.FixedString.html">
+         FixedString
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Ghost_HARPN.html">
+         Ghost_HARPN
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.SIMBADEntry.html">
+         SIMBADEntry
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Table_stellar_model.html">
+         Table_stellar_model
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.materials.Telluric_spectrum.html">
+         Telluric_spectrum
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.mathfun.html">
+       mathfun
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-7">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.gaussian.html">
+         gaussian
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.lorentzian.html">
+         lorentzian
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.parabole.html">
+         parabole
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.sinus.html">
+         sinus
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.mathfun.voigt.html">
+         voigt
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.plots.html">
+       plots
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-8">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.auto_axis.html">
+         auto_axis
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.init_matplotlib.html">
+         init_matplotlib
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.my_colormesh.html">
+         my_colormesh
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.plot_color_box.html">
+         plot_color_box
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.plot_copy_time.html">
+         plot_copy_time
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.plots.transit_draw.html">
+         transit_draw
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.run_yarara.html">
+       run_yarara
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-9">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.run_yarara.cli.html">
+         cli
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.run_yarara.run.html">
+         run
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.run_yarara.Task.html">
+         Task
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.stages.html">
+       stages
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-10">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.load_and_adapt_input_data.html">
+         load_and_adapt_input_data
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_activity.html">
+         matching_activity
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_brute.html">
+         matching_brute
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_contam.html">
+         matching_contam
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_cosmics.html">
+         matching_cosmics
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_fourier.html">
+         matching_fourier
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_ghost_a.html">
+         matching_ghost_a
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_ghost_b.html">
+         matching_ghost_b
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_mad.html">
+         matching_mad
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_oxygen.html">
+         matching_oxygen
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_pca.html">
+         matching_pca
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_smooth.html">
+         matching_smooth
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.matching_telluric.html">
+         matching_telluric
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.preprocessing.html">
+         preprocessing
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.statistics.html">
+         statistics
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stages.stellar_atmos1.html">
+         stellar_atmos1
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.stats.html">
+       stats
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-11">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.clustering.html">
+         clustering
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.misc.html">
+         misc
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.nearest.html">
+         nearest
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.rm_outliers.html">
+         rm_outliers
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.stats.smooth.html">
+         smooth
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.sts.html">
+       sts
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-12">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_float.html">
+         SIF_float
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_float_telluric.html">
+         SIF_float_telluric
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_int.html">
+         SIF_int
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.SIF_str.html">
+         SIF_str
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.StarInfo.html">
+         StarInfo
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.sts.spec_time_series.html">
+         spec_time_series
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../_autosummary/yarara.util.html">
+       util
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/>
+      <label class="toctree-toggle" for="toctree-checkbox-13">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.assert_never.html">
+         assert_never
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.ccf_fun.html">
+         ccf_fun
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.doppler_r.html">
+         doppler_r
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.flux_norm_std.html">
+         flux_norm_std
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.get_phase.html">
+         get_phase
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.map_rnr.html">
+         map_rnr
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.my_ruler.html">
+         my_ruler
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.print_box.html">
+         print_box
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.print_iter.html">
+         print_iter
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.ratio_line.html">
+         ratio_line
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.sphinx.html">
+         sphinx
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.string_contained_in.html">
+         string_contained_in
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../_autosummary/yarara.util.yarara_artefact_suppressed.html">
+         yarara_artefact_suppressed
+        </a>
+       </li>
+      </ul>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav>
+        </div>
+        <div class="sidebar-end-items">
+             <!-- To handle the deprecated key -->
+            
+                <div class="navbar_extra_footer">
+                Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+                </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+
+
+      </div>
+      <main class="bd-main">
+        
+        
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__primary"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+    </div>
+</div>
+            </div>
+            
+            
+<!-- Table of contents that is only displayed when printing the page -->
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+            <article class="bd-article" role="main">
+              
+  <h1>Source code for yarara.run_yarara</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">configpile</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Annotated</span>
+
+<span class="kn">import</span> <span class="nn">yarara.stages</span>
+<span class="kn">from</span> <span class="nn">yarara.sts</span> <span class="kn">import</span> <span class="n">spec_time_series</span>
+<span class="kn">from</span> <span class="nn">yarara.util</span> <span class="kn">import</span> <span class="n">print_iter</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">PerformanceWarning</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Task"><a class="viewcode-back" href="../../_autosummary/yarara.run_yarara.Task.html#yarara.run_yarara.Task">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">Config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Runs the YARARA pipeline&quot;&quot;&quot;</span>
+
+    <span class="n">prog</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+
+    <span class="c1">#: Stage at which to start the processing</span>
+    <span class="n">stage_start</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">int</span><span class="p">,</span> <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">int_parser</span><span class="p">,</span> <span class="n">short_flag_name</span><span class="o">=</span><span class="s2">&quot;-b&quot;</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="c1">#: Stage before which to stop the processing</span>
+    <span class="n">stage_break</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">int</span><span class="p">,</span> <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">int_parser</span><span class="p">,</span> <span class="n">short_flag_name</span><span class="o">=</span><span class="s2">&quot;-e&quot;</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;99&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="c1">#: TODO: reference</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+            <span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">stripped_str_parser</span><span class="o">.</span><span class="n">empty_means_none</span><span class="p">(),</span>
+            <span class="n">short_flag_name</span><span class="o">=</span><span class="s2">&quot;-r&quot;</span><span class="p">,</span>
+            <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1">#: Whether to close plots</span>
+    <span class="n">close_figure</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">bool</span><span class="p">,</span> <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">bool_parser</span><span class="p">,</span> <span class="n">short_flag_name</span><span class="o">=</span><span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="c1">#: Path to the data to process</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: The path must have the format &quot;STARNAME/data/s1d/INSTRUMENT/&quot;</span>
+    <span class="c1">#: It must also contain a WORKSPACE/ subfolder.</span>
+    <span class="n">data_folder</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span><span class="p">,</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+            <span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">path_parser</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span>
+            <span class="n">long_flag_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">positional</span><span class="o">=</span><span class="n">cp</span><span class="o">.</span><span class="n">Positional</span><span class="o">.</span><span class="n">ONCE</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1">#: Path to the SIMBAD database folder</span>
+    <span class="n">simbad_folder</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span><span class="p">,</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+            <span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">path_parser</span><span class="o">.</span><span class="n">validated</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;table_stars.p&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">(),</span>
+                <span class="s2">&quot;Database folder must contain table_stars.p&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">default_value</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;database&quot;</span> <span class="o">/</span> <span class="s2">&quot;SIMBAD&quot;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1">#: Path to the mask_ccf folder</span>
+    <span class="n">mask_ccf_folder</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span><span class="p">,</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+            <span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">path_parser</span><span class="o">.</span><span class="n">validated</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(),</span> <span class="s2">&quot;Path does not exist&quot;</span><span class="p">),</span>
+            <span class="n">default_value</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;MASK_CCF&quot;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1">#: Path to the material folder</span>
+    <span class="n">material_folder</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span><span class="p">,</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+            <span class="n">cp</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">path_parser</span><span class="o">.</span><span class="n">validated</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(),</span> <span class="s2">&quot;Path does not exist&quot;</span><span class="p">),</span>
+            <span class="n">default_value</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;Material&quot;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="Task.validate_data_folder"><a class="viewcode-back" href="../../_autosummary/yarara.run_yarara.Task.html#yarara.run_yarara.Task.validate_data_folder">[docs]</a>    <span class="k">def</span> <span class="nf">validate_data_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">Err</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_folder</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">cp</span><span class="o">.</span><span class="n">Err</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The data folder </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_folder</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_folder</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">cp</span><span class="o">.</span><span class="n">Err</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The path </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_folder</span><span class="si">}</span><span class="s2"> is not a directory&quot;</span><span class="p">)</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_folder</span><span class="o">.</span><span class="n">parts</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># including /</span>
+            <span class="k">return</span> <span class="n">cp</span><span class="o">.</span><span class="n">Err</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The path is too short, must have the structure STAR/data/s1d/INSTRUMENT at the end&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;HARPN&quot;</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;This code has only been tested with HARPN, not </span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;s1d&quot;</span> <span class="ow">or</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cp</span><span class="o">.</span><span class="n">Err</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The path must have the structure STAR/data/s1d/INSTRUMENT at the end&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;WORKSPACE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">cp</span><span class="o">.</span><span class="n">Err</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The provided path </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_folder</span><span class="si">}</span><span class="s2"> must contain a WORKSPACE subfolder with a copy of the RASSINE processed files.&quot;</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="run"><a class="viewcode-back" href="../../_autosummary/yarara.run_yarara.run.html#yarara.run_yarara.run">[docs]</a><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># planted_activated is false during our runs</span>
+    <span class="c1"># Disable the new Pandas performance warnings due to fragmentation</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">data_folder</span><span class="o">.</span><span class="n">parts</span>
+    <span class="n">ins</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">instrument</span> <span class="o">=</span> <span class="n">ins</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">star</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reducing data from star </span><span class="si">{</span><span class="n">star</span><span class="si">}</span><span class="s2"> and instrument </span><span class="si">{</span><span class="n">instrument</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">directory_workspace</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;WORKSPACE&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+    <span class="n">begin</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">all_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">begin</span><span class="p">]</span>
+    <span class="n">time_step</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;begin&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">get_time_step</span><span class="p">(</span><span class="n">step</span><span class="p">):</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">time_step</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">all_time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">all_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">now</span><span class="p">)</span>
+
+    <span class="n">sts</span> <span class="o">=</span> <span class="n">spec_time_series</span><span class="p">(</span>
+        <span class="n">directory_workspace</span><span class="p">,</span>
+        <span class="n">starname</span><span class="o">=</span><span class="n">star</span><span class="p">,</span>
+        <span class="n">instrument</span><span class="o">=</span><span class="n">ins</span><span class="p">,</span>
+        <span class="n">simbad_folder</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">simbad_folder</span><span class="p">,</span>
+        <span class="n">mask_ccf_folder</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">mask_ccf_folder</span><span class="p">,</span>
+        <span class="n">material_folder</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">material_folder</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># file_test = sts.import_spectrum()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;------------------------</span><span class="se">\n</span><span class="s2"> STAR LOADED : </span><span class="si">{</span><span class="n">sts</span><span class="o">.</span><span class="n">starname</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">------------------------&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> [INFO] Complete analysis </span><span class="si">{</span><span class="n">ins</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="p">[</span><span class="s1">&#39;with&#39;</span><span class="p">,</span> <span class="s1">&#39;without&#39;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)]</span><span class="si">}</span><span class="s2"> reference spectrum launched...</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">stage_start</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">stage_break</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">preprocessing</span><span class="p">(</span><span class="n">sts</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;preprocessing&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">statistics</span><span class="p">(</span><span class="n">sts</span><span class="p">,</span> <span class="n">ins</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;statistics&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_cosmics</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_cosmics&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_telluric</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_telluric&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_oxygen</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_oxygen&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_contam</span><span class="p">(</span>
+                <span class="n">sts</span><span class="p">,</span>
+                <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">frog_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">sts</span><span class="o">.</span><span class="n">material_folder</span> <span class="o">/</span> <span class="s2">&quot;Contam_HARPN.p&quot;</span><span class="p">),</span>
+                <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_contam&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_pca</span><span class="p">(</span><span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_pca&quot;</span><span class="p">)</span>
+
+        <span class="n">ref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;master&quot;</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;median&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;master&quot;</span><span class="p">,</span> <span class="s2">&quot;median&quot;</span><span class="p">][</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_activity</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span>
+                <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span>
+                <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">,</span>
+                <span class="n">input_dico</span><span class="o">=</span><span class="s2">&quot;matching_pca&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_activity&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_ghost_a</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span>
+                <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span>
+                <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">,</span>
+                <span class="n">frog_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">material_folder</span> <span class="o">/</span> <span class="p">(</span><span class="s2">&quot;Ghost_&quot;</span> <span class="o">+</span> <span class="n">ins</span> <span class="o">+</span> <span class="s2">&quot;.p&quot;</span><span class="p">)),</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_ghost_a&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_ghost_b</span><span class="p">(</span><span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_ghost_b&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_fourier</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_fourier&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">11</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_smooth</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_smooth&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">12</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_mad</span><span class="p">(</span><span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span><span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_mad&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">13</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">stellar_atmos1</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;stellar_atmos1&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">14</span><span class="p">:</span>
+            <span class="n">yarara</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">matching_brute</span><span class="p">(</span>
+                <span class="n">sts</span><span class="o">=</span><span class="n">sts</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">close_figure</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">close_figure</span>
+            <span class="p">)</span>
+            <span class="n">get_time_step</span><span class="p">(</span><span class="s2">&quot;matching_brute&quot;</span><span class="p">)</span>
+
+    <span class="c1"># =============================================================================</span>
+    <span class="c1"># SAVE INFO TIME</span>
+    <span class="c1"># =============================================================================</span>
+
+    <span class="n">print_iter</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">begin</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">table_time</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">time_step</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">time_step</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;time_step&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">table_time</span><span class="p">[</span><span class="s2">&quot;frac_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">table_time</span><span class="p">[</span><span class="s2">&quot;time_step&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">table_time</span><span class="p">[</span><span class="s2">&quot;time_step&quot;</span><span class="p">])</span>
+        <span class="n">table_time</span><span class="p">[</span><span class="s2">&quot;time_step&quot;</span><span class="p">]</span> <span class="o">/=</span> <span class="mi">60</span>  <span class="c1"># convert in minutes</span>
+
+        <span class="n">filename_time</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">sts</span><span class="o">.</span><span class="n">dir_root</span>
+            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;REDUCTION_INFO/Time_informations_reduction_</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S&#39;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">gmtime</span><span class="p">())</span><span class="si">}</span><span class="s2">.csv&quot;</span>
+        <span class="p">)</span>
+        <span class="n">table_time</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">filename_time</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cli"><a class="viewcode-back" href="../../_autosummary/yarara.run_yarara.cli.html#yarara.run_yarara.cli">[docs]</a><span class="k">def</span> <span class="nf">cli</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">run</span><span class="p">(</span><span class="n">Task</span><span class="o">.</span><span class="n">from_command_line_</span><span class="p">())</span></div>
+</pre></div>
+
+            </article>
+            
+
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+
+    <!-- Table of contents -->
+
+
+<div class="bd-sidebar-secondary bd-toc show noprint">
+</div>
+
+
+
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            <p>
+  
+      &copy; Copyright 2022, Michael Cretignier and Denis Rosset.<br/>
+</p>
+          </div>
+        </footer>
+        
+
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b"></script>
+
+  </body>
+</html>
