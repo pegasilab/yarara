@@ -1,14 +1,12 @@
 .history/
-/Python/.venv/
+/.venv/
 __pycache__/
 build/
-/Python/docs/source/_autosummary
+/docs/source/_autosummary
 
 .coverage
 coverage.xml
 
-/Python/docs/_build/
+/docs/_build/
 
-/Python/.venv
-
-/Python/.mypy_cache/
+.mypy_cache/

@@ -1,17 +1,17 @@
 [submodule "Material"]
-	path = Python/Material
+	path = Material
 	url = git@github.com:denisrosset/YARARA-material.git
 [submodule "MASK_CCF"]
-	path = Python/MASK_CCF
+	path = MASK_CCF
 	url = git@github.com:denisrosset/YARARA-mask-ccf.git
 [submodule "test/bats"]
-	path = Python/test/bats
+	path = test/bats
 	url = https://github.com/bats-core/bats-core.git
 [submodule "test/test_helper/bats-support"]
-	path = Python/test/test_helper/bats-support
+	path = test/test_helper/bats-support
 	url = https://github.com/bats-core/bats-support.git
 [submodule "test/test_helper/bats-assert"]
-	path = Python/test/test_helper/bats-assert
+	path = test/test_helper/bats-assert
 	url = https://github.com/bats-core/bats-assert.git
 [submodule "spectra/HD110315"]
 	path = spectra/HD110315
