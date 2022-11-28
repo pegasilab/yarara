@@ -76,7 +76,7 @@ def yarara_correct_pattern(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    logging.info("DICO %s used ----" % (sub_dico))
+    logging.info(f"DICO {sub_dico} used ----")
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
@@ -109,7 +109,7 @@ def yarara_correct_pattern(
             )
 
     if isinstance(reference, int):
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        logging.info(f"Reference spectrum : spectrum {reference:.0f}")
         ref: NDArray[np.float64] = flux[reference]
     elif reference == "snr":
         ref = flux[snr.argmax()]
@@ -190,8 +190,8 @@ def yarara_correct_pattern(
             index_sphinx2 = -1
             logging.info("No spectrum contaminated by interference pattern")
 
-    print("Index spectrum containing a pattern : %.0f" % (index_sphinx))
-    print("Index spectrum not containing a pattern : %.0f" % (index_sphinx2))
+    print(f"Index spectrum containing a pattern : {index_sphinx:.0f}")
+    print(f"Index spectrum not containing a pattern : {index_sphinx2:.0f}")
 
     time.sleep(1)
 
@@ -250,8 +250,7 @@ def yarara_correct_pattern(
         plt.figure()
         plt.plot(width, diff_fourrier_pos, color="k")
         logging.info(
-            "The interference pattern is produced by material with a width of %.3f mm"
-            % (freq_maximum_ref)
+            f"The interference pattern is produced by material with a width of {freq_maximum_ref:.3f} mm"
         )
 
         new_diff = diff.copy()
@@ -407,8 +406,7 @@ def yarara_correct_pattern(
                     correct_red
                 ):
                     logging.info(
-                        "Correcting night %.0f (r). Interference produced a width of %.3f mm"
-                        % (j, freq_maximum_left)
+                        f"Correcting night {j:.0f} (r). Interference produced a width of {freq_maximum_left:.3f} mm"
                     )
                     timer_red += 1
                     index_corrected_pattern_red.append(timer_red)
@@ -522,8 +520,7 @@ def yarara_correct_pattern(
 
                 if (abs(freq_maximum - freq_maximum_ref) / freq_maximum) < 0.10:
                     print(
-                        "[INFO] Correcting night %.0f. The interference pattern is produced by material with a width of %.3f mm"
-                        % (j, freq_maximum)
+                        f"[INFO] Correcting night {j:.0f}. The interference pattern is produced by material with a width of {freq_maximum:.3f} mm"
                     )
                     timer_blue += 1
                     index_corrected_pattern_red.append(timer_red)
@@ -669,7 +666,7 @@ def yarara_correct_pattern(
         }
         self.update_info_reduction()
 
-        fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_fourier")
+        fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_fourier'}.npy"
         np.save(fname, new_continuum.astype("float32"))
 
         self.dico_actif = "matching_fourier"

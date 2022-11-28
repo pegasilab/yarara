@@ -67,7 +67,7 @@ def yarara_correct_mad(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    print("\n---- DICO %s used ----\n" % (sub_dico))
+    print(f"\n---- DICO {sub_dico} used ----\n")
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
@@ -172,7 +172,7 @@ def yarara_correct_mad(
             y=0.15,
             color="k",
             ls=":",
-            label="rejection criterion  (%.0f)" % (sum(counter_mad_removed > 0.15)),
+            label=f"rejection criterion  ({sum(counter_mad_removed > 0.15):.0f})",
         )
         plt.legend()
         plt.scatter(jdb, counter_mad_removed, c=jdb, cmap="jet")  # type: ignore
@@ -185,7 +185,7 @@ def yarara_correct_mad(
             y=0.15,
             color="k",
             ls=":",
-            label="rejection criterion (%.0f)" % (sum(counter_mad_removed > 0.15)),
+            label=f"rejection criterion ({sum(counter_mad_removed > 0.15):.0f})",
         )
         plt.scatter(all_snr, counter_mad_removed, c=jdb, cmap="jet")  # type: ignore
         plt.xlabel("SNR", fontsize=13)
@@ -237,7 +237,7 @@ def yarara_correct_mad(
         plt.xlabel("Wavelength", fontsize=13)
         plt.ylabel("Normalised cumulative spectrum removed [%]", fontsize=13)
         plt.subplots_adjust(left=0.07, right=0.97)
-        plt.savefig(self.dir_root + "IMAGES/mad_statistics_iter_%s.png" % (ext))
+        plt.savefig(self.dir_root + f"IMAGES/mad_statistics_iter_{ext}.png")
 
         correction_mad = all_flux - all_flux2  # type: ignore
         to_be_saved = {"wave": grid, "correction_map": correction_mad}
@@ -277,7 +277,7 @@ def yarara_correct_mad(
             )
             new_continuum[count_file][mask] = conti[count_file][mask]
 
-        fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_mad")
+        fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_mad'}.npy"
         np.save(fname, new_continuum.astype("float32"))
 
         self.dico_actif = "matching_mad"

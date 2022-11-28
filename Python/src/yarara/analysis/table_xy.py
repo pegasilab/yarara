@@ -876,7 +876,7 @@ class tableXY(object):
         )
         used_region = (np.sum(used_region, axis=0) != 0).astype("bool")
         logging.info(
-            "Percentage of the spectrum used : %.1f [%%] \n" % (100 * sum(used_region) / len(grid))
+            f"Percentage of the spectrum used : {100 * sum(used_region) / len(grid):.1f} [%] \n"
         )
 
         mask_wave = np.log10(mask[:, 0])

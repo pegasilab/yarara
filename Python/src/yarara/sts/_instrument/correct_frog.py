@@ -57,7 +57,7 @@ def yarara_correct_frog(
     extended : extension of the cluster size
     """
 
-    print_box("\n---- RECIPE : CORRECTION %s WITH FROG ----\n" % (correction.upper()))
+    print_box(f"\n---- RECIPE : CORRECTION {correction.upper()} WITH FROG ----\n")
 
     directory = self.directory
     self.import_table()
@@ -89,7 +89,7 @@ def yarara_correct_frog(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    logging.info("DICO %s used" % (sub_dico))
+    logging.info(f"DICO {sub_dico} used")
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
@@ -377,18 +377,18 @@ def yarara_correct_frog(
     plot_color_box(color=check)
 
     plt.savefig(self.dir_root + "IMAGES/" + name + "_control_check.pdf")
-    logging.info("%.0f versus %.0f" % (sum_a, sum_b))
+    logging.info(f"{sum_a:.0f} versus {sum_b:.0f}")
 
     # TODO: what about failed steps?
 
     if not crit:
         logging.warning(
-            "Control check failed. Correction may be poorly performed for: %s" % (name)
+            f"Control check failed. Correction may be poorly performed for: {name}"
         )
 
     # TODO: reformat
     if True:
-        logging.info("Control check sucessfully performed: %s" % (name))
+        logging.info(f"Control check sucessfully performed: {name}")
 
         diff_ref[np.isnan(diff_ref)] = 0
 
@@ -418,7 +418,7 @@ def yarara_correct_frog(
                 correction2 = np.transpose(correction2)
                 diff_ref2 = diff - correction2
                 plt.subplot(pca_comp_kept // 2 + 1, 2, nb_vec + 1, sharex=ax, sharey=ax)
-                plt.title("Vec PCA fitted = %0.f" % (nb_vec))
+                plt.title(f"Vec PCA fitted = {nb_vec:0.f}")
                 my_colormesh(
                     new_wave,
                     np.arange(len(diff)),
@@ -641,7 +641,7 @@ def yarara_correct_frog(
             }
             self.update_info_reduction()
 
-            fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_" + name)
+            fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_' + name}.npy"
             np.save(fname, new_continuum.astype("float32"))
 
             self.yarara_analyse_summary()

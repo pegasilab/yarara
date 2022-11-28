@@ -292,7 +292,7 @@ def yarara_correct_oxygen(
     }
     self.update_info_reduction()
 
-    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_oxygen")
+    fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_oxygen'}.npy"
     np.save(fname, new_continuum.astype("float32"))
 
     self.dico_actif = "matching_oxygen"

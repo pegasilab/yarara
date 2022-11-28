@@ -26,9 +26,9 @@ def import_sts_flux(
     all_elements = []
     for l in load:
         if len(l.split("matching_")) > 1:
-            all_elements.append(np.load(self.directory + "CONTINUUM/Continuum_%s.npy" % (l)))
+            all_elements.append(np.load(self.directory + f"CONTINUUM/Continuum_{l}.npy"))
         else:
-            all_elements.append(np.load(self.directory + "FLUX/Flux_%s.npy" % (l)))
+            all_elements.append(np.load(self.directory + f"FLUX/Flux_{l}.npy"))
 
     if num is not None:
         all_elements = [elem[num] for elem in all_elements]

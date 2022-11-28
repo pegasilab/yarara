@@ -140,7 +140,7 @@ class table(object):
                     if not light_plot:
                         if unit == 1:
                             plt.annotate(
-                                "%.2f" % (r_matrix[i, j]),
+                                f"{r_matrix[i, j]:.2f}",
                                 (i, j),
                                 fontsize=[13, 16][int(paper_plot)],
                                 va="center",
@@ -148,7 +148,7 @@ class table(object):
                             )
                         else:
                             plt.annotate(
-                                "%.0f" % (r_matrix[i, j] * 100),
+                                f"{r_matrix[i, j] * 100:.0f}",
                                 (i, j),
                                 fontsize=[13, 16][int(paper_plot)],
                                 va="center",
@@ -157,7 +157,7 @@ class table(object):
                     else:
                         if (abs(r_matrix[i, j]) > 0.4) & (r_matrix[i, j] != 1):
                             plt.annotate(
-                                "%.0f" % (abs(r_matrix[i, j]) * 100),
+                                f"{abs(r_matrix[i, j]) * 100:.0f}",
                                 (i - 0.25, j),
                                 fontsize=8,
                                 va="center",

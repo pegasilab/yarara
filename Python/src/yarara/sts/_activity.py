@@ -87,7 +87,7 @@ def yarara_correct_activity(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    logging.info("DICO %s used ----\n" % (sub_dico))
+    logging.info(f"DICO {sub_dico} used ----\n")
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
@@ -103,7 +103,7 @@ def yarara_correct_activity(
     step = self.info_reduction[sub_dico]["step"]
 
     if isinstance(reference, int):
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        logging.info(f"Reference spectrum : spectrum {reference:.0f}")
         ref = flux[reference]
     elif reference == "snr":
         ref = flux[snr.argmax()]
@@ -251,7 +251,7 @@ def yarara_correct_activity(
     }
     self.update_info_reduction()
 
-    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % "matching_activity"
+    fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_activity'}.npy"
     np.save(fname, new_continuum.astype("float32"))
 
     self.dico_actif = "matching_activity"

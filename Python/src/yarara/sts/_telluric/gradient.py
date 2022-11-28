@@ -96,7 +96,7 @@ def yarara_correct_telluric_gradient(
 
     if sub_dico_correction is None:
         sub_dico_correction = self.dico_actif
-    print("\n---- DICO %s used ----\n" % (sub_dico_correction))
+    print(f"\n---- DICO {sub_dico_correction} used ----\n")
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
@@ -120,15 +120,14 @@ def yarara_correct_telluric_gradient(
     if len(snr) < nb_pca_comp:
         nb_pca_comp = len(snr) - 1
         print(
-            "Nb component too high compared to number of observations, nc reduced to %.0f"
-            % (len(snr) - 2)
+            f"Nb component too high compared to number of observations, nc reduced to {len(snr) - 2:.0f}"
         )
 
     def idx_wave(wavelength):
         return int(find_nearest(wave, wavelength)[0])
 
     if isinstance(reference, int):
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        logging.info(f"Reference spectrum : spectrum {reference:.0f}")
         ref = flux[reference]
     elif reference == "snr":
         ref = flux[snr.argmax()]
@@ -337,15 +336,13 @@ def yarara_correct_telluric_gradient(
         plt.axvline(
             x=tel_depth_grid[np.where(comp_percent == 100)[0][0]],
             color="b",
-            label="100%% Completeness : %.2f [%%]"
-            % (100 * 10 ** (tel_depth_grid[np.where(comp_percent == 100)[0][0]])),
+            label=f"100% Completeness : {100 * 10 ** tel_depth_grid[np.where(comp_percent == 100)[0][0]]:.2f} [%]",
         )
         plt.axvline(
             x=tel_depth_grid[find_nearest(comp_percent, 90)[0]],
             color="b",
             ls=":",
-            label="90%% Completeness : %.2f [%%]"
-            % (100 * 10 ** (tel_depth_grid[find_nearest(comp_percent, 90)[0]])),
+            label=f"90% Completeness : {100 * 10 ** tel_depth_grid[find_nearest(comp_percent, 90)[0]]:.2f} [%]",
         )
     plt.ylabel("Completness [%]", fontsize=16)
     plt.xlabel(r"$\log_{10}$(Telluric depth)", fontsize=16)
@@ -502,7 +499,7 @@ def yarara_correct_telluric_gradient(
     if pca_comp_kept > nb_pca_max_kept:
         pca_comp_kept = nb_pca_max_kept
 
-    logging.info("Nb PCA comp kept : %.0f" % (pca_comp_kept))
+    logging.info(f"Nb PCA comp kept : {pca_comp_kept:.0f}")
 
     plt.savefig(self.dir_root + "IMAGES/telluric_PCA_variances.pdf")
 
@@ -561,7 +558,7 @@ def yarara_correct_telluric_gradient(
     plot_color_box(color=check)
 
     plt.savefig(self.dir_root + "IMAGES/telluric_control_check.pdf")
-    logging.info("%.0f versus %.0f" % (sum_a, sum_b))
+    logging.info(f"{sum_a:.0f} versus {sum_b:.0f}")
 
     if crit:
         logging.info("Control check sucessfully performed: telluric")
@@ -704,7 +701,7 @@ def yarara_correct_telluric_gradient(
     }
     self.update_info_reduction()
 
-    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_pca")
+    fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_pca'}.npy"
     np.save(fname, new_continuum.astype("float32"))
 
     self.dico_actif = "matching_pca"

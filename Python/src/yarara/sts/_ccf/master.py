@@ -74,7 +74,7 @@ def yarara_master_ccf(
     contrast = 1 - np.nanmin(stack)
 
     plt.figure()
-    plt.plot(new_vrad, stack, color="k", label="Contrast = %.1f %%" % (100 * contrast))
+    plt.plot(new_vrad, stack, color="k", label=f"Contrast = {100 * contrast:.1f} %")
 
     extension = ["YARARA", "HARPS", "telluric"][int(name_ext != "") + int(name_ext == "_telluric")]
 
@@ -113,7 +113,7 @@ def yarara_master_ccf(
         [v1, v2],
         [half, half],
         color="r",
-        label="FHWM = %.2f kms" % ((v2 - v1) / 1000),
+        label=f"FHWM = {(v2 - v1) / 1000:.2f} kms",
     )
     plt.scatter([v1, v2], [half, half], color="r", edgecolor="k", zorder=10)
     plt.scatter([0], [np.nanmin(stack)], color="k", edgecolor="k", zorder=10)
@@ -122,7 +122,7 @@ def yarara_master_ccf(
     plt.grid()
     plt.xlabel("RV [m/s]", fontsize=13)
     plt.ylabel("Flux normalised", fontsize=13)
-    plt.title("%s" % (self.starname), fontsize=14)
+    plt.title(f"{self.starname}", fontsize=14)
 
     self.yarara_star_info(Contrast=[extension, np.round(contrast, 3)])
     self.yarara_star_info(Fwhm=[extension, np.round((v2 - v1) / 1000, 2)])

@@ -38,8 +38,7 @@ def yarara_exploding_pickle(self: spec_time_series) -> None:
     for sb in sub_dico_to_ventile:
         c += 1
         print(
-            "\n [INFO] Venting sub_dico %s, number of dico remaining : %.0f \n"
-            % (sb, len(sub_dico_to_ventile) - c)
+            f"\n [INFO] Venting sub_dico {sb}, number of dico remaining : {len(sub_dico_to_ventile) - c:.0f} \n"
         )
         continua = []
         for f in tqdm(files):
@@ -49,15 +48,14 @@ def yarara_exploding_pickle(self: spec_time_series) -> None:
                 del file[sb]
             iofun.pickle_dump(file, open(f, "wb"))
         continua = np.array(continua)
-        fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % (sb)
+        fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{sb}.npy"
         np.save(fname, continua)
 
     c = -1
     for sb in sub_dico_to_delete:
         c += 1
         print(
-            "\n [INFO] Deleting sub_dico %s, number of dico remaining : %.0f \n"
-            % (sb, len(sub_dico_to_delete) - c)
+            f"\n [INFO] Deleting sub_dico {sb}, number of dico remaining : {len(sub_dico_to_delete) - c:.0f} \n"
         )
         for f in tqdm(files):
             file = pd.read_pickle(f)
@@ -70,14 +68,14 @@ def yarara_exploding_pickle(self: spec_time_series) -> None:
     c = -1
     for sb in kw + kw2:
         c += 1
-        print("\n [INFO] Venting key word %s \n" % (sb))
+        print(f"\n [INFO] Venting key word {sb} \n")
         flux = []
         for f in tqdm(files):
             file = pd.read_pickle(f)
             flux.append(file[sb])
             iofun.pickle_dump(file, open(f, "wb"))
         flux = np.array(flux)
-        fname = self.dir_root + "WORKSPACE/FLUX/Flux_%s.npy" % (sb)
+        fname = self.dir_root + f"WORKSPACE/FLUX/Flux_{sb}.npy"
         np.save(fname, flux)
 
 

@@ -46,21 +46,21 @@ def yarara_cut_spectrum(
         for name in maps:
             correction_map = np.load(name)
             np.save(name, correction_map[:, idx_min:idx_max].astype("float32"))
-            print("%s modified" % (name.split("/")[-1]))
+            print(f"{name.split('/')[-1]} modified")
 
     maps = glob.glob(self.dir_root + "WORKSPACE/CONTINUUM/*.npy")
     if len(maps):
         for name in maps:
             correction_map = np.load(name)
             np.save(name, correction_map[:, idx_min:idx_max].astype("float32"))
-            print("%s modified" % (name.split("/")[-1]))
+            print(f"{name.split('/')[-1]} modified")
 
     maps = glob.glob(self.dir_root + "WORKSPACE/FLUX/*.npy")
     if len(maps):
         for name in maps:
             correction_map = np.load(name)
             np.save(name, correction_map[:, idx_min:idx_max].astype("float32"))
-            print("%s modified" % (name.split("/")[-1]))
+            print(f"{name.split('/')[-1]} modified")
 
     new_wave = old_wave[idx_min:idx_max]
     wave_min = np.min(new_wave)

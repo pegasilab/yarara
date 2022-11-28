@@ -69,8 +69,7 @@ def yarara_get_berv_value(
         if new:
             plt.figure(figsize=(8.5, 7))
         plt.title(
-            "BERV min : %.1f | BERV max : %.1f | BERV mean : %.1f"
-            % (np.min(berv.y), np.max(berv.y), np.mean(berv.y)),
+            f"BERV min : {np.min(berv.y):.1f} | BERV max : {np.max(berv.y):.1f} | BERV mean : {np.mean(berv.y):.1f}",
             fontsize=13,
         )
         berv.plot(modulo=period)
@@ -80,11 +79,11 @@ def yarara_get_berv_value(
             plt.axhline(
                 y=berv_value,
                 color="gray",
-                label="BERV = %.1f [km/s]" % (berv_value),
+                label=f"BERV = {berv_value:.1f} [km/s]",
             )
             plt.axhline(y=0, ls=":", color="k")
             plt.legend()
-        plt.xlabel("Time %% %.2f" % (period), fontsize=16)
+        plt.xlabel(f"Time % {period:.2f}", fontsize=16)
         plt.ylabel("BERV [km/s]", fontsize=16)
         if save_fig:
             plt.savefig(self.dir_root + "IMAGES/berv_values_summary.pdf")

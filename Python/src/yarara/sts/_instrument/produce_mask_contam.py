@@ -47,7 +47,7 @@ def yarara_produce_mask_contam(
 
     print_box("\n---- RECIPE : PRODUCTION CONTAM MASK ----\n")
 
-    print("\n [INFO] FROG file used : %s" % (frog_file))
+    print(f"\n [INFO] FROG file used : {frog_file}")
     self.import_table()
     self.import_material()
     load = self.material

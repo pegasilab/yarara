@@ -259,7 +259,7 @@ def matching_activity(
     )
 
     proxy = ["Kernel_CaII", "CaII"][reference is None]  # sts.yarara_determine_optimal_Sindex()
-    print("\n Optimal proxy of activity : %s" % (proxy))
+    print(f"\n Optimal proxy of activity : {proxy}")
 
     sts.yarara_correct_activity(
         sub_dico=input_dico,

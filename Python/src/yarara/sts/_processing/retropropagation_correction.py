@@ -95,5 +95,5 @@ def yarara_retropropagation_correction(
     if hl is not None:
         new_continuum[i1:i2] = conti[i1:i2]
 
-    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % (sub_dico)
+    fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{sub_dico}.npy"
     np.save(fname, new_continuum.astype("float32"))

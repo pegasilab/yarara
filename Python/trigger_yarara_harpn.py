@@ -121,11 +121,10 @@ sts = spec_time_series(directory_workspace)
 sts.planet = planet_activated
 sts.instrument = ins
 
-print("------------------------\n STAR LOADED : %s \n------------------------" % (sts.starname))
+print(f"------------------------\n STAR LOADED : {sts.starname} \n------------------------")
 
 print(
-    "\n [INFO] Complete analysis %s %s reference spectrum launched...\n"
-    % (ins, ["with", "without"][int(reference is None)])
+    f"\n [INFO] Complete analysis {ins} {['with', 'without'][int(reference is None)]} reference spectrum launched...\n"
 )
 
 
@@ -318,7 +317,5 @@ if True:
     table_time["frac_time"] = 100 * table_time["time_step"] / np.sum(table_time["time_step"])
     table_time["time_step"] /= 60  # convert in minutes
 
-    filename_time = sts.dir_root + "REDUCTION_INFO/Time_informations_reduction_%s.csv" % (
-        time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
-    )
+    filename_time = sts.dir_root + f"REDUCTION_INFO/Time_informations_reduction_{time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime())}.csv"
     table_time.to_csv(filename_time)

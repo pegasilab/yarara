@@ -114,7 +114,7 @@ def yarara_telluric(
         suppress_broad
     ):  # to avoid rejecting all tellurics for cool stars
         mask = mask[keep_telluric]
-    logging.info("%.0f lines available in the telluric mask" % (len(mask)))
+    logging.info(f"{len(mask):.0f} lines available in the telluric mask")
     plt.figure()
     plt.plot(grid, flux)
     for j in 0.5 * (mask[:, 0] + mask[:, 1]):
@@ -142,7 +142,7 @@ def yarara_telluric(
     plt.axes((0.15, 0.3, 0.8, 0.6))
     self.ccf_rv.yerr *= 0
     self.ccf_rv.yerr += 50
-    self.ccf_rv.plot(modulo=365.25, label="%s ccf rv" % (telluric_tag))
+    self.ccf_rv.plot(modulo=365.25, label=f"{telluric_tag} ccf rv")
     plt.scatter(self.table.jdb % 365.25, self.table.berv * 1000, color="b", label="berv")
     plt.legend()
     plt.ylabel("RV [m/s]")
@@ -156,9 +156,9 @@ def yarara_telluric(
         fmt="ko",
     )
     self.berv_offset = np.nanmedian(self.table.berv * 1000 - self.ccf_rv.y) / 1000
-    print("\n [INFO] Difference with the BERV : %.0f m/s" % (self.berv_offset * 1000))
+    print(f"\n [INFO] Difference with the BERV : {self.berv_offset * 1000:.0f} m/s")
     plt.ylabel(r"$\Delta$RV [m/s]")
-    plt.savefig(self.dir_root + "IMAGES/telluric_control_check_%s.pdf" % (telluric_tag))
+    plt.savefig(self.dir_root + f"IMAGES/telluric_control_check_{telluric_tag}.pdf")
 
     output = self.ccf_timeseries
 
@@ -168,7 +168,7 @@ def yarara_telluric(
     mask_fail = mask_fail | np.isnan(self.ccf_rv.y)
     if sum(mask_fail):
         logging.warn(
-            "There are %.0f datapoints incompatible with the BERV values" % (sum(mask_fail))
+            f"There are {sum(mask_fail):.0f} datapoints incompatible with the BERV values"
         )
         for k in range(len(output)):
             output[k][mask_fail] = np.nanmedian(output[k][~mask_fail])

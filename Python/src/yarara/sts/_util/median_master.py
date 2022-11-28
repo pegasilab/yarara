@@ -61,7 +61,7 @@ def yarara_median_master(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    logging.info("DICO %s used ----" % (sub_dico))
+    logging.info(f"DICO {sub_dico} used ----")
 
     if self.table["telluric_fwhm"][0] is None:
         fwhm = np.array([3.0] * len(self.table.jdb))
@@ -76,18 +76,16 @@ def yarara_median_master(
     fwhm_default = [3, 5][self.instrument[:-2] == "CORALIE"]
     if np.percentile(fwhm, 95) > fwhm_max:
         logging.warning(
-            "FWHM of tellurics larger than %.0f km/s (%.1f), reduced to default value of %.0f km/s"
-            % (fwhm_max, np.percentile(fwhm, 95), fwhm_default)
+            f"FWHM of tellurics larger than {fwhm_max:.0f} km/s ({np.percentile(fwhm, 95):.1f}), reduced to default value of {fwhm_default:.0f} km/s"
         )
         fwhm = np.array([fwhm_default] * len(self.table.jdb))
     if np.percentile(fwhm, 95) < fwhm_min:
         logging.warning(
-            "FWHM of tellurics smaller than %.0f km/s (%.1f), increased to default value of %.0f km/s"
-            % (fwhm_min, np.percentile(fwhm, 95), fwhm_default)
+            f"FWHM of tellurics smaller than {fwhm_min:.0f} km/s ({np.percentile(fwhm, 95):.1f}), increased to default value of {fwhm_default:.0f} km/s"
         )
         fwhm = np.array([fwhm_default] * len(self.table.jdb))
 
-    logging.info("FWHM of tellurics : %.1f km/s" % (np.percentile(fwhm, 95)))
+    logging.info(f"FWHM of tellurics : {np.percentile(fwhm, 95):.1f} km/s")
 
     all_flux, all_conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
     all_flux_norm = all_flux / all_conti
@@ -104,14 +102,12 @@ def yarara_median_master(
 
     if sum(mask) < 40:
         logging.warning(
-            "Not enough spectra %s the specified temporal range"
-            % (["inside", "outside"][jdb_range[2] == 0])
+            f"Not enough spectra {['inside', 'outside'][jdb_range[2] == 0]} the specified temporal range"
         )
         mask = np.ones(len(self.table.jdb)).astype("bool")
     else:
         logging.info(
-            "%.0f spectra %s the specified temporal range can be used for the median"
-            % (sum(mask), ["inside", "outside"][jdb_range[2] == 0])
+            f"{sum(mask):.0f} spectra {['inside', 'outside'][jdb_range[2] == 0]} the specified temporal range can be used for the median"
         )
 
     all_flux = all_flux[mask]
@@ -207,12 +203,10 @@ def yarara_median_master(
     # plt.plot(wavelength,np.product(all_mask,axis=0))
     # plt.plot(wavelength,np.product(all_mask2,axis=0))
     logging.info(
-        "Percent always contaminated metric1 : %.3f %%"
-        % (np.sum(np.product(all_mask, axis=0)) / len(wavelength) * 100)
+        f"Percent always contaminated metric1 : {np.sum(np.product(all_mask, axis=0)) / len(wavelength) * 100:.3f} %"
     )
     logging.info(
-        "Percent always contaminated metric2 : %.3f %%"
-        % (np.sum(np.product(all_mask2, axis=0)) / len(wavelength) * 100)
+        f"Percent always contaminated metric2 : {np.sum(np.product(all_mask2, axis=0)) / len(wavelength) * 100:.3f} %"
     )
 
     all_mask_nan1 = 1 - all_mask

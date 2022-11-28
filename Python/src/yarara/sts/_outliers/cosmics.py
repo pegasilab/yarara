@@ -76,7 +76,7 @@ def yarara_correct_cosmics(
 
         if sub_dico is None:
             sub_dico = self.dico_actif
-        print("---- DICO %s used ----" % (sub_dico))
+        print(f"---- DICO {sub_dico} used ----")
 
         all_flux, conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
         all_flux_norm = all_flux / conti
@@ -90,8 +90,7 @@ def yarara_correct_cosmics(
         mask = (all_flux_norm > 1) & (all_flux_norm > level)
 
         print(
-            "\n [INFO] Percentage of cosmics detected with k-sigma %.0f : %.2f%% \n"
-            % (k_sigma, 100 * np.sum(mask) / len(mask.T) / len(mask))
+            f"\n [INFO] Percentage of cosmics detected with k-sigma {k_sigma:.0f} : {100 * np.sum(mask) / len(mask.T) / len(mask):.2f}% \n"
         )
 
         med_map = med * np.ones(len(jdb))[:, np.newaxis]
@@ -143,7 +142,7 @@ def yarara_correct_cosmics(
         }
         self.update_info_reduction()
 
-        fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_cosmics")
+        fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_cosmics'}.npy"
         np.save(fname, new_continuum)
 
         self.dico_actif = "matching_cosmics"

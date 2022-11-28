@@ -88,11 +88,11 @@ def yarara_ccf(
 
     if rv_range is None:
         rv_range = int(3 * self.fwhm)
-        logging.info("RV range updated to : %.1f kms" % (rv_range))
+        logging.info(f"RV range updated to : {rv_range:.1f} kms")
 
     if rv_borders is None:
         rv_borders = int(2 * self.fwhm)
-        logging.info("RV borders updated to : %.1f kms" % (rv_borders))
+        logging.info(f"RV borders updated to : {rv_borders:.1f} kms")
 
     kw = "_planet" * planet
     if kw != "":
@@ -149,7 +149,7 @@ def yarara_ccf(
     if ccf_name is None:
         ccf_name = sub_dico
 
-    logging.info("RV sys : %.2f [km/s] \n" % (rv_sys / 1000))
+    logging.info(f"RV sys : {rv_sys / 1000:.2f} [km/s] \n")
 
     mask[:, 0] = doppler_r(mask[:, 0], rv_sys)[0]
 
@@ -225,7 +225,7 @@ def yarara_ccf(
         :,
     ]  # suppress line farther than 30kms
 
-    print("\n [INFO] Nb lines in the mask : %.0f \n" % (len(mask)))
+    print(f"\n [INFO] Nb lines in the mask : {len(mask):.0f} \n")
 
     mask_min = np.min(mask[:, 0])
     mask_max = np.max(mask[:, 0])
@@ -247,8 +247,7 @@ def yarara_ccf(
         )
         used_region = (np.sum(used_region, axis=0) != 0).astype("bool")
         print(
-            "\n [INFO] Percentage of the spectrum used : %.1f [%%] (%.0f) \n"
-            % (100 * sum(used_region) / len(grid), len(grid))
+            f"\n [INFO] Percentage of the spectrum used : {100 * sum(used_region) / len(grid):.1f} [%] ({len(grid):.0f}) \n"
         )
         time.sleep(1)
     else:
@@ -285,9 +284,9 @@ def yarara_ccf(
             hdu = fits.PrimaryHDU(np.array([log_grid_mask, log_mask]).T)
             hdul = fits.HDUList([hdu])
             hdul.writeto(mask_path)
-            logging.info("CCF mask saved under : %s" % mask_path)
+            logging.info(f"CCF mask saved under : {mask_path}")
     else:
-        logging.info("CCF mask found : %s" % mask_path)
+        logging.info(f"CCF mask found : {mask_path}")
         log_grid_mask, log_mask = fits.open(mask_path)[0].data.T
 
     log_template = interp1d(
@@ -323,7 +322,7 @@ def yarara_ccf(
 
     now = datetime.datetime.now()
     logging.info(
-        "Computing CCF (Current time %.0fh%.0fm%.0fs) \n" % (now.hour, now.minute, now.second)
+        f"Computing CCF (Current time {now.hour:.0f}h{now.minute:.0f}m{now.second:.0f}s) \n"
     )
 
     all_flux = []
@@ -363,9 +362,9 @@ def yarara_ccf(
 
     now = datetime.datetime.now()
     logging.info(
-        "CCF computed (Current time %.0fh%.0fm%.0fs)" % (now.hour, now.minute, now.second)
+        f"CCF computed (Current time {now.hour:.0f}h{now.minute:.0f}m{now.second:.0f}s)"
     )
-    logging.info("CCF velocity step : %.0f m/s\n" % (np.median(np.diff(vrad))))
+    logging.info(f"CCF velocity step : {np.median(np.diff(vrad)):.0f} m/s\n")
 
     self.all_ccf_saved[ccf_name] = (vrad, ccf_power, ccf_power_std)
 
@@ -379,7 +378,7 @@ def yarara_ccf(
         np.std((ccf_power - ccf_ref[:, np.newaxis])[top_ccf], axis=0)
         / np.mean(ccf_power[continuum_ccf])
     )
-    logging.info("SNR CCF continuum median : %.0f\n" % (np.median(ccf_snr)))
+    logging.info(f"SNR CCF continuum median : {np.median(ccf_snr):.0f}\n")
 
     # noise_ccf = ccf_power_std
     # w = noise_ccf/(np.gradient(ccf_ref)/np.gradient(vrad)+epsilon)[:,np.newaxis]
@@ -403,7 +402,7 @@ def yarara_ccf(
 
     svrad_phot[svrad_phot == 0] = 2 * np.max(svrad_phot)  # in case of null values
 
-    logging.info("Photon noise RV median : %.2f m/s\n " % (np.median(svrad_phot)))
+    logging.info(f"Photon noise RV median : {np.median(svrad_phot):.2f} m/s\n ")
 
     svrad_phot2 = {}
     svrad_phot2["rv"] = 10 ** (
@@ -431,7 +430,7 @@ def yarara_ccf(
     self.svrad_phot = svrad_phot2["rv"]
 
     logging.info(
-        "Photon noise RV from calibration : %.2f m/s\n " % (np.median(svrad_phot2["rv"]) * 1000)
+        f"Photon noise RV from calibration : {np.median(svrad_phot2['rv']) * 1000:.2f} m/s\n "
     )
 
     center = 0.0
@@ -736,7 +735,7 @@ def yarara_ccf(
         )
 
         plt.subplot(4, 2, 2, sharex=ax, sharey=ax)
-        self.ccf_centers.plot(label="rms : %.2f" % (self.ccf_centers.rms))
+        self.ccf_centers.plot(label=f"rms : {self.ccf_centers.rms:.2f}")
         plt.legend()
         plt.title("Center", fontsize=14)
 

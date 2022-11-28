@@ -32,8 +32,8 @@ def yarara_map_all(
     if not os.path.exists(directory_images):
         os.system("mkdir " + directory_images)
 
-    if not os.path.exists(directory_images + "%s_%s" % (wave_min, wave_max)):
-        os.system("mkdir " + directory_images + "%s_%s" % (wave_min, wave_max))
+    if not os.path.exists(directory_images + f"{wave_min}_{wave_max}"):
+        os.system("mkdir " + directory_images + f"{wave_min}_{wave_max}")
 
     self.import_info_reduction()
     test_file = self.info_reduction
@@ -52,7 +52,7 @@ def yarara_map_all(
     # counter=nb_plot
     for counter, last in enumerate(dico_chain):
         if test_file[last]["valid"]:
-            print("sub dico %s being processed..." % (last))
+            print(f"sub dico {last} being processed...")
             plt.figure(figsize=(15, 5))
             self.yarara_map(
                 sub_dico=last,
@@ -65,10 +65,10 @@ def yarara_map_all(
             )
             plt.savefig(
                 directory_images
-                + "%s_%s/" % (wave_min, wave_max)
-                + "Map_%s_%s_" % (wave_min, wave_max)
+                + f"{wave_min}_{wave_max}/"
+                + f"Map_{wave_min}_{wave_max}_"
                 + str(counter + 1).zfill(2)
-                + "_%s.png" % (last)
+                + f"_{last}.png"
             )
             # counter-=1
             plt.close("all")
@@ -98,4 +98,4 @@ def yarara_map_all(
         new=False,
     )
     plt.subplots_adjust(top=0.97, right=0.97, left=0.05, bottom=0.05)
-    plt.savefig(directory_images + "%s_%s/" % (wave_min, wave_max) + "Before_after.png")
+    plt.savefig(directory_images + f"{wave_min}_{wave_max}/" + "Before_after.png")

@@ -46,7 +46,7 @@ def plot_copy_time(ax1=None, fmt="isot", time="x", split=0):
     ax2.set_xticks(x)
     if fmt == "deci":
         new_labels = Time.Time(x, format="mjd").decimalyear
-        new_labels = ["%.2f" % (i) for i in new_labels]
+        new_labels = [f"{i:.2f}" for i in new_labels]
     else:
         new_labels = Time.Time(x, format="mjd").isot
         new_labels = [i.split("T")[split] for i in new_labels]

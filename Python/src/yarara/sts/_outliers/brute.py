@@ -78,7 +78,7 @@ def yarara_correct_brute(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    print("\n---- DICO %s used ----\n" % (sub_dico))
+    print(f"\n---- DICO {sub_dico} used ----\n")
 
     all_flux, conti = self.import_sts_flux(load=["flux" + kw, sub_dico])
     all_flux = all_flux / conti
@@ -86,7 +86,7 @@ def yarara_correct_brute(
     step = self.info_reduction[sub_dico]["step"]
 
     if isinstance(reference, int):
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        logging.info(f"Reference spectrum : spectrum {reference:.0f}")
         ref = all_flux[reference]
     elif reference == "snr":
         ref = all_flux[snr.argmax()]
@@ -213,7 +213,7 @@ def yarara_correct_brute(
     }
     self.update_info_reduction()
 
-    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_brute")
+    fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_brute'}.npy"
     np.save(fname, new_continuum.astype("float32"))
 
     self.dico_actif = "matching_brute"

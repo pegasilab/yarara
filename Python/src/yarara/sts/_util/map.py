@@ -23,7 +23,7 @@ def yarara_substract_map(
     if len(file_map):
         correction_map = np.load(file_map[0])
     else:
-        print(" [WARNING] Correction map %s does not exist !" % ("matching_" + map_name))
+        print(f" [WARNING] Correction map {'matching_' + map_name} does not exist !")
     flux_modified = flux_init - correction_map * corr
     return flux_modified
 
@@ -41,6 +41,6 @@ def yarara_add_map(
     if len(file_map):
         correction_map = np.load(file_map[0])
     else:
-        print(" [WARNING] Correction map %s does not exist !" % ("matching_" + map_name))
+        print(f" [WARNING] Correction map {'matching_' + map_name} does not exist !")
     flux_modified = flux_init + correction_map * corr
     return flux_modified

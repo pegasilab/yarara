@@ -113,7 +113,7 @@ def yarara_correct_telluric_proxy(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    print("\n---- DICO %s used ----\n" % (sub_dico))
+    print(f"\n---- DICO {sub_dico} used ----\n")
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
@@ -142,7 +142,7 @@ def yarara_correct_telluric_proxy(
         logging.info("Reference spectrum : master")
         ref = np.array(load["reference_spectrum"])
     elif type(reference) == int:
-        logging.info("Reference spectrum : spectrum %.0f" % (reference))
+        logging.info(f"Reference spectrum : spectrum {reference:.0f}")
         ref = flux[reference]
     else:
         ref = 0 * np.median(flux, axis=0)
@@ -229,8 +229,7 @@ def yarara_correct_telluric_proxy(
     print("\n")
     for k in range(len(guess_position) // len_segment + 1):
         print(
-            " [INFO] Segment %.0f/%.0f being reduced\n"
-            % (k + 1, len(guess_position) // len_segment + 1)
+            f" [INFO] Segment {k + 1:.0f}/{len(guess_position) // len_segment + 1:.0f} being reduced\n"
         )
         second_guess_position = guess_position[k * len_segment : (k + 1) * len_segment]
         # print(second_guess_position)
@@ -388,9 +387,7 @@ def yarara_correct_telluric_proxy(
     }
     self.update_info_reduction()
 
-    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % (
-        "matching_" + sub_dico_output
-    )
+    fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_' + sub_dico_output}.npy"
     np.save(fname, new_continuum.astype("float32"))
 
     self.dico_actif = "matching_" + sub_dico_output

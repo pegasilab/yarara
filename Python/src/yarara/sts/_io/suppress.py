@@ -68,18 +68,18 @@ def suppress_time_spectra(
                     correction_map["correction_map"], idx, axis=0
                 )
                 pickle_dump(correction_map, open(names, "wb"))
-                logging.info("%s modified" % (names.split("/")[-1]))
+                logging.info(f"{names.split('/')[-1]} modified")
 
         name = name[mask]
 
         files_to_process = np.sort(np.array(name))
         for j in files_to_process:
             if suppress:
-                logging.info("File deleted : %s " % (j))
+                logging.info(f"File deleted : {j} ")
                 os.system("rm " + j)
             else:
                 new_name = name_ext + "_" + j.split("/")[-1]
-                logging.info("File renamed : %s " % (directory + "/" + new_name))
+                logging.info(f"File renamed : {directory + '/' + new_name} ")
                 os.system("mv " + j + " " + directory + "/" + new_name)
 
         os.system("rm " + directory + "/Analyse_summary.p")

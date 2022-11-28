@@ -175,7 +175,7 @@ def yarara_comp_all(
     if wave_min != wave_max:
         plt.figure(figsize=(18, 7))
         plt.subplot(2, 1, 1)
-        plt.title("Before YARARA (%s)" % (sub_dico1), fontsize=16)
+        plt.title(f"Before YARARA ({sub_dico1})", fontsize=16)
         self.yarara_plot_all(
             wave_min=wave_min,
             wave_max=wave_max,
@@ -190,7 +190,7 @@ def yarara_comp_all(
         plt.ylabel(r"Flux", fontsize=16)
 
         plt.subplot(2, 1, 2, sharex=ax, sharey=ax)
-        plt.title("After YARARA (%s)" % (sub_dico2), fontsize=16)
+        plt.title(f"After YARARA ({sub_dico2})", fontsize=16)
         self.yarara_plot_all(
             wave_min=wave_min,
             wave_max=wave_max,
@@ -206,4 +206,4 @@ def yarara_comp_all(
         plt.ylim(-0.01, 1.09)
         plt.subplots_adjust(left=0.07, right=0.97, top=0.95, bottom=0.10, hspace=0.40)
 
-        plt.savefig(self.dir_root + "IMAGES/Correction_1d_%s.png" % (analysis))
+        plt.savefig(self.dir_root + f"IMAGES/Correction_1d_{analysis}.png")

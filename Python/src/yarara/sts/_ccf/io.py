@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 def read_ccf_mask(self: spec_time_series, mask_name: str) -> NDArray[np.float64]:
-    logging.info("Reading CCF mask : %s \n" % (mask_name))
+    logging.info(f"Reading CCF mask : {mask_name} \n")
     mask_path = root + "/Python/MASK_CCF/" + mask_name + ".txt"
     mask = np.genfromtxt(mask_path)
     mask = np.array([0.5 * (mask[:, 0] + mask[:, 1]), mask[:, 2]]).T

@@ -53,7 +53,7 @@ def yarara_correct_smooth(
     if sub_dico is None:
         sub_dico = self.dico_actif
 
-    logging.info("DICO %s used" % (sub_dico))
+    logging.info(f"DICO {sub_dico} used")
 
     files = glob.glob(directory + "RASSI*.p")
     files = np.sort(files)
@@ -234,7 +234,7 @@ def yarara_correct_smooth(
         )
         new_continuum[count_file][mask] = conti[count_file][mask]
 
-    fname = self.dir_root + "WORKSPACE/CONTINUUM/Continuum_%s.npy" % ("matching_smooth")
+    fname = self.dir_root + f"WORKSPACE/CONTINUUM/Continuum_{'matching_smooth'}.npy"
     np.save(fname, new_continuum.astype("float32"))
 
     logging.info("Computation of the new continua, wait ...")

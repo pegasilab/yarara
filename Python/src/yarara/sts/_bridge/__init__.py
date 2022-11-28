@@ -290,7 +290,7 @@ def scale_cmap(self: spec_time_series):
     Q3 = np.nanpercentile(b, 75)
     Q1 = np.nanpercentile(b, 25)
     clim = np.max([Q3 - med, med - Q1]) + 1.5 * (Q3 - Q1)
-    print(" [INFO] Zscale color scaled to : %.3f" % (clim))
+    print(f" [INFO] Zscale color scaled to : {clim:.3f}")
     self.low_cmap = -clim
     self.high_cmap = clim
 
@@ -639,7 +639,7 @@ def yarara_berv_summary(
 
     if sub_dico is None:
         sub_dico = self.dico_actif
-    logging.info("---- DICO %s used ----" % (sub_dico))
+    logging.info(f"---- DICO {sub_dico} used ----")
 
     snr = np.array(tab["snr"])
     fluxes, fluxes_std, all_conti, all_conti_err = self.import_sts_flux(
@@ -672,7 +672,7 @@ def yarara_berv_summary(
     sum_mask = mask_bin[np.sum(mask_bin, axis=1) != 0]
     if sum(np.sum(sum_mask, axis=1) != 0) < 5:  # need ast least 5 bins
         dbin_berv = np.round((np.max(berv) - np.min(berv)) / 15, 1)
-        print("Bin size changed for %.1f km/s because not enough bins" % (dbin_berv))
+        print(f"Bin size changed for {dbin_berv:.1f} km/s because not enough bins")
         if not dbin_berv:
             dbin_berv = 0.05
         berv_bin = np.arange(
@@ -729,7 +729,7 @@ def yarara_berv_summary(
 
     plt.subplot(1, nb_plot, nb_plot, sharey=ax)
     plt.axhline(y=0, color="k", ls=":")
-    plt.title("Window contam covered = %.0f %%" % (windows_contam))
+    plt.title(f"Window contam covered = {windows_contam:.0f} %")
     plot_color_box(color=check)
 
     self.yarara_star_info(Contam_BERV=["fixed", int(windows_contam)])
@@ -760,15 +760,7 @@ def snr_statistic(self: spec_time_series, version=1):
         snr = np.array(self.table["snr_computed"])
     plt.figure(figsize=(8, 7))
     plt.title(
-        "\n Nb spectra : %.0f\nMin : %.0f   |   Q1 : %.0f   |   Q2 : %.0f   |   Q3 : %.0f   |   Max : %.0f\n"
-        % (
-            len(snr),
-            np.min(snr),
-            np.percentile(snr, 25),
-            np.percentile(snr, 50),
-            np.percentile(snr, 75),
-            np.max(snr),
-        ),
+        f"\n Nb spectra : {len(snr):.0f}\nMin : {np.min(snr):.0f}   |   Q1 : {np.percentile(snr, 25):.0f}   |   Q2 : {np.percentile(snr, 50):.0f}   |   Q3 : {np.percentile(snr, 75):.0f}   |   Max : {np.max(snr):.0f}\n",
         fontsize=16,
     )
     plt.hist(snr, bins=40, histtype="step", color="k")
@@ -793,7 +785,7 @@ def snr_statistic(self: spec_time_series, version=1):
     plt.xlabel(r"$SNR_{5500}$", fontsize=16, fontweight="bold", color=check)
     plot_color_box(color=check)
 
-    plt.savefig(self.dir_root + "IMAGES/snr_statistic_%.0f.pdf" % (version))
+    plt.savefig(self.dir_root + f"IMAGES/snr_statistic_{version:.0f}.pdf")
 
 
 def dace_statistic(
@@ -812,11 +804,11 @@ def dace_statistic(
     vec.night_stack()
 
     plt.figure(figsize=(15, 6))
-    vec.plot(color="gray", alpha=0.25, capsize=0, label="rms : %.2f m/s" % (vec.rms))
+    vec.plot(color="gray", alpha=0.25, capsize=0, label=f"rms : {vec.rms:.2f} m/s")
     vec.detrend_poly.plot(
         color="k",
         capsize=0,
-        label="rms2 : %.2f m/s" % (vec.detrend_poly.rms),
+        label=f"rms2 : {vec.detrend_poly.rms:.2f} m/s",
         species=species,
     )
     plt.xlabel(r"Time BJD [days]", fontsize=16)
@@ -879,25 +871,22 @@ def yarara_transit_def(
             fwhm = int(star_transit_properties["FWHM"].values[0])
             if teff:
                 print(
-                    "\n [INFO] Effective temperature upated from %.0f to %.0f K"
-                    % (self.star_info["Teff"]["fixed"], teff)
+                    f"\n [INFO] Effective temperature upated from {self.star_info['Teff']['fixed']:.0f} to {teff:.0f} K"
                 )
                 self.yarara_star_info(Teff=["fixed", int(teff)])
             if fwhm:
                 print(
-                    "\n [INFO] FWHM upated from %.0f to %.0f km/s"
-                    % (self.star_info["FWHM"]["fixed"], fwhm)
+                    f"\n [INFO] FWHM upated from {self.star_info['FWHM']['fixed']:.0f} to {fwhm:.0f} km/s"
                 )
                 self.yarara_star_info(Fwhm=["fixed", int(fwhm)])
                 self.fwhm = fwhm
 
             for p, t0, dt in zip(period, T0, duration):
                 print(
-                    "\n [INFO] Star %s found in the table : P = %.2f days | T0 = %.2f JDB | T14 = %.2f hours | Teff = %.0f K | FWHM = %.0f km/s"
-                    % (self.starname, p, t0, dt, teff, fwhm)
+                    f"\n [INFO] Star {self.starname} found in the table : P = {p:.2f} days | T0 = {t0:.2f} JDB | T14 = {dt:.2f} hours | Teff = {teff:.0f} K | FWHM = {fwhm:.0f} km/s"
                 )
         else:
-            print("\n [WARNING] Star %s not found in the transits.csv table" % (self.starname))
+            print(f"\n [WARNING] Star {self.starname} not found in the transits.csv table")
             if (period != 100000) & (period != 0):
                 period = np.array([period])
                 T0 = np.array([T0])
@@ -938,12 +927,7 @@ def yarara_transit_def(
         plt.xlim(np.min(time) - length, np.max(time) + length)
 
         plt.title(
-            "%s In/Out spectra : %.0f/%.0f"
-            % (
-                self.starname,
-                sum(transits != 0),
-                len(transits) - sum(transits != 0),
-            )
+            f"{self.starname} In/Out spectra : {sum(transits != 0):.0f}/{len(transits) - sum(transits != 0):.0f}"
         )
         ax = plt.gca()
 

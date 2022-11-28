@@ -43,7 +43,7 @@ def import_rassine_output(
 
     files = glob.glob(directory + "RASSI*.p")
     if len(files) <= 1:  # 1 when merged directory
-        print("No RASSINE file found in the directory : %s" % (directory))
+        print(f"No RASSINE file found in the directory : {directory}")
         if return_name:
             return [], []
         else:
