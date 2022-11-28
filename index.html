@@ -112,6 +112,11 @@
    Data format
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="products.html">
+   Products
+  </a>
+ </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -690,6 +695,17 @@ title="Fullscreen mode"
   </span>
 
 </button>
+<label for="__secondary"
+  class="headerbtn headerbtn-secondary"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
 
     </div>
 </div>
@@ -703,18 +719,70 @@ title="Fullscreen mode"
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-install">
+   To install
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-try-it">
+   To try it
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-build-the-docs">
+   To build the docs
+  </a>
+  <ul class="nav section-nav flex-column">
+  </ul>
+ </li>
+</ul>
+
+            </nav>
         </div>
     </div>
 </div>
 
             <article class="bd-article" role="main">
               
-  <section id="yarara">
+  <section class="tex2jax_ignore mathjax_ignore" id="yarara">
 <h1>YARARA<a class="headerlink" href="#yarara" title="Permalink to this heading">#</a></h1>
+<p><img alt="YARARA logo" src="_images/logo.jpg" /></p>
+<p>YARARA working copy</p>
+<section id="to-install">
+<h2>To install<a class="headerlink" href="#to-install" title="Permalink to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/pegasilab/yarara.git
+<span class="nb">cd</span> yarara
+git submodule update --init <span class="c1"># will also pull the HD110315 data for tests</span>
+python -m venv .venv <span class="c1"># to create the virtual environment that Poetry will use</span>
+.venv/bin/python -m pip install --upgrade pip <span class="c1">#upgrade the pip version to latest one</span>
+poetry install --all-extras <span class="c1"># remove --all-extras if you do not want to build the docs</span>
+</pre></div>
+</div>
+</section>
+<section id="to-try-it">
+<h2>To try it<a class="headerlink" href="#to-try-it" title="Permalink to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry run test/bats/bin/bats test/test_HD110315.bats <span class="c1"># will run the full pipeline including RASSINE</span>
+</pre></div>
+</div>
+</section>
+<section id="to-build-the-docs">
+<h2>To build the docs<a class="headerlink" href="#to-build-the-docs" title="Permalink to this heading">#</a></h2>
+<p>Launch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry run make -C docs clean html
+</pre></div>
+</div>
+<p>The files are then in <code class="docutils literal notranslate"><span class="pre">docs/build/html</span></code>.</p>
 <div class="toctree-wrapper compound">
 </div>
 <div class="toctree-wrapper compound">
 </div>
+</section>
 </section>
 
 
@@ -744,6 +812,33 @@ title="Fullscreen mode"
 
 
 <div class="bd-sidebar-secondary bd-toc show noprint">
+    <div class="toc-item">
+        <div class="tocsection onthispage">
+            <i class="fas fa-list"></i> Contents
+        </div>
+        <nav id="bd-toc-nav" aria-label="Page">
+            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-install">
+   To install
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-try-it">
+   To try it
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-build-the-docs">
+   To build the docs
+  </a>
+  <ul class="nav section-nav flex-column">
+  </ul>
+ </li>
+</ul>
+
+        </nav>
+    </div>
 </div>
 
 
