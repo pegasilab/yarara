@@ -139,11 +139,6 @@ for stage in range(stage_start, stage_break):
     if stage == 1:
         yarara.stages.statistics(sts, ins, close_figure)
         get_time_step("statistics")
-        if sts.starname == "Sun":
-            # TODO: not tested
-            sts.yarara_correct_smooth(sub_dico="matching_diff", reference="median", window_ang=1)
-
-    # sts.yarara_inject_planet(amp=[0.4,0.4,0.4,0.4],period=[7.142,27.123,101.543,213.594],phase=[0,0,0,0])
 
     if stage == 2:
         yarara.stages.matching_cosmics(sts=sts, reference=reference, close_figure=close_figure)
