@@ -11,3 +11,5 @@ and `INSTRUMENT` is the name of the instrument (usually `HARPS03` or `HARPN`).
 ## YARARA outputs
 
 TODO
+
+- Images in `{STARNAME}/data/s1d/{INSTRUMENT}/IMAGES`

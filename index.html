@@ -730,8 +730,13 @@ title="Fullscreen mode"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#to-try-it">
-   To try it
+  <a class="reference internal nav-link" href="#to-try-it-without-fuss">
+   To try it without fuss
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-run-the-full-pipeline">
+   To run the full pipeline
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -753,7 +758,8 @@ title="Fullscreen mode"
   <section class="tex2jax_ignore mathjax_ignore" id="yarara">
 <h1>YARARA<a class="headerlink" href="#yarara" title="Permalink to this heading">#</a></h1>
 <p><img alt="YARARA logo" src="_images/logo.jpg" /></p>
-<p>YARARA working copy</p>
+<p>This is a distribution of the YARARA reduction pipeline written by <a class="reference external" href="mailto:michael&#46;cretignier&#37;&#52;&#48;gmail&#46;com">Michaël Crétignier</a>,
+with some refactoring by <a class="reference external" href="mailto:physics&#37;&#52;&#48;denisrosset&#46;com">Denis Rosset</a>.</p>
 <section id="to-install">
 <h2>To install<a class="headerlink" href="#to-install" title="Permalink to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/pegasilab/yarara.git
@@ -765,9 +771,36 @@ poetry install --all-extras <span class="c1"># remove --all-extras if you do not
 </pre></div>
 </div>
 </section>
-<section id="to-try-it">
-<h2>To try it<a class="headerlink" href="#to-try-it" title="Permalink to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry run test/bats/bin/bats test/test_HD110315.bats <span class="c1"># will run the full pipeline including RASSINE</span>
+<section id="to-try-it-without-fuss">
+<h2>To try it without fuss<a class="headerlink" href="#to-try-it-without-fuss" title="Permalink to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry run test/bats/bin/bats test/test_HD110315.bats
+<span class="c1"># will run the full pipeline including RASSINE</span>
+</pre></div>
+</div>
+</section>
+<section id="to-run-the-full-pipeline">
+<h2>To run the full pipeline<a class="headerlink" href="#to-run-the-full-pipeline" title="Permalink to this heading">#</a></h2>
+<p><strong>Warning</strong>: Do not run RASSINE or YARARA in paths containing spaces. It will fail.</p>
+<ul class="simple">
+<li><p>Datafiles are described <a class="reference internal" href="data.html"><span class="doc std std-doc">here</span></a></p></li>
+<li><p>Products are described <a class="reference internal" href="products.html"><span class="doc std std-doc">here</span></a></p></li>
+</ul>
+<p>Perform first a full installation as described above using <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">install</span></code> in an isolated Python environment.</p>
+<p>The installation will bring the RASSINE command line tools and a <code class="docutils literal notranslate"><span class="pre">run_yarara</span></code> command line tool as well.</p>
+<p>First, you need your input files in a folder called <code class="docutils literal notranslate"><span class="pre">STARNAME/data/s1d/INSTRUMENT</span></code>. Follow the <a class="reference external" href="https://pegasilab.github.io/rassine/quickstart.html#how-to-customize-the-above-for-a-different-star">RASSINE tutorial</a>.</p>
+<p>Note: you do not need to place those files in a subdirectory of <code class="docutils literal notranslate"><span class="pre">spectra/</span></code>, as it is the case for the <code class="docutils literal notranslate"><span class="pre">HD110315</span></code> data used for tests. You can use the instructions below with absolute or relative paths, if you wish. Relative paths are interpreted with respect to the current working directory.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">harpn.ini</span></code>, <code class="docutils literal notranslate"><span class="pre">harps03.ini</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code> and <code class="docutils literal notranslate"><span class="pre">run_rassine.sh</span></code> files have been copied to the Yarara repository as well. You can simply reuse them.</p>
+<p>This command will run all the RASSINE stages.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry run ./run_rassine.sh -l WARNING -c harpn.ini spectra/STARNAME/data/s1d/INSTRUMENT
+</pre></div>
+</div>
+<p>Then, copy all the <code class="docutils literal notranslate"><span class="pre">RASSINE_*</span></code> files from <code class="docutils literal notranslate"><span class="pre">STACKED/</span></code> in a new folder called <code class="docutils literal notranslate"><span class="pre">WORKSPACE/</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir spectra/STARNAME/data/s1d/INSTRUMENT/WORKSPACE
+cp spectra/STARNAME/data/s1d/INSTRUMENT/STACKED/RASSINE_* spectra/STARNAME/data/s1d/INSTRUMENT/WORKSPACE
+</pre></div>
+</div>
+<p>Then run the full Yarara pipeline:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry run run_yarara spectra/STARNAME/data/s1d/INSTRUMENT
 </pre></div>
 </div>
 </section>
@@ -824,8 +857,13 @@ poetry install --all-extras <span class="c1"># remove --all-extras if you do not
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#to-try-it">
-   To try it
+  <a class="reference internal nav-link" href="#to-try-it-without-fuss">
+   To try it without fuss
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#to-run-the-full-pipeline">
+   To run the full pipeline
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
