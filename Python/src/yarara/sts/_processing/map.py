@@ -39,7 +39,7 @@ def yarara_map(
     wave_max: Optional[Union[float64, float, int]] = 4300.0,  # was None
     index: str = "index",
     ratio: bool = False,
-    reference: str = "median",
+    reference: Union[int, np.ndarray, Literal["snr", "median", "master", "zeros"]] = "median",
     new: bool = True,
     plot: bool = True,
     substract_map: List[Any] = [],

@@ -23,9 +23,9 @@ def yarara_telluric(
     delta_window: int = 5,
     telluric_tag: str = "telluric",
     weighted: bool = False,
-    reference: str = True,
+    reference: Union[bool, Literal["norm", "master_snr"]] = True,
     ratio: bool = False,
-    normalisation: str = "slope",
+    normalisation: Literal["left", "slope"] = "slope",
     ccf_oversampling: int = 3,
 ) -> None:
 

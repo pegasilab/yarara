@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob as glob
 import logging
 import time
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Literal, Optional, Union, cast
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -33,7 +33,7 @@ def yarara_correct_telluric_gradient(
     wave_min_correction: int = 4400,  # TODO: put a float default
     wave_max_correction: int = 6600,
     smooth_map: int = 1,
-    reference: str = "master",
+    reference: Union[int, Literal["snr", "median", "master", "zeros"]] = "master",
     inst_resolution: int = 110000,
     equal_weight: bool = True,
     nb_pca_comp: int = 20,

@@ -1,17 +1,17 @@
 """
 This modules does XXX
 """
-from typing import List, Iterable, NoReturn, Optional, Sequence, Tuple, Union, overload
+from typing import Iterable, List, NoReturn, Optional, Sequence, Tuple, Union, overload
 
 import numpy as np
 from colorama import Fore
-from numpy import int64, float32, float64, ndarray
+from numpy import float32, float64, int64, ndarray
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
 
 def string_contained_in(
-    array: List[str], string: str, inv: bool=False
+    array_: List[str], string: str, inv: bool = False
 ) -> Tuple[ndarray, ndarray]:
     """
 
@@ -23,7 +23,7 @@ def string_contained_in(
     Returns:
         of bool, of strings
     """
-    array = np.array(array)
+    array = np.array(array_)
     split = np.array([len(i.split(string)) - 1 for i in array])
     mask = split.astype("bool")
     if inv:
@@ -292,7 +292,9 @@ def print_box(sentence: str) -> None:
     print("\n")
 
 
-def doppler_r(lamb: Union[float64, float, ndarray], v: Union[float64, float, int]) -> Tuple[ndarray, ndarray]:
+def doppler_r(
+    lamb: Union[float64, float, ndarray], v: Union[float64, float, int]
+) -> Tuple[ndarray, ndarray]:
     """Relativistic Doppler. Take (wavelength, velocity in [m/s]) and return lambda observed and lambda source"""
     c = 299.792e6
     button = False

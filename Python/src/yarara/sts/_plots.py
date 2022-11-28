@@ -8,6 +8,7 @@ import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .. import Float
 from ..stats import find_nearest
 from ..util import assert_never, doppler_r
 
@@ -18,8 +19,8 @@ if TYPE_CHECKING:
 def yarara_plot_all(
     self: spec_time_series,
     sub_dico: str = "matching_diff",
-    wave_min: float = 4400.0,
-    wave_max: float = 4500.0,
+    wave_min: Float = 4400.0,
+    wave_max: Float = 4500.0,
     plot_median: bool = False,
     berv_keys: str = "none",
     cmap: str = "brg",
