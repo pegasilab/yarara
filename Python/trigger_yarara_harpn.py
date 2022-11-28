@@ -13,16 +13,13 @@ import logging
 import os
 import sys
 import time
-from typing import Dict, Literal, Optional, Union
+from typing import Dict, Literal, Union
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 
 import yarara.stages
-from yarara.analysis.table_xy import tableXY
-from yarara.iofun import pickle_dump
-from yarara.stats.misc import IQ
 from yarara.sts import spec_time_series
 from yarara.util import print_iter
 
@@ -36,18 +33,9 @@ input_product = "s1d"
 
 stage_start = 0  # always start at 0
 stage_break = 29  # break included
-cascade = True
 close_figure = True
 planet_activated: bool = False
-rassine_full_auto = 0
-bin_length = 1
-fast = False
 reference = None
-verbose = 2
-prefit_planet = False
-drs_version = "old"
-sub_dico_to_analyse = "matching_diff"
-m_clipping = 3
 import warnings
 
 # Disable the new Pandas performance warnings due to fragmentation
@@ -68,30 +56,12 @@ if len(sys.argv) > 1:
         elif j[0] == "-e":
             stage_break = int(j[1])
             # TODO: options below are never used
-        elif j[0] == "-c":
-            cascade = int(j[1])
         elif j[0] == "-p":
             planet_activated = int(j[1]) != 0
-        elif j[0] == "-a":
-            rassine_full_auto = int(j[1])
-        elif j[0] == "-l":
-            bin_length = int(j[1])
         elif j[0] == "-r":
             reference = j[1]
-        elif j[0] == "-f":
-            fast = int(j[1])
         elif j[0] == "-d":
             close_figure = bool(j[1])
-        elif j[0] == "-v":
-            verbose = int(j[1])
-        elif j[0] == "-k":
-            prefit_planet = int(j[1])
-        elif j[0] == "-D":
-            drs_version = j[1]
-        elif j[0] == "-S":
-            sub_dico_to_analyse = j[1]
-        elif j[0] == "-m":
-            m_clipping = int(j[1])
 
 
 cwd = os.getcwd()
@@ -153,17 +123,10 @@ sts.instrument = ins
 
 print("------------------------\n STAR LOADED : %s \n------------------------" % (sts.starname))
 
-if fast:
-    # TODO: not executed, remove fast
-    print(
-        "\n [INFO] Fast analysis %s %s reference spectrum launched...\n"
-        % (ins, ["with", "without"][int(reference is None)])
-    )
-else:
-    print(
-        "\n [INFO] Complete analysis %s %s reference spectrum launched...\n"
-        % (ins, ["with", "without"][int(reference is None)])
-    )
+print(
+    "\n [INFO] Complete analysis %s %s reference spectrum launched...\n"
+    % (ins, ["with", "without"][int(reference is None)])
+)
 
 
 # =============================================================================
