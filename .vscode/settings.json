@@ -113,4 +113,5 @@
         "ylabel",
         "ylim"
     ],
+    "esbonio.sphinx.confDir": "",
 }
