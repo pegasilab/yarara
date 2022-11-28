@@ -1,10 +1,11 @@
+import logging
 from typing import Literal, Optional, Union
 
 import matplotlib.pylab as plt
 import numpy as np
+import pandas as pd
 
-from yarara.iofun import pickle_dump
-
+from ..iofun import pickle_dump
 from ..sts import spec_time_series
 
 
@@ -12,6 +13,95 @@ def load_and_adapt_input_data(sts: spec_time_series) -> None:
     # ADAPT INPUT DATA
     sts.yarara_analyse_summary(rm_old=True)
     sts.yarara_add_step_dico(sub_dico="matching_diff", step=0, sub_dico_used="matching_anchors")
+    sts.yarara_exploding_pickle()
+
+
+def preprocessing(sts: spec_time_series, close_figure: bool) -> None:
+    # sts.yarara_inject_planet()
+    sts.yarara_simbad_query()
+    sts.yarara_analyse_summary()
+    sts.import_table()
+
+    sts.flux_error(ron=11)
+    sts.continuum_error()
+    sts.yarara_exploding_pickle()
+
+    sts.yarara_check_rv_sys()
+    sts.yarara_check_fwhm()
+    plt.close("all")
+
+    sts.yarara_ccf(
+        mask=sts.read_ccf_mask(sts.mask_harps),
+        mask_name=sts.mask_harps,
+        ccf_oversampling=1,
+        plot=True,
+        save=True,
+        rv_range=None,
+    )
+
+    sts.yarara_correct_secular_acc(update_rv=True)
+
+    sts.scale_cmap()
+
+    # sous option
+    sts.suppress_low_snr_spectra(suppress=False)
+
+    # sous option
+    sts.yarara_suppress_doubtful_spectra(suppress=False)
+
+    # sts.supress_time_spectra(num_min=None, num_max=None)
+    # sts.split_instrument(instrument=ins)
+    if close_figure:
+        plt.close("all")
+
+
+def statistics(sts: spec_time_series, ins: str, close_figure: bool) -> None:
+    # STATISTICS
+    sts.yarara_simbad_query()
+    # sts.yarara_star_info(sp_type='K1V', Mstar=1.0, Rstar=1.0)
+
+    sts.yarara_add_step_dico("matching_diff", 0, sub_dico_used="matching_anchors")
+
+    # sts.yarara_add_step_dico('matching_brute',0,chain=True)
+
+    # COLOR TEMPLATE
+    logging.info("Compute bolometric constant")
+    sts.yarara_flux_constant()
+    sts.yarara_color_template()
+
+    sts.yarara_map_1d_to_2d(instrument=ins)
+
+    # ERROR BARS ON FLUX AND CONTINUUM
+    print("Add flux errors")
+    sts.yarara_non_zero_flux()
+    sts.flux_error(ron=11)
+    sts.continuum_error()
+
+    # BERV SUMMARY
+    sts.yarara_berv_summary(sub_dico="matching_diff", dbin_berv=3, nb_plot=2)
+
+    # ACTIVITY
+    logging.info("Compute activity proxy")
+    sts.yarara_activity_index(sub_dico="matching_diff")
+
+    # table
+    sts.yarara_obs_info(pd.DataFrame(data=[ins] * len(sts.table), columns=["instrument"]))
+    sts.import_table()
+
+    logging.info("Make SNR statistics figure")
+    sts.snr_statistic()
+    logging.info("Make DRS RV summary figure")
+    sts.dace_statistic()
+
+    sts.yarara_transit_def(period=100000, T0=0, duration=0.0001, auto=True)
+
+    logging.info("Crop spectra")
+    w0 = sts.yarara_get_first_wave()
+    sts.yarara_cut_spectrum(wave_min=w0, wave_max=6865.00)
+
+    if close_figure:
+        plt.close("all")
+
     sts.yarara_exploding_pickle()
 
 
@@ -144,6 +234,7 @@ def matching_oxygen(sts: spec_time_series, reference: Optional[str], close_figur
 def matching_contam(
     sts: spec_time_series, reference: Optional[str], frog_file: str, close_figure: bool
 ) -> None:
+    sts.yarara_activity_index()
 
     # input Contam_HARPN
 

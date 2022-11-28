@@ -15,7 +15,6 @@ import sys
 import time
 from typing import Dict, Literal, Union
 
-import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 
@@ -134,97 +133,12 @@ print(
 
 for stage in range(stage_start, stage_break):
     if stage == 0:
-        # sts.yarara_inject_planet()
-        sts.yarara_simbad_query()
-        sts.yarara_analyse_summary()
-        sts.import_table()
-
-        sts.flux_error(ron=11)
-        sts.continuum_error()
-        sts.yarara_exploding_pickle()
-
-        sts.yarara_check_rv_sys()
-        sts.yarara_check_fwhm()
-        plt.close("all")
-
-        sts.yarara_ccf(
-            mask=sts.read_ccf_mask(sts.mask_harps),
-            mask_name=sts.mask_harps,
-            ccf_oversampling=1,
-            plot=True,
-            save=True,
-            rv_range=None,
-        )
-
-        sts.yarara_correct_secular_acc(update_rv=True)
-
-        sts.scale_cmap()
-
-        # sous option
-        sts.suppress_low_snr_spectra(suppress=False)
-
-        # sous option
-        sts.yarara_suppress_doubtful_spectra(suppress=False)
-
-        # sts.supress_time_spectra(num_min=None, num_max=None)
-        # sts.split_instrument(instrument=ins)
-
-        if close_figure:
-            plt.close("all")
-
+        yarara.stages.preprocessing(sts, close_figure)
         get_time_step("preprocessing")
 
     if stage == 1:
-        # STATISTICS
-        sts.yarara_simbad_query()
-        # sts.yarara_star_info(sp_type='K1V', Mstar=1.0, Rstar=1.0)
-
-        sts.yarara_add_step_dico("matching_diff", 0, sub_dico_used="matching_anchors")
-
-        # sts.yarara_add_step_dico('matching_brute',0,chain=True)
-
-        # COLOR TEMPLATE
-        logging.info("Compute bolometric constant")
-        sts.yarara_flux_constant()
-        sts.yarara_color_template()
-
-        sts.yarara_map_1d_to_2d(instrument=ins)
-
-        # ERROR BARS ON FLUX AND CONTINUUM
-        print("Add flux errors")
-        sts.yarara_non_zero_flux()
-        sts.flux_error(ron=11)
-        sts.continuum_error()
-
-        # BERV SUMMARY
-        sts.yarara_berv_summary(sub_dico="matching_diff", dbin_berv=3, nb_plot=2)
-
-        # ACTIVITY
-        logging.info("Compute activity proxy")
-        sts.yarara_activity_index(sub_dico="matching_diff")
-
-        # table
-        sts.yarara_obs_info(pd.DataFrame(data=[ins] * len(sts.table), columns=["instrument"]))
-        sts.import_table()
-
-        logging.info("Make SNR statistics figure")
-        sts.snr_statistic()
-        logging.info("Make DRS RV summary figure")
-        sts.dace_statistic()
-
-        sts.yarara_transit_def(period=100000, T0=0, duration=0.0001, auto=True)
-
-        logging.info("Crop spectra")
-        w0 = sts.yarara_get_first_wave()
-        sts.yarara_cut_spectrum(wave_min=w0, wave_max=6865.00)
-
-        if close_figure:
-            plt.close("all")
-
-        sts.yarara_exploding_pickle()
-
+        yarara.stages.statistics(sts, ins, close_figure)
         get_time_step("statistics")
-
         if sts.starname == "Sun":
             # TODO: not tested
             sts.yarara_correct_smooth(sub_dico="matching_diff", reference="median", window_ang=1)
@@ -244,8 +158,6 @@ for stage in range(stage_start, stage_break):
         get_time_step("matching_oxygen")
 
     if stage == 5:
-        # TODO: stage
-        sts.yarara_activity_index()
         yarara.stages.matching_contam(
             sts,
             reference=reference,
@@ -317,5 +229,8 @@ if True:
     table_time["frac_time"] = 100 * table_time["time_step"] / np.sum(table_time["time_step"])
     table_time["time_step"] /= 60  # convert in minutes
 
-    filename_time = sts.dir_root + f"REDUCTION_INFO/Time_informations_reduction_{time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime())}.csv"
+    filename_time = (
+        sts.dir_root
+        + f"REDUCTION_INFO/Time_informations_reduction_{time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime())}.csv"
+    )
     table_time.to_csv(filename_time)
