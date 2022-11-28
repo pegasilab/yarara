@@ -132,8 +132,10 @@ class spec_time_series(object):
 
     def __init__(self, directory: str) -> None:
         if len(directory.split("/")) == 1:
+            # TODO: never executed
             directory = root + "/spectra/" + directory + "/data/s1d/HARPS03/WORKSPACE/"
         if directory[-1] != "/":
+            # TODO: never executed
             directory = directory + "/"
 
         self.directory = directory
@@ -249,6 +251,7 @@ class spec_time_series(object):
             pickle_dump(dico_material, open(self.directory + "Analyse_material.p", "wb"))
 
         if os.path.exists(self.directory + "/RASSINE_Master_spectrum.p"):
+            # TODO: never executed
             master = pd.read_pickle(self.directory + "/RASSINE_Master_spectrum.p")
             master = master["flux"] / master["output"]["continuum_linear"]
             os.system(
