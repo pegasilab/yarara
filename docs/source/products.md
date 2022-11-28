@@ -4,7 +4,7 @@ List of products read by YARARA:
 
 ## In `database/SIMBAD/`
 
-- `table_stars.p` of type {py:class}`yarara.materials.SIMBADEntry`
+- `table_stars.p`, a dict whose keys are star names and values are of type {py:class}`yarara.materials.SIMBADEntry`
 
 
 ## In `MASK_CCF/`
