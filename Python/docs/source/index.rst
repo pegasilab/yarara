@@ -7,6 +7,7 @@ YARARA
     :caption: General information
 
     Home page <self>
+    data
 
 
 .. toctree::

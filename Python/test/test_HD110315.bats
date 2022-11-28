@@ -38,6 +38,62 @@ setup_file() {
     cp ../spectra/HD110315/data/s1d/HARPN/STACKED/RASSINE_* ../spectra/HD110315/data/s1d/HARPN/WORKSPACE
 }
 
-@test "YARARA" {
-    python trigger_yarara_harpn.py -b 0 -e 15
+@test "YARARA step 0" {
+    run_yarara -b 0 -e 1 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 1" {
+    run_yarara -b 1 -e 2 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 2" {
+    run_yarara -b 2 -e 3 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 3" {
+    run_yarara -b 3 -e 4 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 4" {
+    run_yarara -b 4 -e 5 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 5" {
+    run_yarara -b 5 -e 6 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 6" {
+    run_yarara -b 6 -e 7 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 7" {
+    run_yarara -b 7 -e 8 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 8" {
+    run_yarara -b 8 -e 9 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 9" {
+    run_yarara -b 9 -e 10 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 10" {
+    run_yarara -b 10 -e 11 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 11" {
+    run_yarara -b 11 -e 12 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 12" {
+    run_yarara -b 12 -e 13 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 13" {
+    run_yarara -b 13 -e 14 ../spectra/HD110315/data/s1d/HARPN
+}
+
+@test "YARARA step 14" {
+    run_yarara -b 14 -e 15 ../spectra/HD110315/data/s1d/HARPN
 }
