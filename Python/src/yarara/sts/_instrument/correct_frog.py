@@ -149,11 +149,10 @@ def yarara_correct_frog(
     if (correction == "ghost_a") | (correction == "ghost_b"):
         for j in range(3):
             if np.sum(mask > threshold_contam) < 200:
+                threshold_contam *= 0.75
                 logging.warning(
                     f"Not enough wavelength in the mask, threshold contamination reduced down to {threshold_contam:.2f}"
                 )
-                # TODO: should this be before the warning
-                threshold_contam *= 0.75
 
     mask_ghost = np.sum(
         (grid > min_t[:, np.newaxis]) & (grid < max_t[:, np.newaxis]), axis=0

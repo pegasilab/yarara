@@ -250,18 +250,6 @@ class spec_time_series(object):
             dico_material = pd.DataFrame(dico_material)
             pickle_dump(dico_material, open(self.directory + "Analyse_material.p", "wb"))
 
-        if os.path.exists(self.directory + "/RASSINE_Master_spectrum.p"):
-            # TODO: never executed
-            master = pd.read_pickle(self.directory + "/RASSINE_Master_spectrum.p")
-            master = master["flux"] / master["output"]["continuum_linear"]
-            os.system(
-                "mv "
-                + self.directory
-                + "RASSINE_Master_spectrum.p "
-                + self.directory
-                + "ras_Master_spectrum.p "
-            )
-
         if not os.path.exists(self.directory + "/CONTINUUM"):
             os.system("mkdir " + self.directory + "/CONTINUUM")
 
