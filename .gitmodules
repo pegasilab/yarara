@@ -1,9 +1,9 @@
 [submodule "Material"]
 	path = Material
-	url = git@github.com:denisrosset/YARARA-material.git
+	url = https://github.com/pegasilab/YARARA-material.git
 [submodule "MASK_CCF"]
 	path = MASK_CCF
-	url = git@github.com:denisrosset/YARARA-mask-ccf.git
+	url = https://github.com/pegasilab/YARARA-mask-ccf.git
 [submodule "test/bats"]
 	path = test/bats
 	url = https://github.com/bats-core/bats-core.git
@@ -15,4 +15,4 @@
 	url = https://github.com/bats-core/bats-assert.git
 [submodule "spectra/HD110315"]
 	path = spectra/HD110315
-	url = git@github.com:pegasilab/HD110315.git
+	url = https://github.com/pegasilab/HD110315.git
